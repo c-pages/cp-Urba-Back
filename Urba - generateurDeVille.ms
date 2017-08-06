@@ -74,6 +74,8 @@ struct str_batiment (
 		sceneNode = convertToPoly (mesh ())
 		sceneNode.EditablePoly.SetSelection #Face #{1..25}
 		sceneNode.EditablePoly.delete #Face
+			
+		sceneNode.name = uniqueName "Urba - Bat "
 		sceneNode
 	),
 	fn creerFace 	pt1 	pt2 	Zmin 	hauteur	=(
@@ -167,24 +169,6 @@ struct str_ville (
 		
 	private
 		
-/* 		
-		fn genererBatiment 	bat 	=(
-			
-			---- le style ----
-			local id_randomStyle = random 1 styles.count
-			
-			---- le nombre d'étages ----
-			local nbrEtages = random etages_min etages_max
-			
-			---- le sous bassement ----
-			
-			---- le RdC ----
-			
-			---- etages courants ----
-			
-			---- toiture ----
-			
-		), */
 		
 		
 		fn pointLePlusHautsurY 	shp 	spline	=(
@@ -243,7 +227,11 @@ struct str_ville (
 		fn selectionner id =(
 			select batiments[id].sceneNode
 		),
-		fn choisirStyle 	surf	=(
+		
+		
+		fn choisirStyle 	nvBat	=(
+			
+			local surf = nvBat.get_surfBB ()
 			
 			-- le style en fonction du la surface 		--get_surfBB_SubSpline  	tracee 	id_subSpline
 			local stylesPossibles =#()
@@ -256,21 +244,39 @@ struct str_ville (
 			local id_styleTiree = random 1 	stylesPossibles.count
 				--format  "id_styleTiree %\n" id_styleTiree
 			local styleCourant = stylesPossibles [ id_styleTiree ]
+			
+			nvBat.setStyle 	styleCourant
+			
 			styleCourant
+			
 		),
+		
+		fn choisirZ =(
+			
+			local resultZ = 0
+			
+			
+			
+			resultZ
+			
+		),
+		
+		
 		---- les fonctions ----
-		fn creerBatiment  style:	id_subSpline:1 =(
+		fn creerBatiment  id_subSpline:1 =(
 			
 			---- l'objet batiment -----
 			local nvBat = str_batiment 	 	id_subSpline:id_subSpline \
 															tracee: tracee
 			append batiments nvBat
-				
-			local styleCourant = choisirStyle 	( nvBat.get_surfBB () )
-			nvBat.setStyle 	styleCourant
 			
-			local zCourant = tracee.pos.z
+			---- le style ----
+			choisirStyle 	nvBat
 			
+			---- la position en Z ----
+			local zCourant = choisirZ () --tracee.pos.z
+			
+			---- La creation de la geometrie ----
 			nvBat.creer_ssBassement 	zCourant
 			nvBat.creer_RdC 				zCourant
 			nvBat.creer_etages 			zCourant
@@ -279,7 +285,9 @@ struct str_ville (
 		),
 		
 		fn generer 	nvTracee =(
-			tracee = nvTracee
+			
+			tracee = copy nvTracee
+			tracee.name = uniqueName "Urba - Ville "
 			preparerSpline ()
 			
 			-- Création des batiments	--
@@ -371,7 +379,7 @@ struct generateurDeVille (
 )	-- fin generateurDeVille --
 
 urba 	= generateurDeVille ()
-ville 	= urba.creerVille $
+ville 	= urba.creerVille $Line001
 ville.selectAll ()
 
 -- ville.batiments
