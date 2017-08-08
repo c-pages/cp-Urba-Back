@@ -36,7 +36,7 @@ struct str_batiment (
 	style, 
 	tracee ,
 	id_subSpline 	= 0 ,
-	sceneNode,
+	object,
 	
 	fn get_surfBB = (
 		
@@ -63,38 +63,62 @@ struct str_batiment (
 	),
 	fn setStyle 	nvStyle =(
 		style = nvStyle
-		sceneNode.wireColor = style.wireColor
+		object.wireColor = style.wireColor
 	),
 	selectionner =(
 		clearSelection ()
--- 		select sceneNode
+-- 		select object
 	),
 	
 	fn creerPolyVide =(
-		sceneNode = convertToPoly (mesh ())
-		sceneNode.EditablePoly.SetSelection #Face #{1..25}
-		sceneNode.EditablePoly.delete #Face
+		object = convertToPoly (mesh ())
+		object.EditablePoly.SetSelection #Face #{1..25}
+		object.EditablePoly.delete #Face
 			
-		sceneNode.name = uniqueName "Urba - Bat "
-		sceneNode
+		object.name = uniqueName "Urba - Bat "
+		object
 	),
-	fn creerFace 	pt1 	pt2 	Zmin 	hauteur	=(
+	
+	fn creerFace 	listeDesPoints =(
 		
-		local verts = sceneNode.verts.count
+		local verts = object.verts.count
 		
-		polyop.createVert sceneNode	[pt2.x, pt2.y, Zmin]	
-		polyop.createVert sceneNode	[pt1.x, pt1.y, Zmin]
-		polyop.createVert sceneNode	[pt1.x, pt1.y, Zmin + hauteur]
-		polyop.createVert sceneNode	[pt2.x, pt2.y, Zmin + hauteur]
+		-- les vertex --
+		for pt in  listeDesPoints do 
+			polyop.createVert object	pt
 		
-		polyop.createEdge sceneNode (verts+1) (verts+2)
-		polyop.createEdge sceneNode (verts+2) (verts+3)
-		polyop.createEdge sceneNode (verts+3) (verts+4)
-		polyop.createEdge sceneNode (verts+4) (verts+1)
 		
-		polyop.createPolygon sceneNode  #((verts+1),(verts+2),(verts+3),(verts+4))
+		-- les edges --
+		for i = 1 to listeDesPoints.count - 1 do 
+			polyop.createEdge object (verts+i) (verts+i+1)
+		polyop.createEdge object (verts+listeDesPoints.count) (verts+1)
 		
-		sceneNode
+		-- la face --
+		local listeVertexPrFace = #()
+		for i = 1 to listeDesPoints.count  do 
+			append listeVertexPrFace ( verts+i )
+		polyop.createPolygon object  listeVertexPrFace
+		
+	),
+	
+	
+	fn creerFaceVerticale 	pt1 	pt2 	&z 	hauteur	=(
+		
+		local verts = object.verts.count
+-- 		local z = copy Zmin
+		polyop.createVert object	[pt2.x, pt2.y, z]	
+		polyop.createVert object	[pt1.x, pt1.y, z]
+		polyop.createVert object	[pt1.x, pt1.y, z + hauteur]
+		polyop.createVert object	[pt2.x, pt2.y, z + hauteur]
+		
+		polyop.createEdge object (verts+1) (verts+2)
+		polyop.createEdge object (verts+2) (verts+3)
+		polyop.createEdge object (verts+3) (verts+4)
+		polyop.createEdge object (verts+4) (verts+1)
+		
+		polyop.createPolygon object  #((verts+1),(verts+2),(verts+3),(verts+4))
+		
+		object
 		
 	),
 	
@@ -103,13 +127,13 @@ struct str_batiment (
 		for id_pt = 1 to (numKnots 	tracee 	id_subSpline)  - 1 do	 (
 			knt_1 = getKnotPoint 	tracee 	id_subSpline 	id_pt
 			knt_2 = getKnotPoint 	tracee 	id_subSpline 	( id_pt + 1 )
-			creerFace 	knt_1		knt_2 	altitude 	hauteur
+			creerFaceVerticale 	knt_1		knt_2 	altitude 	hauteur
 		)
 		
 		knt_1 = getKnotPoint 	tracee 	id_subSpline 	(numKnots 	tracee 	id_subSpline)
 		knt_2 = getKnotPoint 	tracee 	id_subSpline 	1
 		
-		creerFace 	knt_1		knt_2 	altitude 	hauteur
+		creerFaceVerticale 	knt_1		knt_2 	altitude 	hauteur
 		
 	),
 	
@@ -118,14 +142,14 @@ struct str_batiment (
 	
 	
 	--- les parties des batiments ----
-	fn creer_ssBassement 	z&	=(
+	fn creer_ssBassement 	&z	=(
 		creerFacesContour		z 	style.epaisseur_sousBassement 
 		z += style.epaisseur_sousBassement
 	),
-	fn creer_RdC 	z&=(
+	fn creer_RdC 		&z	=(
 		
 	),
-	fn creer_etages 	z&=(
+	fn creer_etages 	&z	=(
 		
 		-- le nombre d'étages --
 		local nbrEtages = random 		style.etages_min 		style.etages_max
@@ -145,8 +169,17 @@ struct str_batiment (
 		)
 		
 	),
-	fn creer_toitTerrasse z&=(
-		
+	fn creer_toitTerrasse &z=(
+		format "Z:%\n" z
+		local listeDesPoints = #()
+		for i = 1 to numKnots tracee 	id_subSpline do (
+			pt = getKnotPoint tracee 	id_subSpline 	i 
+			pt.z = z
+		format "pt:%\n" z
+			insertItem   pt listeDesPoints 1
+-- 			append listeDesPoints  pt
+		)
+		creerFace listeDesPoints
 	),
 	
 	on create do (
@@ -207,6 +240,7 @@ struct str_ville (
 			if vec2.x > vec1.X do result = not result
 			
 			result
+			
 		),
 		
 		fn preparerSpline =(
@@ -215,19 +249,6 @@ struct str_ville (
 					if not estPolygone_sensPositif tracee id_subSpline do
 						reverse		tracee	id_subSpline	
 		),
-		
-		
-	public
-		
-		fn selectAll = with redraw off (
-			clearSelection ()
-			for bat in batiments do 
-				selectMore bat.sceneNode
-		),
-		fn selectionner id =(
-			select batiments[id].sceneNode
-		),
-		
 		
 		fn choisirStyle 	nvBat	=(
 			
@@ -253,34 +274,50 @@ struct str_ville (
 		
 		fn choisirZ =(
 			
-			local resultZ = 0
-			
-			
+			local resultZ = 0.
 			
 			resultZ
 			
 		),
 		
+	public
+		
+		
+		fn selectAll = with redraw off (
+			clearSelection ()
+			for bat in batiments do 
+				selectMore bat.object
+		),
+		fn selectionner id: =(
+			if id == unsupplied then
+				select tracee
+			else
+				select batiments[id].object
+		),
 		
 		---- les fonctions ----
 		fn creerBatiment  id_subSpline:1 =(
 			
 			---- l'objet batiment -----
-			local nvBat = str_batiment 	 	id_subSpline:id_subSpline \
+			local nvBat 	= 	str_batiment 	id_subSpline:id_subSpline \
 															tracee: tracee
 			append batiments nvBat
+			nvBat.object.parent = tracee
 			
 			---- le style ----
 			choisirStyle 	nvBat
 			
 			---- la position en Z ----
-			local zCourant = choisirZ () --tracee.pos.z
+			local zCourant 	= 		choisirZ () --tracee.pos.z
 			
 			---- La creation de la geometrie ----
-			nvBat.creer_ssBassement 	zCourant
-			nvBat.creer_RdC 				zCourant
-			nvBat.creer_etages 			zCourant
-			nvBat.creer_toitTerrasse 	zCourant
+			nvBat.creer_ssBassement 		&zCourant
+			format "zCourant 0 :%\n" 		zCourant
+			nvBat.creer_RdC 					&zCourant
+			format "zCourant 1 :%\n" 		zCourant
+			nvBat.creer_etages 				&zCourant
+			format "zCourant 2 :%\n" 		zCourant
+			nvBat.creer_toitTerrasse 		&zCourant
 			
 		),
 		
@@ -380,7 +417,7 @@ struct generateurDeVille (
 
 urba 	= generateurDeVille ()
 ville 	= urba.creerVille $Line001
-ville.selectAll ()
+ville.selectionner id:1
 
 -- ville.batiments
 
