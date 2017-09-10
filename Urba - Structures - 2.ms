@@ -21,6 +21,7 @@ struct str_urba_elem_model (
 	
 	nom = "Model",
 	fichier ="",
+	largeur = 100,
 	
 	fn get_largeur =(),
 	
@@ -62,7 +63,7 @@ struct str_urba_elem_repart (
 
 
 
----------manager de sequence facade ------------
+---------manager de SEQUENCE FACADE ------------
 struct str_urba_facadeMgr (
 	
 
@@ -79,18 +80,62 @@ struct str_urba_facadeMgr (
 	
 	elements =#(),
 	
+	
+	
+	
+	
+	
+	
+	
+	
 	fn print =(
 		debug "---------------------------------------------------"
 		for elem in elements do			
 			debug "elem" var:elem
 		debug "---------------------------------------------------"
 	),
+	
+	
+	
+	
+	fn getNbrRepart =(
+		local nbrResult = 0
+		for elem in elements do			
+			if classOf elem == str_urba_elem_repart	do nbrResult += 1
+		nbrResult
+	),
+	
+	
+	
+	
+	
+	
 	fn supprimer _id =(
+		deleteItem elements 	_id
 	),
 	
 	fn vider =(
+		elements =#()
+	),
+	
+	fn deplacer 	_id 	_idDest =(
+		
+		local elemABouger = elements[ _id ]
+		supprimer _id 
+-- 		if _idDest > _id then
+			insertItem 	elemABouger	elements		(_idDest )
+-- 		else 
+-- 			insertItem 	elemABouger	elements		_idDest
 		
 	),
+	fn monter _id =(
+		deplacer _id (_id-1)
+	),
+	fn descendre _id =(
+		deplacer _id (_id+1)
+	),
+	
+	
 	
 	---- creation d'elements --------
 	fn creer_model 	fichier:undefined	=(
@@ -111,6 +156,49 @@ struct str_urba_facadeMgr (
 	
 	
 )
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------  Preset VILLES	 --------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+struct str_urba_preset_ville (
+	nom 			="Nouvelle ville",
+	batiments 	=#(),
+	probabilites =#()
+)
+
+
+
+
+struct str_urba_preset_ville_MGR (
+	elements 	=#(),
+	fichier		= "",
+	
+	private
+		fn sauvegarderDatas  	_datas  _nomDatas	=(
+			
+			local propsNoms 	= getPropNames  _datas
+			
+			for propNom in propsNoms do 
+				if propNom != "dossierScript"
+					do setINISetting   fichierPrefs		_nomDatas   propNom  	( ( getProperty _datas	 propNom	)	as string )
+			
+		),
+	public
+		
+		
+		fn ajouter= (
+			append elements ( str_urba_preset_ville () )
+		),
+		fn charger =(
+		),
+		fn sauvegarder =(
+		),
+		fn creer =(
+			append elements ( str_urba_preset_ville () )
+		)
+)
+
 
 
 

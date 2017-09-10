@@ -24,6 +24,7 @@
 
 
 (
+	global urba
 	
 ----- scripts globaux -------------
 include "$userScripts\cp - GLOBAL\UI.ms"
@@ -32,6 +33,11 @@ include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
 	
 ----- scripts externes -------------
 include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
+	
+include "$userScripts\cp-Urba\Urba - Villes.ms"
+include "$userScripts\cp-Urba\Urba - Batiments.ms"
+include "$userScripts\cp-Urba\Urba - Facades.ms"
+	
 -- include "$userScripts\cp-Urba\Urba - Construction.ms"
 -- include "$userScripts\cp-Urba\Urba - Edit.ms"
 
@@ -39,7 +45,7 @@ include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
 ------------------------------------------------------------------------------
 ----------	FENETRE								 -------------------------
 ------------------------------------------------------------------------------
-rollout roll_urba  "urba " width:296 height:296
+rollout roll_urba "urba " width:313 height:85
 (
 	------------ DEBUG	----------------------------------------------------------------------------------
 	local m_debug = true
@@ -70,20 +76,44 @@ rollout roll_urba  "urba " width:296 height:296
 	ImgTag 'ui_titre' "" pos:[16,4] width:66 height:18 align:#left
 	
 	---- le bouton pour fermer la fenetre ----
-	ImgTag ui_btnFermer "X" pos:[276,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center
+	ImgTag 'ui_btnFermer' "X" pos:[292,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
 	
 	
 	
-	pickbutton 'btn_shape' "Shape" pos:[19,34] width:266 height:23 align:#left autoDisplay:true filter:shape_filt
-	button 'btn_generer' "Générer" pos:[24,241] width:259 height:38 align:#left
-	radioButtons 'rdo1' "" pos:[27,125] width:125 height:16 labels:#("Par surfaces") align:#left
-	spinner 'spn_etagesMin' "" pos:[156,76] width:121 height:16 range:[0,100,1] type:#integer scale:1 align:#left
-	label 'lbl1' "Etages min. :" pos:[28,76] width:94 height:18 align:#left
+	button 'btn_generer' "Générer" pos:[68,46] width:220 height:19 align:#left
 	
 	
-	spinner 'spn_etagesMax' "" pos:[156,96] width:121 height:16 range:[0,100,5] type:#integer scale:1 align:#left
-	label 'lbl2' "Etages max. :" pos:[28,96] width:94 height:18 align:#left
+	checkbutton 'ckb_ville' "V" pos:[15,46] width:19 height:19 align:#left	
+	
+	
+	
+	
+	checkbutton 'ckb_batiment' "B" pos:[33,46] width:19 height:19 align:#left
+	checkbutton 'ckb_facade' "F" pos:[51,46] width:19 height:19 align:#left
+	
+	
+	dropdownList 'ddl_villes' "" pos:[16,26] width:271 height:21 align:#left
+	
+	
 	------------  Fonctions	----------------------------------------------------------------------------------
+	
+	
+	fn actualiser =(
+		
+		local listTmp =#()
+		for elem in m_prt.villes.mgr.elements do
+			append listTmp elem.nom
+		ddl_villes.items = listTmp
+		
+		
+		local enable = false
+		if m_prt.villes.mgr.elements.count > 0 do
+			enable = true		
+-- 		btn_supprimer.enabled = enable		
+		btn_generer.enabled = enable
+	)
+	
+	
 	
 	fn reagencer taille: 	=(
 		
@@ -127,29 +157,69 @@ rollout roll_urba  "urba " width:296 height:296
 		-- le bouton fermer --
 		ui_btnFermer.bitmap = m_prt.m_icos_fermer[1]	
 		b_initialisation = true
+		
+		actualiser ()
 	)
 	
 	------------  Evenements	----------------------------------------------------------------------------------
+	
+	
+	
+	
 	---- Fenetre -----
-	on roll_urba moved			_pos 	do	m_prt.m_pos	= _pos	
-	on roll_urba resized			_taille 	do	reagencer ()
 	
 	---- Drag ----
-	on roll_urba lbuttondown	_pos 	do	m_drag.demarrer ()
-	on roll_urba lbuttonup 		_pos 	do	m_drag.arreter ()
-	on roll_urba mouseMove 	_pos 	do	m_drag.suivreSouris ()
 	
 	---- Bouton fermer -----
-	on 	ui_btnFermer	mouseover 		do 	etatBtnFermer #Survol
-	on 	ui_btnFermer	mouseout 		do 	etatBtnFermer #Repos
-	on 	ui_btnFermer	mousedown 	do 	etatBtnFermer #Press
-	on 	ui_btnFermer	mouseup		do 	etatBtnFermer #Repos
-	on 	ui_btnFermer 	click 				do 	m_prt.fermer ()
 	
 	--- edition ----
 -- 	on btn_shape picked obj 				do	m_prt.edit.preparer obj
-	
 
+	on roll_urba resized _taille 	do
+		reagencer ()
+	on roll_urba moved _pos 	do
+		m_prt.m_pos	= _pos
+	on roll_urba lbuttondown _pos 	do
+		m_drag.demarrer ()
+	on roll_urba lbuttonup _pos 	do
+		m_drag.arreter ()
+	on roll_urba mouseMove _pos 	do
+		m_drag.suivreSouris ()
+	on ui_btnFermer mouseover do
+		etatBtnFermer #Survol
+	on ui_btnFermer mouseout do
+		etatBtnFermer #Repos
+	on ui_btnFermer mouseDown do
+		etatBtnFermer #Press
+	on ui_btnFermer mouseUp do
+		etatBtnFermer #Repos
+	on ui_btnFermer click do
+		m_prt.fermer ()
+	on ckb_ville changed state do
+	(
+		if m_prt.villes.estOuvert () then
+			m_prt.villes.fermer()
+		else
+			m_prt.villes.ouvrir()
+	)
+	on ckb_batiment changed state do
+	(
+			if m_prt.batiments.estOuvert () then
+				m_prt.batiments.fermer()
+			else
+				m_prt.batiments.ouvrir()
+		
+		)
+	on ckb_facade changed state do
+	(
+			if m_prt.facades.estOuvert () then
+				m_prt.facades.fermer()
+			else
+				m_prt.facades.ouvrir()
+		
+		)
+-- 	on ddl_villes selected arg do
+-- 		m_prt.villes.afficher	arg
 )
 	
 ------------------------------------------------------------------------------
@@ -172,7 +242,7 @@ struct str_urba (
 		m_dialog				= roll_urba ,		---- le rollout ----
 		
 		---- props de la fenetre -----
-		m_titre 				= "Labib | urba ",
+		m_titre 				= "Labib | Urba ",
 		m_pos 					= [100,100],
 		m_taille 				= [300, 300],
 		m_estOuvert 		= false,
@@ -183,18 +253,25 @@ struct str_urba (
 		col_fenetreTxt			= color 230  230 230, 	----  		----
 	 */
 		--	Couleurs ui claire -----
-		col_fenetreFond			= color 200 200 200, 		---- MAX 	----
-		col_fenetreTxt			= color 0  0 0, 	----  		----
+		col_fenetreFond			= color 68 68 68, 		---- MAX 	----
+		col_fenetreTxt			= color 240  240 240, 	----  		----
 		
-		ico_btnFermer_R	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_grisClaire_R.jpg",
-		ico_btnFermer_S	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_grisClaire_S.jpg",
-		ico_btnFermer_P	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_grisClaire_P.jpg", 
+		ico_btnFermer_R	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_R.jpg",
+		ico_btnFermer_S	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_S.jpg",
+		ico_btnFermer_P	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_P.jpg",
 	
 		m_icos_fermer= #( 	openbitmap ico_btnFermer_R, openbitmap ico_btnFermer_S, openbitmap ico_btnFermer_P ),
 		
 		
 		---- STRUCTURES ----
 		outils = str_urba_outils (),
+		
+		villes 			= str_urba_villes (),
+		batiments 	= str_urba_batiments (),
+		facades 		= str_urba_facades (),
+		
+		
+		
 		
 -- 		edit 			= str_urba_edit (),
 -- 		contruire 	= str_urba_construction (),
@@ -249,6 +326,5 @@ struct str_urba (
 	
 	urba.ouvrir ()
 
-
-
 )
+
