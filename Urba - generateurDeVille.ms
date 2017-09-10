@@ -26,7 +26,7 @@ struct str_style (
 	surf_max				= 0,		---- 	en cm², si min et max = 0 alors le style est appliqué à toutes surfaces
 	
 	hauteur_etage 					= 250,	
-	epaisseur_sousBassement	= 50,
+	epaisseur_sousBassement		= 50,
 	epaisseur_dalle					= 20
 
 )
@@ -43,9 +43,9 @@ struct str_batiment (
 		local result 	= 0
 		
 		local minX 	= 100000000000000000000.
-		local maxX 	= -100000000000000000000.
+		local maxX = -100000000000000000000.
 		local minY 	= 100000000000000000000.
-		local maxY 	= -100000000000000000000.
+		local maxY = -100000000000000000000.
 		
 		for id_knot_tracee = 1 to (numKnots tracee 	id_subSpline)   do	(
 			knt = getKnotPoint tracee 	id_subSpline 	id_knot_tracee
@@ -56,9 +56,7 @@ struct str_batiment (
 		)
 		
 		result = ( maxX - minX ) * ( maxY - minY )
-		
-		--format "id : %, surf:%\n" 	id_subSpline		result
-		
+				
 		result
 	),
 	fn setStyle 	nvStyle =(
@@ -70,6 +68,9 @@ struct str_batiment (
 -- 		select object
 	),
 	
+	
+	
+	---- MODELISATION ----
 	fn creerPolyVide =(
 		object = convertToPoly (mesh ())
 		object.EditablePoly.SetSelection #Face #{1..25}
@@ -100,7 +101,6 @@ struct str_batiment (
 		polyop.createPolygon object  listeVertexPrFace
 		
 	),
-	
 	
 	fn creerFaceVerticale 	pt1 	pt2 	&z 	hauteur	=(
 		
@@ -141,7 +141,7 @@ struct str_batiment (
 	
 	
 	
-	--- les parties des batiments ----
+	---  CREATION DES PARTIES DES BATIMENTS ----
 	fn creer_ssBassement 	&z	=(
 		creerFacesContour		z 	style.epaisseur_sousBassement 
 		z += style.epaisseur_sousBassement
@@ -170,17 +170,20 @@ struct str_batiment (
 		
 	),
 	fn creer_toitTerrasse &z=(
-		format "Z:%\n" z
+		
 		local listeDesPoints = #()
 		for i = 1 to numKnots tracee 	id_subSpline do (
 			pt = getKnotPoint tracee 	id_subSpline 	i 
 			pt.z = z
-		format "pt:%\n" z
+			
 			insertItem   pt listeDesPoints 1
 -- 			append listeDesPoints  pt
 		)
 		creerFace listeDesPoints
 	),
+	
+	
+	
 	
 	on create do (
 		-- le poly créé-------------
@@ -312,11 +315,8 @@ struct str_ville (
 			
 			---- La creation de la geometrie ----
 			nvBat.creer_ssBassement 		&zCourant
-			format "zCourant 0 :%\n" 		zCourant
 			nvBat.creer_RdC 					&zCourant
-			format "zCourant 1 :%\n" 		zCourant
 			nvBat.creer_etages 				&zCourant
-			format "zCourant 2 :%\n" 		zCourant
 			nvBat.creer_toitTerrasse 		&zCourant
 			
 		),
@@ -327,10 +327,20 @@ struct str_ville (
 			tracee.name = uniqueName "Urba - Ville "
 			preparerSpline ()
 			
-			-- Création des batiments	--
-			for id_subSpline = 1 to (numSplines tracee) do			
-				if isClosed  tracee	id_subSpline	do 
-					creerBatiment	id_subSpline:id_subSpline
+			-- status bar ---
+			progressStart "Urba: Génération de la ville ..." 
+			
+			-- Création des batiments sur chaque spline close	--
+			for id_subSpline = 1 to (numSplines tracee) do	(
+				
+				-- status bar ---
+				progressUpdate ( id_subSpline as float/ (numSplines tracee) * 100 )
+				
+				if isClosed  tracee	id_subSpline	do 	creerBatiment	id_subSpline:id_subSpline
+			)
+			
+			-- status bar ---
+			progressEnd() 
 			
 		)
 		
@@ -348,7 +358,16 @@ struct str_ville (
 
 
 struct generateurDeVille (
+	
 	private
+	------------ DEBUG	----------------------------------------------------------------------------------
+	m_debug = true,
+	m_dbgPrefix ="generateurDeVille",
+	fn debug 	_txt  var:	 param:    =(
+		if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+	),
+	
+	
 		styles 				= #(), -- fin des styles
 		presets_villes	=	#(
 					
@@ -358,7 +377,7 @@ struct generateurDeVille (
 												wirecolor:[250,250,50] \
 												facades_rdc:#(
 													str_facade 	elements:#( str_elem_facade 	fichier:""	largeur:125	) \
-																		sequence_elems:#(1,1,1,0)
+																	sequence_elems:#(1,1,1,0)
 													) \
 												facades_niveaux:#(
 													str_facade 	elements:#( str_elem_facade 	fichier:""	largeur:125	) \
@@ -367,7 +386,7 @@ struct generateurDeVille (
 												toitures:#() \
 												etages_min:1 \
 												etages_max:2 \
-												surf_max:1500000\
+												surf_max:3000000\
 												epaisseur_dalle:0\
 												hauteur_etage:500,
 								
@@ -378,7 +397,7 @@ struct generateurDeVille (
 												toitures:#() \
 												etages_min:5 \
 												etages_max:15 \
-												surf_min:1500000
+												surf_min:3000000
 							)
 		
 			),
@@ -398,25 +417,29 @@ struct generateurDeVille (
 		),
 		
 		fn creerVille	tracee 	= 
-			with redraw off 
+			with redraw off (
+						
 				if tracee != undefined do 
-					if classof tracee == line do (
-			
-				max create mode
-				---- on choisi le type de ville ----
-				local ville_courante = copy presets_villes[1]	--str_ville 	tracee:tracee 
-				---- on genere les batiments
-				ville_courante.generer	tracee	
-				
+					if superClassOf tracee == shape do (
+					
+						max create mode
+						---- on choisi le type de ville ----
+						ville_courante = copy presets_villes[1]	--str_ville 	tracee:tracee 
+						---- on genere les batiments
+						ville_courante.generer	tracee	
+						
+						
+					)
+				debug "ville_courante" var:ville_courante.nom
 				ville_courante
-			
+				
 			) -- fin fn creerVille
 			
 		
 )	-- fin generateurDeVille --
 
 urba 	= generateurDeVille ()
-ville 	= urba.creerVille $Line001
+ville 	= urba.creerVille $contours
 ville.selectionner id:1
 
 -- ville.batiments

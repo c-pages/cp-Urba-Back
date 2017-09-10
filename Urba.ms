@@ -28,11 +28,12 @@
 ----- scripts globaux -------------
 include "$userScripts\cp - GLOBAL\UI.ms"
 include "$userScripts\cp - GLOBAL\DragDialog.ms"
-include "$userScripts\cp - GLOBAL\Debug.ms"
+include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
 	
 ----- scripts externes -------------
-include "$userScripts\cp - Urba\Urba - Construction.ms"
-include "$userScripts\cp - Urba\Urba - Edit.ms"
+include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
+-- include "$userScripts\cp-Urba\Urba - Construction.ms"
+-- include "$userScripts\cp-Urba\Urba - Edit.ms"
 
 
 ------------------------------------------------------------------------------
@@ -117,7 +118,7 @@ rollout roll_urba  "urba " width:296 height:296
 		
 		-- le titre --
 		m_titre 	= str_label 	m_ui:ui_titre			m_texte:m_prt.m_titre
-		m_titre.setCouleur 		m_prt.col_fenetreTxt
+		m_titre.setCouleur 			m_prt.col_fenetreTxt
 		m_titre.setCouleurFond 	m_prt.col_fenetreFond
 		
 		-- le drag --
@@ -140,13 +141,13 @@ rollout roll_urba  "urba " width:296 height:296
 	
 	---- Bouton fermer -----
 	on 	ui_btnFermer	mouseover 		do 	etatBtnFermer #Survol
-	on 	ui_btnFermer	mouseout 			do 	etatBtnFermer #Repos
-	on 	ui_btnFermer	mousedown 		do 	etatBtnFermer #Press
-	on 	ui_btnFermer	mouseup			do 	etatBtnFermer #Repos
+	on 	ui_btnFermer	mouseout 		do 	etatBtnFermer #Repos
+	on 	ui_btnFermer	mousedown 	do 	etatBtnFermer #Press
+	on 	ui_btnFermer	mouseup		do 	etatBtnFermer #Repos
 	on 	ui_btnFermer 	click 				do 	m_prt.fermer ()
 	
 	--- edition ----
-	on btn_shape picked obj 				do	m_prt.edit.preparer obj
+-- 	on btn_shape picked obj 				do	m_prt.edit.preparer obj
 	
 
 )
@@ -192,9 +193,11 @@ struct str_urba (
 		m_icos_fermer= #( 	openbitmap ico_btnFermer_R, openbitmap ico_btnFermer_S, openbitmap ico_btnFermer_P ),
 		
 		
-		---- structures ----
-		edit 			= str_urba_edit (),
-		contruire 	= str_urba_construction (),
+		---- STRUCTURES ----
+		outils = str_urba_outils (),
+		
+-- 		edit 			= str_urba_edit (),
+-- 		contruire 	= str_urba_construction (),
 		
 		
 		------------  Fonctions	----------------------------------------------------------------------------------
@@ -237,14 +240,14 @@ struct str_urba (
 		
 		------------  Evenements	----------------------------------------------------------------------------------
 	on create do (
-		debug "Initialiser"
+		debug "Structure créée."
 	)
 ) -- fin struct urba -----
 
 
 	global urba  	=	str_urba () --	m_labib:Labib
 	
-	urba
+	urba.ouvrir ()
 
 
 

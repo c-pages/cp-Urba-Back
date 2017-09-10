@@ -36,12 +36,12 @@ struct str_urba_edit (
 	
 	fn preparer 	_shape = with redraw off (
 		local nodeVille = copy _shape
-		local extrud = Extrude ()
+		local extrud 	= Extrude ()
 		
 		extrud.amount = 50
 		
 		addModifier 		nodeVille extrud
-		convertToPoly	nodeVille
+		convertToPoly		nodeVille
 		select 				nodeVille
 		
 		nodeVille

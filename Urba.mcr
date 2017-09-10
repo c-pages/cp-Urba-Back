@@ -5,7 +5,7 @@ buttonText:"Urba"
 toolTip:"Generateur de ville"
 (
 	
-	global urba  	=	fileIn	 "$userScripts\cp - Urba\Urba.ms"  
+	global urba  	=	fileIn	 "$userScripts\cp-Urba\Urba.ms"  
 		on execute do 	(
 		
 		if ( urba.estOuvert () )	
