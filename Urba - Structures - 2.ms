@@ -77,6 +77,7 @@ struct str_urba_facadeMgr (
 	
 	
 	
+	m_urba,
 	
 	elements =#(),
 	
@@ -158,45 +159,38 @@ struct str_urba_facadeMgr (
 )
 
 
+
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
--------------------------  Preset VILLES	 --------------------------------------------------------------------------------------------------------
+-------------------------  Presets				 --------------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
-struct str_urba_preset_ville (
-	nom 			="Nouvelle ville",
-	batiments 	=#(),
-	probabilites =#()
+struct str_urba_preset_batiment (
+	idUnique			=	"",
+	nom 				= 	"Nouveau bâtiment",
+	surf_min			= 	50.,
+	surf_max 		= 	350.,
+	
+	toiture_type		=	"",
+	
+	etages_type		=	"",
+	etages_min			= 	1,
+	etages_max 		= 	5,
+	etages_hauteur 	= 	250,
+	
+	rdc_type			=	"",
+	rdc_hauteur 		= 	300
 )
 
 
 
 
-struct str_urba_preset_ville_MGR (
-	elements 	=#(),
-	fichier		= "",
-	
-	private
-		fn sauvegarderDatas  	_datas  _nomDatas	=(
-			
-			local propsNoms 	= getPropNames  _datas
-			
-			for propNom in propsNoms do 
-				if propNom != "dossierScript"
-					do setINISetting   fichierPrefs		_nomDatas   propNom  	( ( getProperty _datas	 propNom	)	as string )
-			
-		),
-	public
-		
-		
-		fn ajouter= (
-			append elements ( str_urba_preset_ville () )
-		),
-		fn charger =(
-		),
-		fn sauvegarder =(
-		),
-		fn creer =(
-			append elements ( str_urba_preset_ville () )
-		)
+
+---- VILLE -----
+struct str_urba_preset_ville (
+	nom 			=	"Nouvelle ville",
+	idUnique	=	"V0",
+	batiments 	=	#(),
+	probabilites =	#()
 )
 
 

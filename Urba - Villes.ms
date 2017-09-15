@@ -3,26 +3,12 @@
 	Christophe Pages (http://www.c-pages.fr) 	
 ##########################################################################################################################
 
-	FENETRE TYPE	( sert de model de base, n'est pas importé dans le script )	
-	sans barre de titre, draggable et bouton fermer
-	
-	Remplacer (ctr + h): 'urba_villes' par:  'maFenetreAMoi'.
-	il y a des parties a decommenter :"--- a décommenter ---"
-	Noms des variables 
-	-	roll_urba_villes :			le nom de la fenetre
-	-	urba_villes_pos :			le parametre des prefs stockant la pos de la fenetre
-	-	urba_villes_estOuvert :	le nom du parametre ouvert dans les preferences ( labib.prefs.fenetre. ' urba_villesOuvert )
-	-	str_urba_villes:			le nom de la struicture de controle de la fenetre
-	
 ##########################################################################################################################
 
 	todo:
 	
 ##########################################################################################################################
 	changelog:
-	*v0.1 - [02/10/2016] -----------------------------------------------------------------------------
-	- Mise en place globale ( mise au propre du travail durant l'été)
-	- Une interface souple et simple
 ########################################################################################################################*/
 
 -- (
@@ -35,9 +21,10 @@
 ------------------------------------------------------------------------------
 include "$userScripts\cp - GLOBAL\UI.ms"
 include "$userScripts\cp - GLOBAL\DragDialog.ms"
+include "$userScripts\cp - GLOBAL\Manager de presets.ms"
 
 -- include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
-include "$userScripts\cp-Urba\Urba - Ville - edition.ms"
+-- include "$userScripts\cp-Urba\Urba - Ville - edition.ms"
 
 ------------------------------------------------------------------------------
 ----------	Fenetre								 -------------------------
@@ -57,7 +44,6 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	local m_titre
 -- 	local m_log
 	
-	local villeCourante
 	
 	------------  UI	----------------------------------------------------------------------------------		
 	---- le bouton pour fermer la fenetre ----
@@ -74,7 +60,7 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	
 	
 	
-	button 'btn_supprimer_bat' "-" pos:[248,65] width:16 height:16 align:#left
+	button 'btn_retirer_bat' "-" pos:[248,65] width:16 height:16 align:#left
 	button 'btn_ajouter_bat' "+" pos:[233,65] width:16 height:16 align:#left
 
 	label 'lbl_batiments' "Bâtiments:" pos:[11,66] width:105 height:14 align:#left
@@ -88,11 +74,8 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	button 'btn_ajouter_ville' "+" pos:[224,22] width:21 height:21 align:#left
 	dropdownList 'ddl_villes' "" pos:[9,22] width:216 height:21 align:#left
 
--- 	button 'btn_annuler' "Annuler" pos:[12,222] width:90 height:16 align:#left
--- 	button 'btn_enregistrerSous' "sous" pos:[227,222] width:34 height:16 align:#left
--- 	button 'btn_enregistrer' "Enregistrer" pos:[147,222] width:81 height:16 align:#left
 	
-	------------  Fonctions	----------------------------------------------------------------------------------
+	------------  FONCTIONS	----------------------------------------------------------------------------------
 	---- Gere l'état du bouton  -----
 	fn etatBtnFermer		_etat =(
 		case _etat of (
@@ -104,17 +87,18 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	
 	
 	fn actualiser = (
+		
+		--- les villes----------
 		local listTmp =#()
-		for elem in m_prt.mgr.elements do
-			append listTmp elem.nom
+		for preset in m_prt.presets.get () do
+			append listTmp preset.nom
 		ddl_villes.items = listTmp
 		
 		
 		
 		local enable = true
-		if m_prt.m_id_villeCourante != 0 then (
-			villeCourante  = m_prt.mgr.elements[ m_prt.m_id_villeCourante ]
-			edt_ville_nom.text = villeCourante.nom
+		if m_prt.villeCourante != undefined then (
+			edt_ville_nom.text = m_prt.villeCourante.nom
 		) else (
 			enable = false
 		)	
@@ -124,13 +108,24 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 		lbl_proba.enabled 				= enable
 		spn_proba.enabled 				= enable
 		lbl_batiments.enabled 			= enable
-		btn_supprimer_bat.enabled 	= enable
+		btn_retirer_bat.enabled 	= enable
 		btn_ajouter_bat.enabled 		= enable
 		btn_supprimer_ville.enabled 	= enable
 		lbx_bats.enabled 					= enable
 		
-		
-		if 
+		---- les batiments --------
+		if enable do (
+			lbx_bats.items = m_prt.get_batimentsVilleCourante ()
+			
+			if lbx_bats.selection != 0 then (
+				spn_proba.value = m_prt.villeCourante.probabilites[ lbx_bats.selection ]
+				lbl_proba.enabled = true
+				spn_proba.enabled = true
+			) else (				
+				lbl_proba.enabled = false
+				spn_proba.enabled = false
+			)
+		)
 		
 	)
 	
@@ -141,67 +136,61 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 		
 		m_titre 		= str_label 	m_ui:ui_titre			m_texte:"Urba | Villes"
 		m_titre.setCouleur (color 255	255	255)
-		/* 
-		m_log 		= str_label 	m_ui:ui_log				m_texte:"..."
-		m_log.setPolice (str_policePetite())
-		m_log.setCouleur (color 200	200	200)
-		 */
 		
 		-- le bouton fermer --
 		ui_btnFermer.bitmap = m_prt.m_icos_fermer[1]	
 		
-		actualiser()
-
 	)
 	
 	
-	------------  Evenements	----------------------------------------------------------------------------------
-	
-	
-	
-		---- Drag ----
-	
-	---- Fermer ----
-	
-	
-	
-	
-	
-	on roll_urba_villes lbuttondown _pos 	do
-		m_drag.demarrer ()
-	on roll_urba_villes lbuttonup _pos 	do
-		m_drag.arreter ()
-	on roll_urba_villes mouseMove _pos 	do
-		m_drag.suivreSouris ()
-	
-	
-	
-	on btn_ajouter_ville pressed  do m_prt.ajouter_ville ()
-	
-	
-	on edt_ville_nom changed  txt do (
-		villeCourante.nom = txt
-		actualiser ()
-		urba.m_dialog.actualiser ()
+	fn ouvrir_menuBatiments =(
+		
+		local txt_corps 	= "rcMenu  rc_batiments (\n"
+		
+		--- liste des item du menu -----------------
+		local listeBats 	= m_prt.get_presetsBatiment ()
+		for bat in listeBats do 	txt_corps += "menuItem " + bat.idUnique	+ " \"" + bat.nom +"\"\n"
+		txt_corps += "separator sep01\n"
+		txt_corps += "menuItem " + "creerBat " + " \"Créer bâtiment\"\n"
+		
+		--- les evenements -------
+		id = 0
+		for bat in listeBats do txt_corps += "on " + bat.idUnique + " picked do urba.villes.ajouter_batimentID " + (id +=1) as string + "\n"			
+		txt_corps += "on creerBat picked do urba.batiments.creer_nouveau ()\n"	
+		
+		txt_corps += ")"
+		
+		--- on creer le menu -----
+		execute   txt_corps 
+		popUpMenu	rc_batiments
+		
 	)
 	
-	on ddl_villes selected  _val do (
-		m_prt.m_id_villeCourante = _val
-		actualiser ()
-		)
+	------------  EVENEMENTS	----------------------------------------------------------------------------------
+	---- les villes ----
+	on btn_ajouter_ville 	pressed  				do 	m_prt.creer_ville ()
+	on btn_supprimer_ville 	pressed  				do 	m_prt.supprimer_ville 	ddl_villes.selection
+	on edt_ville_nom 		entered  		txt 	do 	m_prt.changerNom		txt
+	on ddl_villes 				selected  		val 	do 	m_prt.selectionner_id 	val
 	
+	---- les batiments ----
+	on btn_ajouter_bat 		pressed  				do 	ouvrir_menuBatiments ()	
+	on btn_retirer_bat	 	pressed  				do 	m_prt.retirer_batimentID 	lbx_bats.selection
+	on lbx_bats				selected  		_val 	do 	actualiser ()
+	on lbx_bats				doubleClicked  _val 	do 	m_prt.ouvrir_batiment 		_val
+	on spn_proba 				changed  		_val 	do 	m_prt.changerProbabilite  	lbx_bats.selection		_val
+	
+	---- Rollout ----
+	on roll_urba_villes 		lbuttondown 	_pos 	do	m_drag.demarrer ()
+	on roll_urba_villes 		lbuttonup 		_pos 	do	m_drag.arreter ()
+	on roll_urba_villes 		mouseMove 	_pos 	do	m_drag.suivreSouris ()
 	
 	---- Fermer ----
-	on ui_btnFermer mouseover do
-		etatBtnFermer #Survol
-	on ui_btnFermer mouseout do
-		etatBtnFermer #Repos
-	on ui_btnFermer mouseDown do
-		etatBtnFermer #Press
-	on ui_btnFermer mouseUp do
-		etatBtnFermer #Repos	
-	on ui_btnFermer click do
-		m_prt.fermer ()
+	on ui_btnFermer 			mouseover 				do	etatBtnFermer #Survol
+	on ui_btnFermer 			mouseout 				do	etatBtnFermer #Repos
+	on ui_btnFermer 			mouseDown 			do	etatBtnFermer #Press
+	on ui_btnFermer 			mouseUp 				do	etatBtnFermer #Repos	
+	on ui_btnFermer 			click 						do	m_prt.fermer ()
 	
 )
 
@@ -209,18 +198,20 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 ----------	Structure								 -------------------------
 ------------------------------------------------------------------------------
 struct str_urba_villes (
-	private
-		m_estOuvert 			= false,
-		
-		
-		------------  Membres	----------------------------------------------------------------------------------
+	------------ DEBUG	----------------------------------------------------------------------------------
+	m_debug = true,
+	m_dbgPrefix ="Urba | Ville",
+	fn debug 	_txt  var:	 param:    =(
+		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		catch ()
+	),
+	----------------------------------------------------------------------------------------------------------
+	------------  Membres	----------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------
 	public
-		
-		m_id_villeCourante 	= 0,
-		
-		mgr 			= 	str_urba_preset_ville_MGR (),
-		edition 		= str_urba_ville_edition (),
-		
+		------------	UI		------------------------------------------------------------------------------------------
+		m_estOuvert 			= false,
+	
 		---- pointeurs ----
 		m_dialog				= roll_urba_villes ,		---- le rollout ----
 		m_dialogPos 		= [100,100],
@@ -238,14 +229,42 @@ struct str_urba_villes (
 										openBitMap ico_btnFermer_P 			-- Pressé ----
 									),
 		
-		------------  Fonctions	----------------------------------------------------------------------------------
-		public
+	public
+		------------	STRUCTURES DIVERSES 		------------------------------------------------------------------------------------------
+		---- le struct principale parent ----
+		m_urba,
+	
+		---- le manager de presets ----
+		presets = str_presetsMGR 	preset_type:	str_urba_preset_ville	\
+												fichier:			m_urba.fichier_presets	\
+												prefixUnique:	"Ville",
 		
-		fn estOuvert = m_estOuvert,
-			
+		---- la ville actuelement selectionnée ----
+		villeCourante,
+		
+		
+		------------	UI		------------------------------------------------------------------------------------------
+		
+	----------------------------------------------------------------------------------------------------------
+	------------  Fonctions	------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------
+	
+									
+	public
+	
+		------------	UI		------------------------------------------------------------------------------------------
+		fn estOuvert 		= m_estOuvert,
+		fn actualiser 	= if m_estOuvert do m_dialog.actualiser (),
+		
 		---- fenetre -----
 		fn ouvrir =(			
 			m_estOuvert 		= true
+			
+			
+			m_dialogPos = GetDialogPos m_urba.m_dialog 
+			m_dialogPos += [ (GetDialogSize m_urba.m_dialog).x ,0]
+-- 			m_dialogPos += [ 0, (GetDialogSize m_urba.m_dialog).y ]
+			
 			---- creation de la fenetre ----
 			createDialog m_dialog 	bgcolor:				col_fenetreFond 		\
 											fgcolor:				col_fenetreTxt 		\
@@ -256,7 +275,8 @@ struct str_urba_villes (
 			
 			---- initialisation de la fenetre ----
 			m_dialog.m_prt	 	= this
-			m_dialog.initialiser ()
+			m_dialog.initialiser 	()
+			m_dialog.actualiser  	()
 			
 		),
 		
@@ -275,36 +295,105 @@ struct str_urba_villes (
 		
 		
 		
-		fn ajouter_ville =(
-			mgr.ajouter ()
-			if not m_estOuvert do ouvrir ()
-			m_id_villeCourante = mgr.elements.count		
-			m_dialog.actualiser ()	
-			m_dialog.ddl_villes.selection = m_dialog.ddl_villes.items.count
+		fn ajouter_batimentID 	_id =(
+			debug "ajouter_batimentID" var:_id
 			
+			local batCible = m_urba.batiments.presets.get_preset  _id
+			append 	villeCourante.batiments		batCible.idUnique
+			append 	villeCourante.probabilites	100.
+			
+			presets.sauvegarder		villeCourante
+			actualiser ()
 		),
-		fn afficher 	_id =(
-			m_id_villeCourante = _id
-			m_dialog.actualiser ()
+		fn retirer_batimentID 	_id =(
+			debug "retirer_batimentID" var:_id
+		
+			local _idUnique = villeCourante.batiments [_id]
+			deleteItem	villeCourante.batiments 	_id
+			deleteItem	villeCourante.probabilites 	_id
+			
+			presets.sauvegarder		villeCourante			
+			actualiser ()
+		),
+		
+		
+		
+		fn ouvrir_batiment 	_id =(
+			m_urba.batiments.ouvrir ()
+			local _idUnique = villeCourante.batiments [_id]
+			local bat 		= ( m_urba.batiments.presets.get_parIdUnique  _idUnique )
+			
+			
+			m_urba.batiments.selectionner	bat
+			debug "_idUnique" var:_idUnique
+			debug "bat" var:bat
+			actualiser ()
+		),
+		
+		fn get_presetsBatiment =(
+			m_urba.batiments.presets.get ()
+		),
+		
+		------------ Villes ------------------------------------------------------------------------------------------
+		fn get_batimentsVilleCourante = (
+			local listeTmp = #()
+			for id_bat in villeCourante.batiments do
+				append listeTmp  ( m_urba.batiments.presets.get_parIdUnique  id_bat ).nom
+			listeTmp
+		),
+			
+		fn selectionner 	_preset 	=(
+			local id_preset = presets.trouver_ID 	_preset
+			villeCourante = _preset
+			m_dialog.ddl_villes.selection = id_preset
+			actualiser ()
+		),
+		fn selectionner_id 	_id =(
+			if _id >0 do (
+				villeCourante = presets.get_preset		_id
+				m_dialog.ddl_villes.selection = _id
+			)
+			actualiser ()
+		),
+		
+		
+		
+		fn supprimer_ville 	_id	 =(
+			local presetAVirer = presets.get_preset		_id
+			if querybox ( "Supprimer définitivement: " + presetAVirer.nom + " ?" ) do (
+				presets.supprimer _id
+				m_dialog.ddl_villes.selection = 0
+			)
+			actualiser ()
+			m_urba.actualiser ()
+		),
+		fn creer_ville =(
+			local nvPreset = presets.creer_preset ()
+			selectionner 	nvPreset
+			actualiser ()
+			m_urba.actualiser ()
+		),
+		
+		
+		
+		
+		
+		fn changerNom 	_nvNom =(
+			villeCourante.nom = _nvNom
+			presets.sauvegarder		villeCourante
+			actualiser ()
+			m_urba.actualiser ()
+		),
+		fn changerProbabilite 	_idBat	_nvlleProba	 =(
+			villeCourante.probabilites[_idBat] = _nvlleProba
+			presets.sauvegarder		villeCourante
+			actualiser ()
+			m_urba.actualiser ()
 		)
 		
-		------------  Evenements	----------------------------------------------------------------------------------
-	
+		
+
 )
-
--- try 
--- 	destroydialog test.m_dialog 
--- catch ()
-
--- test = str_urba_villes ()
--- test.ouvrir ()
-
-
-
--- )
-
-
-
 
 
 

@@ -51,7 +51,8 @@ rollout roll_urba "urba " width:313 height:85
 	local m_debug = true
 	local m_dbgPrefix ="urba rollout"
 	fn debug 	_txt  var:	 param:    =(
-		if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		catch ()
 	)
 
 	
@@ -101,15 +102,17 @@ rollout roll_urba "urba " width:313 height:85
 	fn actualiser =(
 		
 		local listTmp =#()
-		for elem in m_prt.villes.mgr.elements do
-			append listTmp elem.nom
+		local presets_villes = m_prt.villes.presets.get ()
+		
+		for preset in presets_villes do
+			append listTmp 	preset.nom
 		ddl_villes.items = listTmp
 		
 		
 		local enable = false
-		if m_prt.villes.mgr.elements.count > 0 do
+		if presets_villes.count > 0 do
 			enable = true		
--- 		btn_supprimer.enabled = enable		
+		
 		btn_generer.enabled = enable
 	)
 	
@@ -158,7 +161,6 @@ rollout roll_urba "urba " width:313 height:85
 		ui_btnFermer.bitmap = m_prt.m_icos_fermer[1]	
 		b_initialisation = true
 		
-		actualiser ()
 	)
 	
 	------------  Evenements	----------------------------------------------------------------------------------
@@ -195,12 +197,18 @@ rollout roll_urba "urba " width:313 height:85
 		etatBtnFermer #Repos
 	on ui_btnFermer click do
 		m_prt.fermer ()
+	
+	
+	
+	
 	on ckb_ville changed state do
 	(
 		if m_prt.villes.estOuvert () then
 			m_prt.villes.fermer()
-		else
+		else (
 			m_prt.villes.ouvrir()
+			m_prt.villes.selectionner_id	 ddl_villes.selection
+		)
 	)
 	on ckb_batiment changed state do
 	(
@@ -231,7 +239,8 @@ struct str_urba (
 	m_debug = true,
 	m_dbgPrefix ="urba",
 	fn debug 	_txt  var:	 param:    =(
-		if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		catch ()
 	),
 	
 	
@@ -242,16 +251,11 @@ struct str_urba (
 		m_dialog				= roll_urba ,		---- le rollout ----
 		
 		---- props de la fenetre -----
-		m_titre 				= "Labib | Urba ",
+		m_titre 				= "Urba ",
 		m_pos 					= [100,100],
 		m_taille 				= [300, 300],
 		m_estOuvert 		= false,
 		
-		--- ui libre de labib -----------	
-	/* 	--	Couleurs ui sombre -----
-		col_fenetreFond			= color 68 68 68, 		---- MAX 	----
-		col_fenetreTxt			= color 230  230 230, 	----  		----
-	 */
 		--	Couleurs ui claire -----
 		col_fenetreFond			= color 68 68 68, 		---- MAX 	----
 		col_fenetreTxt			= color 240  240 240, 	----  		----
@@ -259,26 +263,22 @@ struct str_urba (
 		ico_btnFermer_R	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_R.jpg",
 		ico_btnFermer_S	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_S.jpg",
 		ico_btnFermer_P	=	"$userScripts\cp - GLOBAL\ico\ico_fermer_P.jpg",
-	
+		
 		m_icos_fermer= #( 	openbitmap ico_btnFermer_R, openbitmap ico_btnFermer_S, openbitmap ico_btnFermer_P ),
 		
+		fichier_presets		= "$userScripts\cp-Urba\urba_presets.ini",
 		
 		---- STRUCTURES ----
 		outils = str_urba_outils (),
 		
-		villes 			= str_urba_villes (),
-		batiments 	= str_urba_batiments (),
-		facades 		= str_urba_facades (),
-		
-		
-		
-		
--- 		edit 			= str_urba_edit (),
--- 		contruire 	= str_urba_construction (),
-		
+		villes 			= str_urba_villes 			m_urba:this,
+		batiments 	= str_urba_batiments 	m_urba:this,
+		facades 		= str_urba_facades 		m_urba:this,
 		
 		------------  Fonctions	----------------------------------------------------------------------------------
-	public
+		
+		fn actualiser = m_dialog.actualiser (),
+		
 		fn estOuvert = m_estOuvert,
 		fn ouvrir =(
 			debug "ouvrir"
@@ -287,13 +287,17 @@ struct str_urba (
 			---- creation de la fenetre ----
 			createDialog m_dialog 	fgcolor:			col_fenetreFond 	\
 											style:				#(#style_resizing) \
-											pos:					m_pos	
--- 											lockHeight:			true	\
--- 											lockWidth:			true	 \	
+											pos:					m_pos		\
+											lockHeight:			true	 \	
+											lockWidth:			true
 			
-			---- initialisation de la fenetre ----
+			--- chargement des presets ------
+			villes.presets.charger ()
+			batiments.presets.charger ()
+			
+			---- fenetre ----
 			m_dialog.initialiser 	this
-	
+			m_dialog.actualiser ()
 		),
 		
 		fn fermer  silence:false =(		---- silence : fermer sans modifier l'état des preferences ---	
@@ -302,6 +306,12 @@ struct str_urba (
 			---- maj des preferences ----	
 			if not silence do (
 			)
+			
+			
+			villes.fermer ()
+			batiments.fermer ()
+			facades.fermer ()	
+			
 			
 			---- fermer la fenêtre ----
 			try destroydialog m_dialog catch ()
@@ -322,9 +332,14 @@ struct str_urba (
 ) -- fin struct urba -----
 
 
-	global urba  	=	str_urba () --	m_labib:Labib
-	
-	urba.ouvrir ()
+
+try urba.fermer () catch ()
+clearListener ()
+global urba  	=	str_urba () --	m_labib:Labib
+urba.ouvrir ()
+urba
+
+
 
 )
 

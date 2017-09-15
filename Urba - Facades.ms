@@ -31,7 +31,7 @@ include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
 ------------------------------------------------------------------------------
 ----------	Fenetre								 -------------------------
 ------------------------------------------------------------------------------
-rollout roll_urba_facades "Urba - Facades" width:250 height:390
+rollout roll_urba_facades "Urba | Facades" width:250 height:390
 (
 	------------  Membres	----------------------------------------------------------------------------------
 	---- Pointeurs ----
@@ -175,7 +175,7 @@ rollout roll_urba_facades "Urba - Facades" width:250 height:390
 		
 		m_drag 		= str_drag 	m_prt:roll_urba_facades		
 		
-		m_titre 		= str_label 	m_ui:ui_titre			m_texte:"Urba - Facades"
+		m_titre 		= str_label 	m_ui:ui_titre			m_texte:"Urba | Facades"
 		m_titre.setCouleur (color 255	255	255)
 		
 		/* 
@@ -284,6 +284,9 @@ struct str_urba_facades (
 		m_estOuvert 		= false,
 		------------  Membres	----------------------------------------------------------------------------------
 	public
+		
+		m_urba,		--		<--- le struct principale
+		
 		---- pointeurs ----
 		m_dialog				= roll_urba_facades ,		---- le rollout ----
 		m_dialogPos 		= [100,100],
