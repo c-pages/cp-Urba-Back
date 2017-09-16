@@ -57,48 +57,46 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:250
 	
 	------------  UI	----------------------------------------------------------------------------------		
 
+	---- le bouton pour fermer la fenetre ----
+	ImgTag 'ui_btnFermer' "X" pos:[roll_urba_batiment.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
+	
 	button 'btn_supprimer_bat' "-" pos:[244,22] width:21 height:21 align:#left
 	button 'btn_ajouter_bat' "+" pos:[224,22] width:21 height:21 align:#left
 	dropdownList 'ddl_bats' "" pos:[9,22] width:216 height:21 align:#left
 	
-	---- le bouton pour fermer la fenetre ----
-	ImgTag 'ui_btnFermer' "X" pos:[roll_urba_batiment.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
 	
 	ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
 -- 	ImgTag 'ui_log' "" pos:[8,43] width:66 height:18 align:#left
 	
 	
 	edittext 'edt_bat_nom' "" pos:[115,48] width:147 height:16 align:#left
-	label 'lbl_elem_nom' "Nom:" pos:[12,48] width:66 height:15 align:#left
+	label 'lbl_elem_nom' "Nom:" pos:[12,48] width:25 height:15 align:#left
 	
-	spinner 'spn_etages_min' "" pos:[117,145] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	label 'lbl_elem_largeur' "Nbr. min.:" pos:[29,144] width:65 height:15 align:#left
+	spinner 'spn_etages_min' "" pos:[117,141] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	label 'lbl_elem_largeur' "Nbr. min.:" pos:[29,140] width:46 height:15 align:#left
 	
 	
-	spinner 'spn_etages_max' "" pos:[117,160] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	label 'lbl14' "Nbr. max.:" pos:[29,159] width:71 height:15 align:#left
-	spinner 'spn_surf_min' "" pos:[117,67] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
-	label 'lbl_surf_min' "Surface min.:" pos:[29,67] width:68 height:15 align:#left
-	spinner 'spn_etages_hauteur' "" pos:[117,175] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl18' "Hauteur:" pos:[29,174] width:64 height:15 align:#left
-	spinner 'spn_rdc_hauteur' "" pos:[117,214] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl19' "Hauteur:" pos:[29,213] width:55 height:15 align:#left
+	spinner 'spn_etages_max' "" pos:[117,156] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	label 'lbl14' "Nbr. max.:" pos:[29,155] width:51 height:15 align:#left
+	spinner 'spn_surf_min' "" pos:[117,64] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
+	label 'lbl_surf_min' "Surface min.:" pos:[29,64] width:68 height:15 align:#left
+	spinner 'spn_etages_hauteur' "" pos:[117,171] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl18' "Hauteur:" pos:[29,170] width:44 height:15 align:#left
+	spinner 'spn_rdc_hauteur' "" pos:[117,210] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl19' "Hauteur:" pos:[29,209] width:46 height:15 align:#left
 -- 	label 'lbl20' "Sous-bassement:" pos:[12,229] width:90 height:15 align:#left
-	label 'lbl21' "m²" pos:[247,67] width:19 height:15 align:#left
-	dropdownList 'ddl_toiture' "" pos:[119,101] width:144 height:21 align:#left
-	label 'lbl22' "Toiture:" pos:[12,107] width:99 height:15 align:#left
-	dropdownList 'ddl_etages' "" pos:[119,125] width:144 height:21 align:#left
-	label 'lbl23' "Etages:" pos:[12,131] width:99 height:15 align:#left
-	dropdownList 'ddl_rdc' "" pos:[119,194] width:144 height:21 align:#left
-	label 'lbl24' "RdC:" pos:[12,200] width:99 height:15 align:#left
-	spinner 'spn_surf_max' "" pos:[117,82] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
-	label 'lbl_surf_max' "Surface max.:" pos:[29,81] width:68 height:15 align:#left
-	label 'lbl26' "m²" pos:[248,81] width:19 height:15 align:#left
+	label 'lbl21' "m²" pos:[247,64] width:19 height:15 align:#left
+	dropdownList 'ddl_toiture' "" pos:[119,97] width:144 height:21 align:#left
+	label 'lbl22' "Toiture:" pos:[12,103] width:38 height:15 align:#left
+	dropdownList 'ddl_etages' "" pos:[119,121] width:144 height:21 align:#left
+	label 'lbl23' "Etages:" pos:[12,127] width:38 height:15 align:#left
+	dropdownList 'ddl_rdc' "" pos:[119,190] width:144 height:21 align:#left
+	label 'lbl24' "RdC:" pos:[12,196] width:25 height:15 align:#left
+	spinner 'spn_surf_max' "" pos:[117,79] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
+	label 'lbl_surf_max' "Surface max.:" pos:[29,78] width:68 height:15 align:#left
+	label 'lbl26' "m²" pos:[248,78] width:19 height:15 align:#left
 -- 	spinner 'spn_ssBassement_hauteur' "" pos:[117,243] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 -- 	label 'lbl27' "Hauteur:" pos:[29,242] width:55 height:15 align:#left
-	
-	
-	
 	
 	
 	------------  Fonctions	----------------------------------------------------------------------------------
@@ -167,7 +165,6 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:250
 		-- le bouton fermer --
 		ui_btnFermer.bitmap = m_prt.m_icos_fermer[1]	
 		
-
 	)
 	
 	
@@ -179,10 +176,8 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:250
 	
 	---- Fermer ----
 	
-	on btn_ajouter_bat 	pressed do (
-		m_prt.creer ()
-		actualiser ()
-	)
+	on btn_ajouter_bat 		pressed 	do 	m_prt.creer_nouveau ()
+	on btn_supprimer_bat 	pressed 	do 	m_prt.supprimer_batiment ddl_bats.selection
 	
 	on edt_bat_nom 		entered  	txt 		do 	m_prt.changerNom		txt
 	on spn_surf_min 		changed 	val		do 	m_prt.changer_surfMin 	val
@@ -277,6 +272,19 @@ struct str_urba_batiments (
 	public
 	------------	UI		------------------------------------------------------------------------------------------
 		fn actualiser 	= if m_estOuvert do m_dialog.actualiser (),
+		fn selectionner 	_preset 	=(
+			local id_preset = presets.trouver_ID 	_preset
+			batCourant = _preset
+			m_dialog.ddl_bats.selection = id_preset
+			actualiser ()
+		),
+		fn selectionner_id 	_id =(
+			if _id >0 do (
+				batCourant = presets.get_preset		_id
+				m_dialog.ddl_bats.selection = _id
+			)
+			actualiser ()
+		),
 		fn estOuvert = m_estOuvert,
 			
 		---- fenetre -----
@@ -293,6 +301,9 @@ struct str_urba_batiments (
 			---- initialisation de la fenetre ----
 			m_dialog.m_prt	 	= this
 			m_dialog.initialiser ()
+			--- pour selectionner un premier élément
+			if ( presets.get () ).count >0 do selectionner_id 1
+			
 			actualiser ()
 			
 		),
@@ -307,25 +318,42 @@ struct str_urba_batiments (
 			
 		),
 		
-		fn selectionner 	_preset 	=(
-			local id_preset = presets.trouver_ID 	_preset
-			batCourant = _preset
-			m_dialog.ddl_bats.selection = id_preset
-			actualiser ()
-		),
-		fn selectionner_id 	_id =(
-			if _id >0 do (
-				batCourant = presets.get_preset		_id
-				m_dialog.ddl_bats.selection = _id
-			)
-			actualiser ()
-		),
 		
 									
 	------------	Manager des batiments		------------------------------------------------------------------------------------------
 		fn creer_nouveau =(
 			presets.creer_preset ()
+			if not m_estOuvert do ouvrir ()
+			selectionner_id (presets.get()).count
 			actualiser()
+		),
+		fn supprimer_batiment 	_id	 =(
+			local presetAVirer = presets.get_preset		_id
+			
+			--- on check si il y a des ville possedant ce batiment
+			local villesAyantCeBatiment = #()
+			for ville in m_urba.villes.presets.get () do
+				if m_urba.villes.a_batiment	ville	presetAVirer.idUnique do 
+					append villesAyantCeBatiment ville
+			
+			
+			
+			if querybox ( "Supprimer définitivement: " + presetAVirer.nom + " ?\n" +  villesAyantCeBatiment.count as string + " ville(s) ont ce bâtiment." ) do (
+				presets.supprimer _id
+				
+				for ville in villesAyantCeBatiment do( 
+					local idAVirer = 	findItem ville.batiments	presetAVirer.idUnique
+					m_urba.villes.retirer_batimentID	idAVirer
+				)
+	-- 			local _idUnique = villeCourante.batiments [_id]
+-- 				deleteItem	villeCourante.batiments 	_id
+-- 				deleteItem	villeCourante.probabilites 	_id
+					
+				
+				selectionner_id 	( m_dialog.ddl_bats.selection - 1 )
+			)
+			actualiser ()
+			m_urba.actualiser ()
 		),
 		
 		

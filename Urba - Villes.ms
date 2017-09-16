@@ -53,7 +53,7 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 -- 	ImgTag 'ui_log' "" pos:[8,43] width:66 height:18 align:#left
 
 	edittext 'edt_ville_nom' "" pos:[118,47] width:147 height:16 align:#left
-	label 'lbl_ville_nom' "Nom:" pos:[11,47] width:66 height:15 align:#left
+	label 'lbl_ville_nom' "Nom:" pos:[11,47] width:26 height:15 align:#left
 	
 	
 	listbox 'lbx_bats' "" pos:[10,81] width:253 height:10 align:#left
@@ -63,11 +63,11 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	button 'btn_retirer_bat' "-" pos:[248,65] width:16 height:16 align:#left
 	button 'btn_ajouter_bat' "+" pos:[233,65] width:16 height:16 align:#left
 
-	label 'lbl_batiments' "Bâtiments:" pos:[11,66] width:105 height:14 align:#left
+	label 'lbl_batiments' "Bâtiments:" pos:[11,66] width:52 height:14 align:#left
 	spinner 'spn_proba' "" pos:[118,218] width:147 height:16 align:#left
 
 	
-	label 'lbl_proba' "Probabilité:" pos:[13,218] width:81 height:14 align:#left
+	label 'lbl_proba' "Probabilité:" pos:[13,218] width:55 height:14 align:#left
 
 
 	button 'btn_supprimer_ville' "-" pos:[244,22] width:21 height:21 align:#left
@@ -145,6 +145,7 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	
 	fn ouvrir_menuBatiments =(
 		
+		
 		local txt_corps 	= "rcMenu  rc_batiments (\n"
 		
 		--- liste des item du menu -----------------
@@ -156,7 +157,7 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 		--- les evenements -------
 		id = 0
 		for bat in listeBats do txt_corps += "on " + bat.idUnique + " picked do urba.villes.ajouter_batimentID " + (id +=1) as string + "\n"			
-		txt_corps += "on creerBat picked do urba.batiments.creer_nouveau ()\n"	
+		txt_corps += "on creerBat picked do ( urba.batiments.creer_nouveau (); urba.villes.ajouter_batimentID	urba.batiments.presets.count )\n"	
 		
 		txt_corps += ")"
 		
@@ -308,14 +309,19 @@ struct str_urba_villes (
 		fn retirer_batimentID 	_id =(
 			debug "retirer_batimentID" var:_id
 		
-			local _idUnique = villeCourante.batiments [_id]
+-- 			local _idUnique = villeCourante.batiments [_id]
 			deleteItem	villeCourante.batiments 	_id
 			deleteItem	villeCourante.probabilites 	_id
 			
 			presets.sauvegarder		villeCourante			
 			actualiser ()
 		),
-		
+		fn a_batiment	_ville		_idUniqueBat	=(
+			local result = false
+			if findItem	_ville.batiments	_idUniqueBat >0 do
+				result = true
+			result
+		),
 		
 		
 		fn ouvrir_batiment 	_id =(
