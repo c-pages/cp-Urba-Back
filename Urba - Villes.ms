@@ -29,7 +29,7 @@ include "$userScripts\cp - GLOBAL\Manager de presets.ms"
 ------------------------------------------------------------------------------
 ----------	Fenetre								 -------------------------
 ------------------------------------------------------------------------------
-rollout roll_urba_villes "urba_villes" width:279 height:246
+rollout roll_urba_villes "urba_villes" width:279 height:290
 (
 		
 
@@ -60,8 +60,8 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	
 	
 	
-	button 'btn_retirer_bat' "-" pos:[248,65] width:16 height:16 align:#left
-	button 'btn_ajouter_bat' "+" pos:[233,65] width:16 height:16 align:#left
+	button 'btn_retirer_bat' "-" pos:[249,65] width:16 height:16 align:#left
+	button 'btn_ajouter_bat' "+" pos:[234,65] width:16 height:16 align:#left
 
 	label 'lbl_batiments' "Bâtiments:" pos:[11,66] width:52 height:14 align:#left
 	spinner 'spn_proba' "" pos:[118,218] width:147 height:16 align:#left
@@ -74,7 +74,14 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	button 'btn_ajouter_ville' "+" pos:[224,22] width:21 height:21 align:#left
 	dropdownList 'ddl_villes' "" pos:[9,22] width:216 height:21 align:#left
 
+	spinner 'spn_surf_min' "" pos:[118,233] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
 	
+	label 'lbl_surf_min' "Surface min.:" pos:[13,233] width:68 height:15 align:#left
+	label 'lbl21' "m²" pos:[249,234] width:19 height:15 align:#left
+	
+	spinner 'spn_surf_max' "" pos:[118,248] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
+	label 'lbl_surf_max' "Surface max.:" pos:[13,247] width:68 height:15 align:#left
+	label 'lbl26' "m²" pos:[249,248] width:19 height:15 align:#left
 	------------  FONCTIONS	----------------------------------------------------------------------------------
 	---- Gere l'état du bouton  -----
 	fn etatBtnFermer		_etat =(
@@ -84,7 +91,6 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 			#Press : 	ui_btnFermer.bitmap = m_prt.m_icos_fermer[3]	
 		)
 	)
-	
 	
 	fn actualiser = (
 		
@@ -108,22 +114,41 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 		lbl_proba.enabled 				= enable
 		spn_proba.enabled 				= enable
 		lbl_batiments.enabled 			= enable
-		btn_retirer_bat.enabled 	= enable
+		btn_retirer_bat.enabled 		= enable
 		btn_ajouter_bat.enabled 		= enable
 		btn_supprimer_ville.enabled 	= enable
 		lbx_bats.enabled 					= enable
+		
+		spn_surf_min.enabled 			= enable
+		spn_surf_max.enabled 			= enable
+		
+		lbl21.enabled 						= enable
+		lbl26.enabled 						= enable
+		lbl_surf_min.enabled 			= enable
+		lbl_surf_max.enabled 			= enable
+		
+		
 		
 		---- les batiments --------
 		if enable do (
 			lbx_bats.items = m_prt.get_batimentsVilleCourante ()
 			
 			if lbx_bats.selection != 0 then (
-				spn_proba.value = m_prt.villeCourante.probabilites[ lbx_bats.selection ]
-				lbl_proba.enabled = true
-				spn_proba.enabled = true
+				
+				spn_proba.value 		= m_prt.villeCourante.probabilites[ lbx_bats.selection ]
+				spn_surf_min.value 	= m_prt.villeCourante.surfaces_min[ lbx_bats.selection ]
+				spn_surf_max.value 	= m_prt.villeCourante.surfaces_max[ lbx_bats.selection ]
+
 			) else (				
 				lbl_proba.enabled = false
 				spn_proba.enabled = false
+				
+				spn_surf_min.enabled 			= false
+				spn_surf_max.enabled 			= false
+		lbl21.enabled 						= false
+		lbl26.enabled 						= false
+		lbl_surf_min.enabled 			= false
+		lbl_surf_max.enabled 			= false
 			)
 		)
 		
@@ -180,6 +205,8 @@ rollout roll_urba_villes "urba_villes" width:279 height:246
 	on lbx_bats				selected  		_val 	do 	actualiser ()
 	on lbx_bats				doubleClicked  _val 	do 	m_prt.ouvrir_batiment 		_val
 	on spn_proba 				changed  		_val 	do 	m_prt.changerProbabilite  	lbx_bats.selection		_val
+	on spn_surf_min 			changed 	val		do 	m_prt.changer_surfMin 		lbx_bats.selection	val
+	on spn_surf_max 		changed 	val		do 	m_prt.changer_surfMax		lbx_bats.selection	val
 	
 	---- Rollout ----
 	on roll_urba_villes 		lbuttondown 	_pos 	do	m_drag.demarrer ()
@@ -229,7 +256,15 @@ struct str_urba_villes (
 										openBitMap ico_btnFermer_S ,		-- Survol ----
 										openBitMap ico_btnFermer_P 			-- Pressé ----
 									),
-		
+	private
+		---- Valeurs par défaut ----
+		defaut_proba 			= 100.,
+		defaut_surfaceMin 	= 50.,
+		defaut_surfaceMax 	= 300.,
+									
+									
+									
+									
 	public
 		------------	STRUCTURES DIVERSES 		------------------------------------------------------------------------------------------
 		---- le struct principale parent ----
@@ -258,12 +293,12 @@ struct str_urba_villes (
 		fn actualiser 	= if m_estOuvert do m_dialog.actualiser (),
 		
 		---- fenetre -----
-		fn ouvrir =(			
+		fn ouvrir pos: =(			
 			m_estOuvert 		= true
-			
-			
-			m_dialogPos = GetDialogPos m_urba.m_dialog 
-			m_dialogPos += [ (GetDialogSize m_urba.m_dialog).x ,0]
+			if pos != unsupplied do	m_dialogPos = pos
+-- 			
+-- 			m_dialogPos = GetDialogPos m_urba.m_dialog 
+-- 			m_dialogPos += [ (GetDialogSize m_urba.m_dialog).x ,0]
 -- 			m_dialogPos += [ 0, (GetDialogSize m_urba.m_dialog).y ]
 			
 			---- creation de la fenetre ----
@@ -300,8 +335,10 @@ struct str_urba_villes (
 			debug "ajouter_batimentID" var:_id
 			
 			local batCible = m_urba.batiments.presets.get_preset  _id
-			append 	villeCourante.batiments		batCible.idUnique
-			append 	villeCourante.probabilites	100.
+			append 	villeCourante.batiments			batCible.idUnique
+			append 	villeCourante.probabilites		defaut_proba
+			append 	villeCourante.surfaces_min		defaut_surfaceMin
+			append 	villeCourante.surfaces_max	defaut_surfaceMax
 			
 			presets.sauvegarder		villeCourante
 			actualiser ()
@@ -310,8 +347,10 @@ struct str_urba_villes (
 			debug "retirer_batimentID" var:_id
 		
 -- 			local _idUnique = villeCourante.batiments [_id]
-			deleteItem	villeCourante.batiments 	_id
-			deleteItem	villeCourante.probabilites 	_id
+			deleteItem	villeCourante.batiments 		_id
+			deleteItem	villeCourante.probabilites 		_id
+			deleteItem	villeCourante.surfaces_min 	_id
+			deleteItem	villeCourante.surfaces_max 	_id
 			
 			presets.sauvegarder		villeCourante			
 			actualiser ()
@@ -325,7 +364,7 @@ struct str_urba_villes (
 		
 		
 		fn ouvrir_batiment 	_id =(
-			m_urba.batiments.ouvrir ()
+			m_urba.batiments.ouvrir 	pos: ( GetDialogPos m_dialog +  [(GetDialogSize m_dialog).x,0] )
 			local _idUnique = villeCourante.batiments [_id]
 			local bat 		= ( m_urba.batiments.presets.get_parIdUnique  _idUnique )
 			
@@ -392,6 +431,18 @@ struct str_urba_villes (
 		),
 		fn changerProbabilite 	_idBat	_nvlleProba	 =(
 			villeCourante.probabilites[_idBat] = _nvlleProba
+			presets.sauvegarder		villeCourante
+			actualiser ()
+			m_urba.actualiser ()
+		),
+		fn changer_surfMin 	_idBat	_val	 =(
+			villeCourante.surfaces_min[_idBat] = _val
+			presets.sauvegarder		villeCourante
+			actualiser ()
+			m_urba.actualiser ()
+		),
+		fn changer_surfMax 	_idBat	_val	 =(
+			villeCourante.surfaces_max[_idBat] = _val
 			presets.sauvegarder		villeCourante
 			actualiser ()
 			m_urba.actualiser ()

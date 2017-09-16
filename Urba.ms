@@ -45,7 +45,7 @@ include "$userScripts\cp-Urba\Urba - Facades.ms"
 ------------------------------------------------------------------------------
 ----------	FENETRE								 -------------------------
 ------------------------------------------------------------------------------
-rollout roll_urba "urba " width:313 height:85
+rollout roll_urba "urba " width:279 height:85
 (
 	------------ DEBUG	----------------------------------------------------------------------------------
 	local m_debug = true
@@ -77,14 +77,15 @@ rollout roll_urba "urba " width:313 height:85
 	ImgTag 'ui_titre' "" pos:[16,4] width:66 height:18 align:#left
 	
 	---- le bouton pour fermer la fenetre ----
-	ImgTag 'ui_btnFermer' "X" pos:[292,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
+	ImgTag 'ui_btnFermer' "X" pos:[roll_urba.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
 	
 	
-	
-	button 'btn_generer' "Générer" pos:[68,46] width:220 height:19 align:#left
+
+	button 'btn_generer' "Générer" pos:[68,46] width:189 height:19 align:#left
 	
 	
 	checkbutton 'ckb_ville' "V" pos:[15,46] width:19 height:19 align:#left	
+	
 	
 	
 	
@@ -93,7 +94,8 @@ rollout roll_urba "urba " width:313 height:85
 	checkbutton 'ckb_facade' "F" pos:[51,46] width:19 height:19 align:#left
 	
 	
-	dropdownList 'ddl_villes' "" pos:[16,26] width:271 height:21 align:#left
+	dropdownList 'ddl_villes' "" pos:[16,26] width:240 height:21 align:#left
+	
 	
 	
 	------------  Fonctions	----------------------------------------------------------------------------------
@@ -206,7 +208,8 @@ rollout roll_urba "urba " width:313 height:85
 		if m_prt.villes.estOuvert () then
 			m_prt.villes.fermer()
 		else (
-			m_prt.villes.ouvrir()
+			m_prt.villes.ouvrir pos:( GetDialogPos roll_urba + [ (GetDialogSize  roll_urba ).x ,0] )
+
 			m_prt.villes.selectionner_id	 ddl_villes.selection
 		)
 	)
@@ -294,6 +297,8 @@ struct str_urba (
 			--- chargement des presets ------
 			villes.presets.charger ()
 			batiments.presets.charger ()
+			facades.presets.charger ()
+			facades.elementsDeFacade.charger ()
 			
 			---- fenetre ----
 			m_dialog.initialiser 	this

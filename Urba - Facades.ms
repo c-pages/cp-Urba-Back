@@ -31,7 +31,7 @@ include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
 ------------------------------------------------------------------------------
 ----------	Fenetre								 -------------------------
 ------------------------------------------------------------------------------
-rollout roll_urba_facades "Urba | Facades" width:250 height:390
+rollout roll_urba_facades "Urba | Facades" width:279 height:273
 (
 	------------  Membres	----------------------------------------------------------------------------------
 	---- Pointeurs ----
@@ -44,38 +44,39 @@ rollout roll_urba_facades "Urba | Facades" width:250 height:390
 	local m_titre
 -- 	local m_log
 	
+	local uis_facade, uis_element
+	
 	---- RCM -----
 	
 	------------  UI	----------------------------------------------------------------------------------		
 	---- le bouton pour fermer la fenetre ----
 	ImgTag 'ui_btnFermer' "X" pos:[roll_urba_facades.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
 	
+
+	button 'btn_supprimer_facade' "-" pos:[244,22] width:21 height:21 align:#left
+	button 'btn_ajouter_facade' "+" pos:[224,22] width:21 height:21 align:#left
+	dropdownList 'ddl_facades' "" pos:[9,22] width:216 height:21 align:#left
+	
 	ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
 	
-	listbox 'lbx_sequence' "Séquence:" pos:[11,48] width:212 height:7 align:#left
-	
+	label 'lbl_sequence' "Séquence:" pos:[11,66] width:52 height:14 align:#left
+	listbox 'lbx_sequence' "" pos:[11,81] width:239 height:7 align:#left
 
-	editText 'edt_elem_nom' "" pos:[73,185] width:147 height:16 align:#left
-	label 'lbl_elem_nom' "Nom:" pos:[21,185] width:52 height:15 align:#left
-
-	editText 'edt_elem_fichier' "" pos:[73,218] width:132 height:16 align:#left
-	label 'lbl_elem_fichier' "Fichier:" pos:[21,218] width:52 height:15 align:#left
-	button 'btn_elem_fichier' "..." pos:[206,219] width:16 height:16 align:#left
-	spinner 'spn_elem_largeur' "" pos:[74,202] width:146 height:15 range:[0,1e+13,0] scale:1 align:#left
-	label 'lbl_elem_largeur' "Largeur:" pos:[21,201] width:52 height:15 align:#left
-	button 'btn_supprimer' "-" pos:[207,48] width:16 height:16 align:#left
-	button 'btn_ajouter' "+" pos:[192,48] width:16 height:16 align:#left
-	groupBox 'grp_prop' "Propiétés de l'élément :" pos:[11,166] width:223 height:171 align:#left
-	button 'btn_descendre' "v" pos:[223,79] width:16 height:16 align:#left
-	button 'btn_monter' "^" pos:[223,64] width:16 height:16 align:#left
-	editText 'edt_nom_facade' "" pos:[65,27] width:157 height:16 align:#left
-	label 'lbl_nom_facade' "Nom:" pos:[12,27] width:52 height:15 align:#left
-	groupBox 'grp_notes' "Notes:" pos:[16,234] width:214 height:98 align:#left
-	label 'lbl_notes' "..." pos:[33,251] width:174 height:76 align:#left
+	label 'lbl_model' "Modèle:" pos:[21,229] width:52 height:15 align:#left
+	spinner 'spn_elem_largeur' "" pos:[75,214] width:179 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl_elem_largeur' "Largeur:" pos:[21,213] width:52 height:15 align:#left
+	button 'btn_supprimer_element' "-" pos:[236,65] width:16 height:16 align:#left
+	button 'btn_ajouter_element' "+" pos:[221,65] width:16 height:16 align:#left
+	GroupBox 'grp_prop' "Propriétés de l'élément :" pos:[11,181] width:253 height:78 align:#left
+	button 'btn_descendre' "v" pos:[250,94] width:16 height:16 align:#left
+	button 'btn_monter' "^" pos:[250,79] width:16 height:16 align:#left
+	edittext 'edt_nom_facade' "" pos:[118,46] width:147 height:16 align:#left
+	label 'lbl_nom_facade' "Nom:" pos:[12,46] width:52 height:15 align:#left
 	
-	button 'btn_annuler' "Annuler" pos:[12,348] width:90 height:16 align:#left
-	button 'btn_enregistrerSous' "Enregistrer sous" pos:[144,361] width:90 height:16 align:#left
-	button 'btn_enregistrer' "Enregistrer" pos:[144,346] width:90 height:16 align:#left
+	dropdownList 'ddl_Type' "" pos:[77,194] width:178 height:21 align:#left
+	label 'lbl_type' "Type:" pos:[21,196] width:30 height:15 align:#left
+	
+	dropdownList 'ddl_model' "" pos:[77,229] width:178 height:21 align:#left
 	
 	
 	------------  Fonctions	----------------------------------------------------------------------------------
@@ -91,83 +92,92 @@ rollout roll_urba_facades "Urba | Facades" width:250 height:390
 	
 	fn actualiser = (
 		
+		--- les presets facades ----------
+		local listTmp =#()
+		local presetsFacades = m_prt.presets.get ()
+		for preset in presetsFacades do
+			append listTmp preset.nom
+		ddl_facades.items = listTmp
+		
+		local prop_enabled = true
+		if presetsFacades.count ==0 do prop_enabled = false
+		
+		for ui in uis_facade do
+			ui.enabled = prop_enabled
 		
 		
 		
-		--- liste sequence ------------
-		local lstTmp =#()
-		for elem in m_prt.sequence.elements do
-			append lstTmp 	elem.nom
-		lbx_sequence.items = lstTmp
-		
-		--- les proprietes ----------		
-		local prop_enable = lbx_sequence.selection != 0
-		grp_prop.enabled  			= prop_enable
-		
-		edt_elem_nom.enabled  	= prop_enable
-		lbl_elem_nom.enabled  		= prop_enable
-		grp_notes.enabled  			= prop_enable
-		lbl_notes.enabled  			= prop_enable
-		
-		edt_elem_fichier.enabled  	= prop_enable
-		btn_elem_fichier.enabled  	= prop_enable
-		lbl_elem_fichier.enabled  	= prop_enable
-		
-		spn_elem_largeur.enabled  = prop_enable
-		lbl_elem_largeur.enabled  	= prop_enable
-		
-		if prop_enable then (
-			local elem = m_prt.sequence.elements[ lbx_sequence.selection ]
--- 			debug "elem" var:elem
-			edt_elem_nom.text 					= elem.nom
-			case classOf elem of (
-				str_urba_elem_model: (
-					edt_elem_fichier.text 		= elem.fichier
-					spn_elem_largeur.value  	= elem.largeur
+		if m_prt.facadeCourante == undefined then (
+			btn_supprimer_facade.enabled = false
+		) else (
+			
+			btn_supprimer_facade.enabled = true
+			edt_nom_facade.text = m_prt.facadeCourante.nom
+			
+			--- la sequence d'elements ----------
+			local listTmp =#()
+			local presetsElements 	= m_prt.facadeCourante.elements
+			for id_elem in presetsElements do (
+				
+				local preset = m_prt.elementsDeFacade.get_parIdUnique	id_elem
+				local nomItem =ddl_type.items[preset.type]
+				case preset.type of (
+					2:	nomItem += " : " + preset.largeur as string + " cm."
+					3:	nomItem += " : ..."
 				)
-				str_urba_elem_espace: (
-					edt_elem_fichier.enabled  	= false
-					btn_elem_fichier.enabled  	= false
-					lbl_elem_fichier.enabled  	= false
-					
-					edt_elem_fichier.text 		= ""				
-					spn_elem_largeur.value  	= elem.largeur
-				)
-				str_urba_elem_repart: (
-					edt_elem_fichier.enabled  	= false
-					btn_elem_fichier.enabled  	= false
-					lbl_elem_fichier.enabled  	= false
-					
-					spn_elem_largeur.enabled  = false
-					lbl_elem_largeur.enabled  	= false
-					
-					edt_elem_fichier.text 		= ""					
-					spn_elem_largeur.value  	= 0			
-				)
+				
+				append listTmp nomItem
+				
 			)
 			
-		) else (
-			edt_elem_nom.text 			= ""		
-			edt_elem_fichier.text 		= ""						
-			spn_elem_largeur.value  	= 0	
+			lbx_sequence.items 		= listTmp
 			
 		)
 		
 		
+		if lbx_sequence.selection == 0 then
+			prop_enabled = false
+		else (
+		)
+		
+		for ui in uis_element do
+			ui.enabled = prop_enabled
+		
+		
+		if m_prt.elementCourant != undefined do (
+			
+			ddl_Type.selection = m_prt.elementCourant.type
+			case m_prt.elementCourant.type of (
+				1:	(	--- Extensible ----
+						lbl_elem_largeur.enabled = false
+						spn_elem_largeur.enabled = false
+						lbl_model.enabled = false
+						ddl_model.enabled = false
+						spn_elem_largeur.Indeterminate = true
+					)
+				2:	(	--- largeur fixe ----
+						lbl_model.enabled = false
+						ddl_model.enabled = false
+						spn_elem_largeur.Indeterminate = false
+						spn_elem_largeur.value = m_prt.elementCourant.largeur
+					)
+				3:	(	--- model ----
+						lbl_elem_largeur.enabled = false
+						spn_elem_largeur.enabled = false
+						spn_elem_largeur.Indeterminate = true
+					)
+			)
+		)
 		
 		
 		
-		--- le nanager de sequence ----------
-		btn_supprimer.enabled  	= prop_enable
-		btn_descendre.enabled  	= prop_enable
-		btn_monter.enabled  		= prop_enable
+		if 	lbx_sequence.selection == 0  do 
+			btn_supprimer_element.enabled = false
 		
-		if lbx_sequence.selection == 1 do 
-			btn_monter.enabled  		= false
-				
-		if lbx_sequence.selection == lbx_sequence.items.count do 
-			btn_descendre.enabled  		= false
-		
+		if lbx_sequence.selection <= 1 do
+			btn_monter.enabled = false		
+		if lbx_sequence.selection == lbx_sequence.items.count do
+			btn_descendre.enabled = false
 	)
 	
 	---- Initialisation de la fenetre  -----
@@ -187,13 +197,22 @@ rollout roll_urba_facades "Urba | Facades" width:250 height:390
 		-- le bouton fermer --
 		ui_btnFermer.bitmap = m_prt.m_icos_fermer[1]	
 		
-		actualiser()
+		uis_facade = #(lbl_sequence, lbx_sequence, lbl_nom_facade, edt_nom_facade, btn_monter, btn_descendre, btn_supprimer_element, btn_ajouter_element)
+		uis_element = #(grp_prop, lbl_type, ddl_Type, lbl_elem_largeur, spn_elem_largeur, lbl_model, ddl_model)
+	
+	
+
+		ddl_type.items = #(	"|<-->|  Extensible", 
+									"|------|  Largeur fixe", 
+									"|===|  Modèle 3D" )
+		
 
 	)
 	
 	
 	------------  Evenements	----------------------------------------------------------------------------------
 	
+	on ddl_facades 				selected  	val 	do 	m_prt.selectionner_id 	val
 	
 	
 	on btn_descendre 	pressed  do (
@@ -204,27 +223,18 @@ rollout roll_urba_facades "Urba | Facades" width:250 height:390
 		lbx_sequence.selection -= 1
 		m_prt.monter 	 	( lbx_sequence.selection + 1 )
 	)
-	on btn_supprimer 	pressed  do m_prt.supprimer 		lbx_sequence.selection
-	on btn_ajouter 		pressed  do (
-		
-		rcmenu menu_ajouter 
-		(
-			menuItem m_model			"Modèle"  
-			menuItem m_esp				"Espacement"  
-			menuItem m_repartl			"Répartition"  
-			
-			on m_model 		picked do	
-				urba.facades.creer_model 				( lbx_sequence.selection +1 )		fichier:"C:\\Users\\Windows\\AppData\\Local\\Autodesk\\3dsMax\\2017 - 64bit\\ENU\\scripts\\cp-Urba\\lib\\facades\\fenetre 1.max"			
-			on m_esp 		picked do	
-				urba.facades.creer_espacement 	( lbx_sequence.selection +1 )
-			on m_repartl 		picked do	
-				urba.facades.creer_repartition 		( lbx_sequence.selection +1 )
-		)  -- fin RCMenu
-		
-		popUpMenu menu_ajouter
+	on btn_supprimer_element 	pressed  do m_prt.supprimer_element	lbx_sequence.selection	
+	on btn_ajouter_element 		pressed  do m_prt.ajouter_element ()
 	
-	)
+	on btn_ajouter_facade 		pressed  do m_prt.ajouter_facade ()	
+	on btn_supprimer_facade 		pressed  do m_prt.supprimer_facade 	ddl_facades.selection
 	
+	
+	on spn_elem_largeur 		changed 	val		do 	m_prt.set_elemLargeur		val
+	
+	
+	
+	on edt_nom_facade 		entered  	txt 		do 	m_prt.changerNom		txt
 	
 	/* 
 	
@@ -242,10 +252,8 @@ rollout roll_urba_facades "Urba | Facades" width:250 height:390
 			actualiser ()
 		)
 	
-	on lbx_sequence selected sel do
-(
-	actualiser ()
-	)
+	on ddl_Type		selected sel do	m_prt.set_elemType 			sel
+	on lbx_sequence selected sel do	m_prt.selectionnerElem_id 		sel
 	on lbx_sequence doubleClicked sel do
 (
 	actualiser ()
@@ -279,13 +287,18 @@ rollout roll_urba_facades "Urba | Facades" width:250 height:390
 ----------	Structure								 -------------------------
 ------------------------------------------------------------------------------
 struct str_urba_facades (
+	------------ DEBUG	----------------------------------------------------------------------------------
+	m_debug = true,
+	m_dbgPrefix ="Urba | Facades",
+	fn debug 	_txt  var:	 param:    =(
+		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		catch ()
+	),
 	
 	private
 		m_estOuvert 		= false,
 		------------  Membres	----------------------------------------------------------------------------------
 	public
-		
-		m_urba,		--		<--- le struct principale
 		
 		---- pointeurs ----
 		m_dialog				= roll_urba_facades ,		---- le rollout ----
@@ -304,58 +317,119 @@ struct str_urba_facades (
 										openBitMap ico_btnFermer_P 			-- Pressé ----
 										),
 				
-		------------  Fonctions	----------------------------------------------------------------------------------
 	public
-		sequence = str_urba_facadeMgr(),
+		------------	STRUCTURES DIVERSES 		------------------------------------------------------------------------------------------
+		---- le struct principale parent ----
+		m_urba,
+	
+		---- le manager de presets des facades ----
+		presets 	= str_presetsMGR 	preset_type:	str_urba_preset_facade	\
+												fichier:			m_urba.fichier_presets	\
+												prefixUnique:	"Facade",
 		
-		fn actualiser = m_dialog.actualiser (),
 		
+		elementsDeFacade = str_presetsMGR 	preset_type:	str_urba_preset_elementFacade	\
+												fichier:			m_urba.fichier_presets	\
+												prefixUnique:	"Element_facade",
+		
+		
+		---- la facade actuelement selectionnée ----
+		facadeCourante,
+		elementCourant,
+		
+										
+										
+										
+										
+	----------------------------------------------------------------------------------------------------------
+	------------  Fonctions	------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------
+
+	public
+	------------	UI		------------------------------------------------------------------------------------------
+		fn actualiser 	= if m_estOuvert do m_dialog.actualiser (),
+		fn selectionner 	_preset 	=(
+			local id_preset = presets.trouver_ID 	_preset
+			facadeCourante = _preset
+			m_dialog.ddl_facades.selection = id_preset
+			actualiser ()
+		),
+		fn selectionner_id 	_id =(
+			if _id >0 do (
+				facadeCourante = presets.get_preset		_id
+				m_dialog.ddl_facades.selection = _id
+			)
+			actualiser ()
+		),
+		fn selectionnerElem_id 	_id =(
+			if _id >0 do (
+				local idUnique = facadeCourante.elements[_id]
+				elementCourant = elementsDeFacade.get_parIdUnique		idUnique
+				m_dialog.lbx_sequence.selection = _id
+			)
+			actualiser ()
+		),
+		fn estOuvert = m_estOuvert,
+			
 		
 		
 		fn supprimer _id	=(
-			sequence.supprimer _id
+-- 			sequence.supprimer _id
 			actualiser ()
 		),
 		fn monter _id =(
-			sequence.monter _id
+-- 			sequence.monter _id
 			actualiser ()
 		),
 		fn descendre _id =(
-			sequence.descendre _id
+-- 			sequence.descendre _id
+			actualiser ()
+		),
+		
+		
+		
+		fn ajouter_facade =(
+			local nvPreset = presets.creer_preset ()
+			facadeCourante = nvPreset
+			actualiser ()
+		),
+		fn supprimer_facade 	_id	=(
+			
+		),
+		
+		fn ajouter_element =(
+			
+			local nvElement = elementsDeFacade.creer_preset ()
+			elementCourant = nvElement
+			elementsDeFacade.sauvegarder nvElement
+			append facadeCourante.elements	 nvElement.idUnique
+			presets.sauvegarder facadeCourante
+			
+			selectionnerElem_id	(elementsDeFacade.get() ).count
+			
+			actualiser ()
+			
+		),
+		fn supprimer_element 	_id	=(
+			
+			elementsDeFacade.supprimer_parIdUnique	facadeCourante.elements[_id]
+			
+			deleteItem	facadeCourante.elements 		_id
+			
+			presets.sauvegarder		facadeCourante			
 			actualiser ()
 		),
 		
 		
 		
 		
-		fn creer_model _idPos	fichier: =(
-			sequence.creer_model 	fichier:"C:\\Users\\Windows\\AppData\\Local\\Autodesk\\3dsMax\\2017 - 64bit\\ENU\\scripts\\cp-Urba\\lib\\facades\\fenetre 1.max"
-			sequence.deplacer 	sequence.elements.count	_idPos
-			m_dialog.lbx_sequence.selection += 1
-			actualiser ()
-		),
-		fn creer_espacement _idPos	=(
-			sequence.creer_espacement ()
-			sequence.deplacer 	sequence.elements.count	_idPos
-			m_dialog.lbx_sequence.selection += 1
-			actualiser ()
-		),
-		fn creer_repartition _idPos	=(
-			sequence.creer_repartition ()
-			sequence.deplacer 	sequence.elements.count	_idPos
-			m_dialog.lbx_sequence.selection += 1
-			actualiser ()
-		),
 		
-		
-		
-		
-		
-		fn estOuvert = m_estOuvert,
 			
 		---- fenetre -----
-		fn ouvrir =(			
-			m_estOuvert 		= true	
+		fn ouvrir  pos: =(			
+			m_estOuvert 		= true
+			if pos != unsupplied do	m_dialogPos = pos
+				
 			---- creation de la fenetre ----
 			createDialog m_dialog 	bgcolor:				col_fenetreFond 	 \
 											fgcolor:				col_fenetreTxt 	\
@@ -366,8 +440,14 @@ struct str_urba_facades (
 			
 			---- initialisation de la fenetre ----
 			m_dialog.m_prt	 	= this
+			
+			
 			m_dialog.initialiser ()
-						
+			--- pour selectionner un premier élément
+			if ( presets.get () ).count >0 do selectionner_id 1
+			if ( elementsDeFacade.get () ).count >0 do selectionnerElem_id 1
+			m_dialog.actualiser ()
+			
 		),
 		
 		fn fermer  =(	
@@ -378,10 +458,38 @@ struct str_urba_facades (
 			---- fermer la fenêtre ----
 			try destroydialog m_dialog catch ()
 			
-		)
+		),
+		fn initialiser =(
+			debug "initialiser"
+		),
+		
+		
+		
+		fn changerNom 	_nvNom =(
+			facadeCourante.nom = _nvNom
+			presets.sauvegarder		facadeCourante
+			actualiser ()
+			m_urba.batiments.actualiser ()
+		),
+		fn set_elemType _type =(
+			elementCourant.type = _type
+			elementsDeFacade.sauvegarder		elementCourant
+			actualiser ()
+-- 			m_urba.batiments.actualiser ()
+			
+		),
+		fn set_elemLargeur 	_nvlLargeur =(
+			elementCourant.largeur = _nvlLargeur
+			elementsDeFacade.sauvegarder		elementCourant
+			actualiser ()
+-- 			m_urba.batiments.actualiser ()
+			
+		),
+		
+		
 		
 		------------  Evenements	----------------------------------------------------------------------------------
-	
+		on create do initialiser ()
 )
 
 -- 	try 

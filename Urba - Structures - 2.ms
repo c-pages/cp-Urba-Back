@@ -164,11 +164,30 @@ struct str_urba_facadeMgr (
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------  Presets				 --------------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---- Element De Facade -----
+struct str_urba_preset_elementFacade (
+	idUnique			=	"",
+	
+	type 				= 1,			---- 	les types : 	1=Extensible, 2=largeur fixe, 3=model 3D
+	largeur			=	100.,		
+	model			=	""			----	le model 3D ... (fichier ou struct ? .... )
+)
+
+---- FACADE -----
+struct str_urba_preset_facade (
+	idUnique			=	"",
+	
+	nom 				= 	"Nouvelle façade",
+	elements 		=#()
+)
+
+
+---- BATIMENT -----
 struct str_urba_preset_batiment (
 	idUnique			=	"",
+	
 	nom 				= 	"Nouveau bâtiment",
-	surf_min			= 	50.,
-	surf_max 		= 	350.,
 	
 	toiture_type		=	"",
 	
@@ -187,10 +206,14 @@ struct str_urba_preset_batiment (
 
 ---- VILLE -----
 struct str_urba_preset_ville (
+	idUnique		=	"V0",
+	
 	nom 			=	"Nouvelle ville",
-	idUnique	=	"V0",
-	batiments 	=	#(),
-	probabilites =	#()
+	
+	batiments 			=	#(),
+	probabilites 		=	#(),
+	surfaces_min		= 	#(),
+	surfaces_max 		= 	#()
 )
 
 

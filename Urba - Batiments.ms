@@ -42,7 +42,7 @@ include "$userScripts\cp-Urba\Urba - Batiment - edition.ms"
 ------------------------------------------------------------------------------
 ----------	Fenetre								 -------------------------
 ------------------------------------------------------------------------------
-rollout roll_urba_batiments "urba_batiments" width:279 height:250
+rollout roll_urba_batiments "urba_batiments" width:279 height:230
 (
 	------------  Membres	----------------------------------------------------------------------------------
 	---- Pointeurs ----
@@ -69,36 +69,45 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:250
 -- 	ImgTag 'ui_log' "" pos:[8,43] width:66 height:18 align:#left
 	
 	
-	edittext 'edt_bat_nom' "" pos:[115,48] width:147 height:16 align:#left
-	label 'lbl_elem_nom' "Nom:" pos:[12,48] width:25 height:15 align:#left
+	edittext 'edt_bat_nom' "" pos:[115,47] width:147 height:16 align:#left
+	label 'lbl_elem_nom' "Nom:" pos:[12,47] width:25 height:15 align:#left
 	
-	spinner 'spn_etages_min' "" pos:[117,141] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	label 'lbl_elem_largeur' "Nbr. min.:" pos:[29,140] width:46 height:15 align:#left
+	spinner 'spn_etages_min' "" pos:[117,111] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	label 'lbl_elem_largeur' "Nbr. min.:" pos:[29,110] width:46 height:15 align:#left
 	
 	
-	spinner 'spn_etages_max' "" pos:[117,156] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	label 'lbl14' "Nbr. max.:" pos:[29,155] width:51 height:15 align:#left
-	spinner 'spn_surf_min' "" pos:[117,64] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
-	label 'lbl_surf_min' "Surface min.:" pos:[29,64] width:68 height:15 align:#left
-	spinner 'spn_etages_hauteur' "" pos:[117,171] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl18' "Hauteur:" pos:[29,170] width:44 height:15 align:#left
-	spinner 'spn_rdc_hauteur' "" pos:[117,210] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl19' "Hauteur:" pos:[29,209] width:46 height:15 align:#left
+	spinner 'spn_etages_max' "" pos:[117,126] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	label 'lbl14' "Nbr. max.:" pos:[29,125] width:51 height:15 align:#left
+-- 	spinner 'spn_surf_min' "" pos:[117,64] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
+-- 	label 'lbl_surf_min' "Surface min.:" pos:[29,64] width:68 height:15 align:#left
+	spinner 'spn_etages_hauteur' "" pos:[117,141] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl18' "Hauteur:" pos:[29,140] width:44 height:15 align:#left
+	spinner 'spn_rdc_hauteur' "" pos:[117,180] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl19' "Hauteur:" pos:[29,179] width:46 height:15 align:#left
 -- 	label 'lbl20' "Sous-bassement:" pos:[12,229] width:90 height:15 align:#left
+-- 	label 'lbl21' "m²" pos:[247,64] width:19 height:15 align:#left
+	dropdownList 'ddl_toiture' "" pos:[119,67] width:144 height:21 align:#left
+	label 'lbl22' "Toiture:" pos:[12,73] width:38 height:15 align:#left
+	dropdownList 'ddl_etages' "" pos:[119,91] width:144 height:21 align:#left
+	label 'lbl23' "Etages:" pos:[12,97] width:38 height:15 align:#left
+	dropdownList 'ddl_rdc' "" pos:[119,160] width:144 height:21 align:#left
+	label 'lbl24' "RdC:" pos:[12,166] width:25 height:15 align:#left
+-- 	spinner 'spn_surf_max' "" pos:[117,79] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
+-- 	label 'lbl_surf_max' "Surface max.:" pos:[29,78] width:68 height:15 align:#left
+-- 	label 'lbl26' "m²" pos:[248,78] width:19 height:15 align:#left
+-- 	spinner 'spn_ssBassement_hauteur' "" pos:[117,243] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+-- 	label 'lbl27' "Hauteur:" pos:[29,242] width:55 height:15 align:#left
+
+	/*
+	spinner 'spn_surf_min' "" pos:[117,64] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
+	
+	label 'lbl_surf_min' "Surface min.:" pos:[29,64] width:68 height:15 align:#left
 	label 'lbl21' "m²" pos:[247,64] width:19 height:15 align:#left
-	dropdownList 'ddl_toiture' "" pos:[119,97] width:144 height:21 align:#left
-	label 'lbl22' "Toiture:" pos:[12,103] width:38 height:15 align:#left
-	dropdownList 'ddl_etages' "" pos:[119,121] width:144 height:21 align:#left
-	label 'lbl23' "Etages:" pos:[12,127] width:38 height:15 align:#left
-	dropdownList 'ddl_rdc' "" pos:[119,190] width:144 height:21 align:#left
-	label 'lbl24' "RdC:" pos:[12,196] width:25 height:15 align:#left
+	
 	spinner 'spn_surf_max' "" pos:[117,79] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
 	label 'lbl_surf_max' "Surface max.:" pos:[29,78] width:68 height:15 align:#left
 	label 'lbl26' "m²" pos:[248,78] width:19 height:15 align:#left
--- 	spinner 'spn_ssBassement_hauteur' "" pos:[117,243] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
--- 	label 'lbl27' "Hauteur:" pos:[29,242] width:55 height:15 align:#left
-	
-	
+	*/
 	------------  Fonctions	----------------------------------------------------------------------------------
 	---- Gere l'état du bouton  -----
 	fn etatBtnFermer		_etat =(
@@ -122,8 +131,8 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:250
 		local enable_ui = true
 		if m_prt.batCourant != undefined then (
 			edt_bat_nom.text 				= m_prt.batCourant.nom
-			spn_surf_min.value 				= m_prt.batCourant.surf_min
-			spn_surf_max.value 				= m_prt.batCourant.surf_max
+-- 			spn_surf_min.value 				= m_prt.batCourant.surf_min
+-- 			spn_surf_max.value 				= m_prt.batCourant.surf_max
 			spn_etages_min.value 			= m_prt.batCourant.etages_min
 			spn_etages_max.value			= m_prt.batCourant.etages_max
 			spn_etages_hauteur.value 	= m_prt.batCourant.etages_hauteur
@@ -136,8 +145,8 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:250
 		) else (
 			enable_ui = false
 			edt_bat_nom.text 				= ""
-			spn_surf_min.value 				= 0
-			spn_surf_max.value 				= 0
+-- 			spn_surf_min.value 				= 0
+-- 			spn_surf_max.value 				= 0
 			spn_etages_min.value 			= 0
 			spn_etages_max.value			= 0
 			spn_etages_hauteur.value 	= 0
@@ -150,8 +159,8 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:250
 	
 	---- Initialisation de la fenetre  -----
 	fn initialiser = (
-		ui_parametres = #(btn_supprimer_bat, edt_bat_nom, lbl_elem_nom , spn_etages_min, lbl_elem_largeur, spn_etages_max, lbl14, spn_surf_min, lbl_surf_min, spn_etages_hauteur, lbl18, spn_rdc_hauteur,
-		lbl19, lbl21, ddl_toiture, lbl22, ddl_etages, lbl23, ddl_rdc, lbl24, spn_surf_max, lbl_surf_max, lbl26 )
+		ui_parametres = #(btn_supprimer_bat, edt_bat_nom, lbl_elem_nom , spn_etages_min, lbl_elem_largeur, spn_etages_max, lbl14,   spn_etages_hauteur, lbl18, spn_rdc_hauteur,
+		lbl19, ddl_toiture, lbl22, ddl_etages, lbl23, ddl_rdc, lbl24 )
 
 		
 		
@@ -180,8 +189,6 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:250
 	on btn_supprimer_bat 	pressed 	do 	m_prt.supprimer_batiment ddl_bats.selection
 	
 	on edt_bat_nom 		entered  	txt 		do 	m_prt.changerNom		txt
-	on spn_surf_min 		changed 	val		do 	m_prt.changer_surfMin 	val
-	on spn_surf_max 	changed 	val		do 	m_prt.changer_surfMax	val
 	
 	on spn_etages_min 			changed 	val	do 	m_prt.changer_etagesMin			val
 	on spn_etages_max 		changed 	val	do 	m_prt.changer_etagesMax			val
@@ -288,8 +295,10 @@ struct str_urba_batiments (
 		fn estOuvert = m_estOuvert,
 			
 		---- fenetre -----
-		fn ouvrir =(			
+		fn ouvrir 	pos:	=(			
 			m_estOuvert 		= true
+			if pos != unsupplied do	m_dialogPos = pos
+				
 			---- creation de la fenetre ----
 			createDialog m_dialog 	bgcolor:				col_fenetreFond 		\
 											fgcolor:				col_fenetreTxt 		\
@@ -362,18 +371,6 @@ struct str_urba_batiments (
 			presets.sauvegarder		batCourant
 			actualiser ()
 			m_urba.villes.actualiser ()
-		),
-		fn changer_surfMin 	_val	 =(
-			batCourant.surf_min = _val
-			presets.sauvegarder		batCourant
-			actualiser ()
-			m_urba.actualiser ()
-		),
-		fn changer_surfMax 	_val	 =(
-			batCourant.surf_max = _val
-			presets.sauvegarder		batCourant
-			actualiser ()
-			m_urba.actualiser ()
 		),
 		
 		fn changer_etagesMin 	_val	 =(
