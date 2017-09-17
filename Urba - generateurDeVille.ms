@@ -32,7 +32,7 @@ struct str_style (
 )
 
 
-struct str_batiment (	
+struct str_batiment (
 	style, 
 	tracee ,
 	id_subSpline 	= 0 ,
@@ -326,7 +326,7 @@ struct str_ville (
 			tracee = copy nvTracee
 			tracee.name = uniqueName "Urba - Ville "
 			preparerSpline ()
-			
+			 
 			-- status bar ---
 			progressStart "Urba: Génération de la ville ..." 
 			

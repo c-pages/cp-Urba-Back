@@ -15,11 +15,11 @@
 	todo:
 	
 ##########################################################################################################################
+	
 	changelog:
 	*v0.1 - [27/07/2017] -----------------------------------------------------------------------------
 	- Mise en place globale 
 	
-R3HB7-X6HMH-F48J3-8XJVP-9QBP9
 ########################################################################################################################*/
 
 
@@ -34,6 +34,7 @@ include "$userScripts\cp - GLOBAL\Manager de presets.ms"
 	
 ----- scripts externes -------------
 include "$userScripts\cp-Urba\Urba - Structures.ms"
+include "$userScripts\cp-Urba\Urba - Outils.ms"
 	
 include "$userScripts\cp-Urba\Urba - Villes.ms"
 include "$userScripts\cp-Urba\Urba - Batiments.ms"
@@ -86,7 +87,7 @@ rollout roll_urba "urba " width:279 height:85
 	checkbutton 'ckb_batiment' "B" pos:[194,26] width:21 height:21 align:#left
 	checkbutton 'ckb_facade' "F" pos:[214,26] width:21 height:21 align:#left
 	
-	button 'btn_generer' "Générer" pos:[16,46] width:239 height:21 align:#left
+	pickButton 'btn_generer' "Générer" pos:[16,46] width:239 height:21 align:#left	filter:shape_filt	message:"Choisir le tracée"
 	
 	------------  Fonctions	----------------------------------------------------------------------------------
 	fn actualiser =(
@@ -161,16 +162,6 @@ rollout roll_urba "urba " width:279 height:85
 	------------  Evenements	----------------------------------------------------------------------------------
 	
 	
-	
-	
-	---- Fenetre -----
-	
-	---- Drag ----
-	
-	---- Bouton fermer -----
-	
-	--- edition ----
--- 	on btn_shape picked obj 				do	m_prt.edit.preparer obj
 
 	on roll_urba resized _taille 	do
 		reagencer ()
@@ -192,6 +183,7 @@ rollout roll_urba "urba " width:279 height:85
 		etatBtnFermer #Repos
 	on ui_btnFermer click do
 		m_prt.fermer ()
+	
 	
 	on ckb_ville changed state do
 	(
@@ -229,8 +221,11 @@ rollout roll_urba "urba " width:279 height:85
 -- 			m_prt.toitures.selectionner_id	 ddl_villes.selection
 		)
 	)
--- 	on ddl_villes selected arg do
--- 		m_prt.villes.afficher	arg
+	
+	
+	on btn_generer picked 	_shape do m_prt.generer	_shape	ddl_villes.selection
+	
+	
 )
 	
 ------------------------------------------------------------------------------
@@ -273,13 +268,20 @@ struct str_urba (
 		
 		fichier_presets		= "$userScripts\cp-Urba\urba_presets.ini",
 		
-		---- STRUCTURES ----
--- 		outils = str_urba_outils (),
+		---- STRUCTURES ----	
+	public
 		
 		villes 			= str_urba_villes 			m_urba:this,
 		batiments 	= str_urba_batiments 	m_urba:this,
 		facades 		= str_urba_facades 		m_urba:this,
 		toitures 		= str_urba_toitures 		m_urba:this,
+		
+	private
+		
+		outils = str_urba_outils		m_urba:this,
+		
+		tracee_origine,	---- le tracee piqué par l'utilisateur
+		tracee,				---- la copie du tracee que l'on va manipuler
 		
 	----------------------------------------------------------------------------------------------------------
 	------------  Fonctions	----------------------------------------------------------------------------------
@@ -318,15 +320,14 @@ struct str_urba (
 			if not silence do (
 			)
 			
-			
 			villes.fermer ()
 			batiments.fermer ()
 			facades.fermer ()	
 			toitures.fermer ()	
 			
-			
 			---- fermer la fenêtre ----
 			try destroydialog m_dialog catch ()
+			
 		),
 		
 		fn toggleOuverture =(
@@ -337,12 +338,57 @@ struct str_urba (
 			
 		),
 		
-		------------  Evenements	----------------------------------------------------------------------------------
-	on create do (
-		debug "Structure créée."
-	)
+		
+		
+		------------------------------------------------------------------------------------------------------------
+		fn generer 		_shape 	_idVille	= with redraw off (
+			
+			debug "Générer ville"
+			debug "Shape"	var:_shape.name
+			
+			max create mode
+			
+			local presetVille = ( villes.presets.get_preset	_idVille )
+			debug "Style"	var:presetVille.nom
+			
+			---- Status bar --------------------
+			progressStart "Urba: Génération de la ville ..." 
+			
+			---- Gestion du tracee ------------
+			tracee_origine	=	_shape
+			tracee = copy	tracee_origine
+			tracee.name = uniqueName	"Urba - Tracee "
+			
+			---- Preparation du tracee -------
+			outils.preparerShape tracee
+			
+			-- Création des batiments --
+			for idSpline = 1 to (numSplines tracee) do	
+				outils.creer_batiment	tracee	idSpline		presetVille
+			
+			-- status bar ---
+			progressEnd() 
+			
+			select tracee
+			
+		),
+		
+		
+		
+		------------  Evenements	--------------------------------------------------------------------------------
+		on create do (
+			debug "Structure créée."
+		)
+	
+	
 ) -- fin struct urba -----
 
+
+
+---------------		DEBUG	-----------------------------------------
+--- on vire les objets en trop
+for obj in objects do
+	if obj != $Line001	do delete obj
 
 
 try urba.fermer () catch ()
@@ -351,6 +397,10 @@ global urba  	=	str_urba () --	m_labib:Labib
 urba.ouvrir ()
 urba
 
+--- on vire les objets en trop
+for obj in objects do
+	if obj != $Line001	do delete obj
+---------------		DEBUG	-----------------------------------------
 
 
 )
