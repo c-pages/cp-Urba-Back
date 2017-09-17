@@ -22,10 +22,10 @@
 ------------------------------------------------------------------------------
 ----------	Fichiers annexes						--------------------------
 ------------------------------------------------------------------------------
-include "$userScripts\cp - GLOBAL\UI.ms"
-include "$userScripts\cp - GLOBAL\DragDialog.ms"
+-- include "$userScripts\cp - GLOBAL\UI.ms"
+-- include "$userScripts\cp - GLOBAL\DragDialog.ms"
 
-include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
+-- include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
 
 
 ------------------------------------------------------------------------------
@@ -52,12 +52,15 @@ rollout roll_urba_facades "Urba | Facades" width:279 height:273
 	---- le bouton pour fermer la fenetre ----
 	ImgTag 'ui_btnFermer' "X" pos:[roll_urba_facades.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
 	
+	ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
 
 	button 'btn_supprimer_facade' "-" pos:[244,22] width:21 height:21 align:#left
 	button 'btn_ajouter_facade' "+" pos:[224,22] width:21 height:21 align:#left
 	dropdownList 'ddl_facades' "" pos:[9,22] width:216 height:21 align:#left
 	
-	ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
+	edittext 'edt_nom_facade' "" pos:[118,46] width:147 height:16 align:#left
+	label 'lbl_nom_facade' "Nom:" pos:[12,46] width:52 height:15 align:#left
+	
 	
 	label 'lbl_sequence' "Séquence:" pos:[11,66] width:52 height:14 align:#left
 	listbox 'lbx_sequence' "" pos:[11,81] width:239 height:7 align:#left
@@ -70,8 +73,6 @@ rollout roll_urba_facades "Urba | Facades" width:279 height:273
 	GroupBox 'grp_prop' "Propriétés de l'élément :" pos:[11,181] width:253 height:78 align:#left
 	button 'btn_descendre' "v" pos:[250,94] width:16 height:16 align:#left
 	button 'btn_monter' "^" pos:[250,79] width:16 height:16 align:#left
-	edittext 'edt_nom_facade' "" pos:[118,46] width:147 height:16 align:#left
-	label 'lbl_nom_facade' "Nom:" pos:[12,46] width:52 height:15 align:#left
 	
 	dropdownList 'ddl_Type' "" pos:[77,194] width:178 height:21 align:#left
 	label 'lbl_type' "Type:" pos:[21,196] width:30 height:15 align:#left
@@ -246,18 +247,11 @@ rollout roll_urba_facades "Urba | Facades" width:279 height:273
 	
 	 */
 	
-		on edt_elem_nom entered text do (
-			m_prt.sequence.elements[ lbx_sequence.selection ].nom = text
-			actualiser ()
-		)
 	
 	on ddl_Type		selected sel do	m_prt.set_elemType 			sel
 	on lbx_sequence selected sel do	m_prt.selectionnerElem_id 		sel
-	on lbx_sequence doubleClicked sel do
-	(
-		actualiser ()
-	
-	)
+		
+	on lbx_sequence doubleClicked sel do	actualiser ()
 	
 	
 	---- Drag ----

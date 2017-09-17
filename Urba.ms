@@ -30,13 +30,15 @@ global urba
 include "$userScripts\cp - GLOBAL\UI.ms"
 include "$userScripts\cp - GLOBAL\DragDialog.ms"
 include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
+include "$userScripts\cp - GLOBAL\Manager de presets.ms"
 	
 ----- scripts externes -------------
-include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
+include "$userScripts\cp-Urba\Urba - Structures.ms"
 	
 include "$userScripts\cp-Urba\Urba - Villes.ms"
 include "$userScripts\cp-Urba\Urba - Batiments.ms"
 include "$userScripts\cp-Urba\Urba - Facades.ms"
+include "$userScripts\cp-Urba\Urba - Toitures.ms"
 	
 -- include "$userScripts\cp-Urba\Urba - Construction.ms"
 -- include "$userScripts\cp-Urba\Urba - Edit.ms"
@@ -69,38 +71,24 @@ rollout roll_urba "urba " width:279 height:85
 	--- ctro des imgtags ---
 	local m_titre
 	
-	
-	
 	fn shape_filt 		obj = superclassof obj == shape
-	------------  UI	----------------------------------------------------------------------------------		
 	
+	------------  UI	----------------------------------------------------------------------------------	
 	ImgTag 'ui_titre' "" pos:[16,4] width:66 height:18 align:#left
 	
 	---- le bouton pour fermer la fenetre ----
 	ImgTag 'ui_btnFermer' "X" pos:[roll_urba.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
 	
+	dropdownList 'ddl_villes' "" pos:[16,26] width:159 height:21 align:#left
 	
-
-	button 'btn_generer' "Générer" pos:[68,46] width:189 height:19 align:#left
+	checkbutton 'ckb_toiture' "T" pos:[234,26] width:21 height:21 align:#left
+	checkbutton 'ckb_ville' "V" pos:[174,26] width:21 height:21 align:#left
+	checkbutton 'ckb_batiment' "B" pos:[194,26] width:21 height:21 align:#left
+	checkbutton 'ckb_facade' "F" pos:[214,26] width:21 height:21 align:#left
 	
-	
-	checkbutton 'ckb_ville' "V" pos:[15,46] width:19 height:19 align:#left	
-	
-	
-	
-	
-	
-	checkbutton 'ckb_batiment' "B" pos:[33,46] width:19 height:19 align:#left
-	checkbutton 'ckb_facade' "F" pos:[51,46] width:19 height:19 align:#left
-	
-	
-	dropdownList 'ddl_villes' "" pos:[16,26] width:240 height:21 align:#left
-	
-	
+	button 'btn_generer' "Générer" pos:[16,46] width:239 height:21 align:#left
 	
 	------------  Fonctions	----------------------------------------------------------------------------------
-	
-	
 	fn actualiser =(
 		
 		local listTmp =#()
@@ -110,7 +98,6 @@ rollout roll_urba "urba " width:279 height:85
 			append listTmp 	preset.nom
 		ddl_villes.items = listTmp
 		
-		
 		local enable = false
 		if presets_villes.count > 0 do
 			enable = true		
@@ -118,9 +105,10 @@ rollout roll_urba "urba " width:279 height:85
 		ckb_ville.checked = m_prt.villes.estOuvert () 
 		ckb_batiment.checked = m_prt.batiments.estOuvert () 
 		ckb_facade.checked = m_prt.facades.estOuvert () 
-		
+		ckb_toiture.checked = m_prt.toitures.estOuvert () 
 		
 		btn_generer.enabled = enable
+		
 	)
 	
 	
@@ -231,6 +219,16 @@ rollout roll_urba "urba " width:279 height:85
 				m_prt.facades.ouvrir()
 		
 		)
+	on ckb_toiture changed state do
+	(
+		if m_prt.toitures.estOuvert () then
+			m_prt.toitures.fermer()
+		else (
+			m_prt.toitures.ouvrir pos:( GetDialogPos roll_urba + [ (GetDialogSize  roll_urba ).x ,0] )
+
+-- 			m_prt.toitures.selectionner_id	 ddl_villes.selection
+		)
+	)
 -- 	on ddl_villes selected arg do
 -- 		m_prt.villes.afficher	arg
 )
@@ -249,7 +247,9 @@ struct str_urba (
 	),
 	
 	
+	----------------------------------------------------------------------------------------------------------
 	------------  Membres	----------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------
 	public
 		
 		---- pointeurs ----
@@ -274,14 +274,17 @@ struct str_urba (
 		fichier_presets		= "$userScripts\cp-Urba\urba_presets.ini",
 		
 		---- STRUCTURES ----
-		outils = str_urba_outils (),
+-- 		outils = str_urba_outils (),
 		
 		villes 			= str_urba_villes 			m_urba:this,
 		batiments 	= str_urba_batiments 	m_urba:this,
 		facades 		= str_urba_facades 		m_urba:this,
+		toitures 		= str_urba_toitures 		m_urba:this,
 		
-		------------  Fonctions	----------------------------------------------------------------------------------
-		
+	----------------------------------------------------------------------------------------------------------
+	------------  Fonctions	----------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------
+	public
 		fn actualiser = m_dialog.actualiser (),
 		
 		fn estOuvert = m_estOuvert,
@@ -300,7 +303,8 @@ struct str_urba (
 			villes.presets.charger ()
 			batiments.presets.charger ()
 			facades.presets.charger ()
-			facades.elementsDeFacade.charger ()
+			facades.elementsDeFacade.charger ()			
+			toitures.presets.charger ()
 			
 			---- fenetre ----
 			m_dialog.initialiser 	this
@@ -318,6 +322,7 @@ struct str_urba (
 			villes.fermer ()
 			batiments.fermer ()
 			facades.fermer ()	
+			toitures.fermer ()	
 			
 			
 			---- fermer la fenêtre ----

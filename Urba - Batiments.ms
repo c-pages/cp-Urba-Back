@@ -33,11 +33,11 @@
 ------------------------------------------------------------------------------
 ----------	Fichiers annexes						--------------------------
 ------------------------------------------------------------------------------
-include "$userScripts\cp - GLOBAL\UI.ms"
-include "$userScripts\cp - GLOBAL\DragDialog.ms"
+-- include "$userScripts\cp - GLOBAL\UI.ms"
+-- include "$userScripts\cp - GLOBAL\DragDialog.ms"
 
 -- include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
-include "$userScripts\cp-Urba\Urba - Batiment - edition.ms"
+-- include "$userScripts\cp-Urba\Urba - Batiment - edition.ms"
 
 ------------------------------------------------------------------------------
 ----------	Fenetre								 -------------------------
@@ -58,7 +58,7 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	------------  UI	----------------------------------------------------------------------------------		
 
 	---- le bouton pour fermer la fenetre ----
-	ImgTag 'ui_btnFermer' "X" pos:[roll_urba_batiment.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
+	ImgTag 'ui_btnFermer' "X" pos:[roll_urba_batiments.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
 	
 	button 'btn_supprimer_bat' "-" pos:[244,22] width:21 height:21 align:#left
 	button 'btn_ajouter_bat' "+" pos:[224,22] width:21 height:21 align:#left
@@ -118,9 +118,12 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 			spn_etages_max.value			= m_prt.batCourant.etages_max
 			spn_etages_hauteur.value 	= m_prt.batCourant.etages_hauteur
 			spn_rdc_hauteur.value 			= m_prt.batCourant.rdc_hauteur
--- 			ddl_toiture....		= m_prt.batCourant.toiture_type
+-- 			ddl_toiture....		= m_prt.batCourant.toiture
 			
 			get_presetsFacades
+			
+			
+			
 			
 			--- liste des etages et RdC-----
 			local listTmp =#()
@@ -129,15 +132,27 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 			ddl_etages.items = listTmp
 			ddl_rdc.items = listTmp
 			
-			if m_prt.batCourant.etages_facade	!= "" then (
-				
+			if m_prt.batCourant.etages_facade	!= "" then (				
 				local facadeTmp = m_prt.m_urba.facades.presets.get_parIdUnique		m_prt.batCourant.etages_facade
-				ddl_etages.selection = m_prt.m_urba.facades.presets.trouver_ID					facadeTmp
-				
-			) else (
-				
-				ddl_etages.selection = 0
-			)
+				ddl_etages.selection = m_prt.m_urba.facades.presets.trouver_ID					facadeTmp				
+			) else 	ddl_etages.selection = 0
+			
+			
+			
+			--- liste des toitures -----
+			local listTmp =#()
+			for toit in m_prt.get_presetsToitures () do
+				append listTmp toit.nom
+			ddl_toiture.items = listTmp
+			
+			if m_prt.batCourant.toiture	!= "" then (				
+				local toitureTmp = m_prt.m_urba.toitures.presets.get_parIdUnique		m_prt.batCourant.toiture
+				ddl_toiture.selection = m_prt.m_urba.toitures.presets.trouver_ID					toitureTmp				
+			) else 	ddl_toiture.selection = 0
+			
+			
+			
+			
 			
 			
 			if m_prt.batCourant.rdc_facade	!= "" then (
@@ -216,6 +231,7 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	
 	on ddl_rdc 				selected  	val 	do 	m_prt.changer_facadeRdC 		val
 	on ddl_etages			selected  	val 	do 	m_prt.changer_facadeEtages 	val
+	on ddl_toiture			selected  	val 	do 	m_prt.changer_toiture 				val
 	
 	
 	
@@ -356,6 +372,26 @@ struct str_urba_batiments (
 		
 									
 	------------	Manager des batiments		------------------------------------------------------------------------------------------
+		
+		/* 
+		fn retirer_toitureID 	_id =(
+			debug "retirer_toitureID" var:_id
+		
+			deleteItem	toitureCourante.toiture 		_id
+			
+			presets.sauvegarder		villeCourante			
+			actualiser ()
+		), */
+		fn a_toiture		_bat		_idUniqueToiture	=(
+			local result = false
+			if 	_bat.toiture		==	_idUniqueToiture  do
+				result = true
+			result
+		),
+		
+		
+		
+		
 		fn creer_nouveau =(
 			presets.creer_preset ()
 			if not m_estOuvert do ouvrir ()
@@ -392,6 +428,9 @@ struct str_urba_batiments (
 		),
 		fn get_presetsFacades =(
 			m_urba.facades.presets.get ()
+		),
+		fn get_presetsToitures =(
+			m_urba.toitures.presets.get ()
 		),
 		
 		fn changerNom 	_nvNom =(
@@ -439,6 +478,14 @@ struct str_urba_batiments (
 			debug "changer_facadeEtages" var:_id
 			
 			batCourant.etages_facade = ( m_urba.facades.presets.get_preset _id		 ).idUnique 
+			presets.sauvegarder		batCourant
+			actualiser ()
+			m_urba.actualiser ()
+		),
+		fn changer_toiture 	_id	 =(
+			debug "changer_toiture" var:_id
+			
+			batCourant.toiture = ( m_urba.toitures.presets.get_preset 	_id		 ).idUnique 
 			presets.sauvegarder		batCourant
 			actualiser ()
 			m_urba.actualiser ()

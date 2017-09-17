@@ -19,9 +19,8 @@
 ------------------------------------------------------------------------------
 ----------	Fichiers annexes						--------------------------
 ------------------------------------------------------------------------------
-include "$userScripts\cp - GLOBAL\UI.ms"
-include "$userScripts\cp - GLOBAL\DragDialog.ms"
-include "$userScripts\cp - GLOBAL\Manager de presets.ms"
+-- include "$userScripts\cp - GLOBAL\UI.ms"
+-- include "$userScripts\cp - GLOBAL\DragDialog.ms"
 
 -- include "$userScripts\cp-Urba\Urba - Structures - 2.ms"
 -- include "$userScripts\cp-Urba\Urba - Ville - edition.ms"
@@ -279,7 +278,6 @@ struct str_urba_villes (
 		villeCourante,
 		
 		
-		------------	UI		------------------------------------------------------------------------------------------
 		
 	----------------------------------------------------------------------------------------------------------
 	------------  Fonctions	------------------------------------------------------------------------------
@@ -363,6 +361,9 @@ struct str_urba_villes (
 				result = true
 			result
 		),
+		
+		
+		
 		
 		
 		fn ouvrir_batiment 	_id =(
