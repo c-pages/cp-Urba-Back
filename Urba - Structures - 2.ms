@@ -191,12 +191,12 @@ struct str_urba_preset_batiment (
 	
 	toiture_type		=	"",
 	
-	etages_type		=	"",
+	etages_facade	=	"",
 	etages_min			= 	1,
 	etages_max 		= 	5,
 	etages_hauteur 	= 	250,
 	
-	rdc_type			=	"",
+	rdc_facade			=	"",
 	rdc_hauteur 		= 	300
 )
 

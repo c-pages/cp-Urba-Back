@@ -169,13 +169,12 @@ rollout roll_urba_facades "Urba | Facades" width:279 height:273
 			)
 		)
 		
-		
-		
 		if 	lbx_sequence.selection == 0  do 
 			btn_supprimer_element.enabled = false
 		
 		if lbx_sequence.selection <= 1 do
-			btn_monter.enabled = false		
+			btn_monter.enabled = false
+		
 		if lbx_sequence.selection == lbx_sequence.items.count do
 			btn_descendre.enabled = false
 	)
@@ -255,8 +254,8 @@ rollout roll_urba_facades "Urba | Facades" width:279 height:273
 	on ddl_Type		selected sel do	m_prt.set_elemType 			sel
 	on lbx_sequence selected sel do	m_prt.selectionnerElem_id 		sel
 	on lbx_sequence doubleClicked sel do
-(
-	actualiser ()
+	(
+		actualiser ()
 	
 	)
 	
@@ -454,6 +453,8 @@ struct str_urba_facades (
 			m_estOuvert 		= false
 			--- Actiualiser position pour reouverture prochaine ----
 			m_dialogPos = getDialogPos m_dialog
+			
+			m_urba.actualiser ()
 			
 			---- fermer la fenêtre ----
 			try destroydialog m_dialog catch ()

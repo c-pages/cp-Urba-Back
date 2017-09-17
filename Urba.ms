@@ -115,6 +115,11 @@ rollout roll_urba "urba " width:279 height:85
 		if presets_villes.count > 0 do
 			enable = true		
 		
+		ckb_ville.checked = m_prt.villes.estOuvert () 
+		ckb_batiment.checked = m_prt.batiments.estOuvert () 
+		ckb_facade.checked = m_prt.facades.estOuvert () 
+		
+		
 		btn_generer.enabled = enable
 	)
 	
@@ -199,9 +204,6 @@ rollout roll_urba "urba " width:279 height:85
 		etatBtnFermer #Repos
 	on ui_btnFermer click do
 		m_prt.fermer ()
-	
-	
-	
 	
 	on ckb_ville changed state do
 	(

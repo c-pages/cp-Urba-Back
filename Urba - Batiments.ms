@@ -66,7 +66,7 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	
 	
 	ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
--- 	ImgTag 'ui_log' "" pos:[8,43] width:66 height:18 align:#left
+	
 	
 	
 	edittext 'edt_bat_nom' "" pos:[115,47] width:147 height:16 align:#left
@@ -78,36 +78,19 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	
 	spinner 'spn_etages_max' "" pos:[117,126] width:145 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
 	label 'lbl14' "Nbr. max.:" pos:[29,125] width:51 height:15 align:#left
--- 	spinner 'spn_surf_min' "" pos:[117,64] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
--- 	label 'lbl_surf_min' "Surface min.:" pos:[29,64] width:68 height:15 align:#left
+	
 	spinner 'spn_etages_hauteur' "" pos:[117,141] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 	label 'lbl18' "Hauteur:" pos:[29,140] width:44 height:15 align:#left
 	spinner 'spn_rdc_hauteur' "" pos:[117,180] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 	label 'lbl19' "Hauteur:" pos:[29,179] width:46 height:15 align:#left
--- 	label 'lbl20' "Sous-bassement:" pos:[12,229] width:90 height:15 align:#left
--- 	label 'lbl21' "m²" pos:[247,64] width:19 height:15 align:#left
+	
 	dropdownList 'ddl_toiture' "" pos:[119,67] width:144 height:21 align:#left
-	label 'lbl22' "Toiture:" pos:[12,73] width:38 height:15 align:#left
+	label 'lbl22' "Toiture:" pos:[12,71] width:38 height:15 align:#left
 	dropdownList 'ddl_etages' "" pos:[119,91] width:144 height:21 align:#left
-	label 'lbl23' "Etages:" pos:[12,97] width:38 height:15 align:#left
+	label 'lbl23' "Etages:" pos:[12,95] width:38 height:15 align:#left
 	dropdownList 'ddl_rdc' "" pos:[119,160] width:144 height:21 align:#left
-	label 'lbl24' "RdC:" pos:[12,166] width:25 height:15 align:#left
--- 	spinner 'spn_surf_max' "" pos:[117,79] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
--- 	label 'lbl_surf_max' "Surface max.:" pos:[29,78] width:68 height:15 align:#left
--- 	label 'lbl26' "m²" pos:[248,78] width:19 height:15 align:#left
--- 	spinner 'spn_ssBassement_hauteur' "" pos:[117,243] width:145 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
--- 	label 'lbl27' "Hauteur:" pos:[29,242] width:55 height:15 align:#left
-
-	/*
-	spinner 'spn_surf_min' "" pos:[117,64] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
+	label 'lbl24' "RdC:" pos:[12,164] width:25 height:15 align:#left
 	
-	label 'lbl_surf_min' "Surface min.:" pos:[29,64] width:68 height:15 align:#left
-	label 'lbl21' "m²" pos:[247,64] width:19 height:15 align:#left
-	
-	spinner 'spn_surf_max' "" pos:[117,79] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
-	label 'lbl_surf_max' "Surface max.:" pos:[29,78] width:68 height:15 align:#left
-	label 'lbl26' "m²" pos:[248,78] width:19 height:15 align:#left
-	*/
 	------------  Fonctions	----------------------------------------------------------------------------------
 	---- Gere l'état du bouton  -----
 	fn etatBtnFermer		_etat =(
@@ -131,15 +114,42 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 		local enable_ui = true
 		if m_prt.batCourant != undefined then (
 			edt_bat_nom.text 				= m_prt.batCourant.nom
--- 			spn_surf_min.value 				= m_prt.batCourant.surf_min
--- 			spn_surf_max.value 				= m_prt.batCourant.surf_max
 			spn_etages_min.value 			= m_prt.batCourant.etages_min
 			spn_etages_max.value			= m_prt.batCourant.etages_max
 			spn_etages_hauteur.value 	= m_prt.batCourant.etages_hauteur
 			spn_rdc_hauteur.value 			= m_prt.batCourant.rdc_hauteur
 -- 			ddl_toiture....		= m_prt.batCourant.toiture_type
--- 			ddl_etages..... 	= m_prt.batCourant.etages_type
--- 			ddl_rdc.....	 		= m_prt.batCourant.rdc_type
+			
+			get_presetsFacades
+			
+			--- liste des etages et RdC-----
+			local listTmp =#()
+			for presetFacade in m_prt.get_presetsFacades () do
+				append listTmp presetFacade.nom
+			ddl_etages.items = listTmp
+			ddl_rdc.items = listTmp
+			
+			if m_prt.batCourant.etages_facade	!= "" then (
+				
+				local facadeTmp = m_prt.m_urba.facades.presets.get_parIdUnique		m_prt.batCourant.etages_facade
+				ddl_etages.selection = m_prt.m_urba.facades.presets.trouver_ID					facadeTmp
+				
+			) else (
+				
+				ddl_etages.selection = 0
+			)
+			
+			
+			if m_prt.batCourant.rdc_facade	!= "" then (
+				
+				local facadeTmp = m_prt.m_urba.facades.presets.get_parIdUnique		m_prt.batCourant.RdC_facade
+				ddl_rdc.selection = m_prt.m_urba.facades.presets.trouver_ID							facadeTmp
+				
+			) else (
+				
+				ddl_rdc.selection = 0
+			)
+			
 			
 			
 		) else (
@@ -154,6 +164,8 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 		)
 		for ui in ui_parametres do
 			ui.enabled = enable_ui
+		
+		
 		
 	)
 	
@@ -196,12 +208,14 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	on spn_rdc_hauteur 		changed 	val	do 	m_prt.changer_rdcHauteur			val
 	
 	
-	on btn_edit pressed  do m_prt.edition.ouvrir ()
+-- 	on btn_edit 					pressed  			do m_prt.edition.ouvrir ()
 	
 	
 	on ddl_bats 				selected  	val 	do 	m_prt.selectionner_id 	val
 	
 	
+	on ddl_rdc 				selected  	val 	do 	m_prt.changer_facadeRdC 		val
+	on ddl_etages			selected  	val 	do 	m_prt.changer_facadeEtages 	val
 	
 	
 	
@@ -234,6 +248,16 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 ----------	Structure								 -------------------------
 ------------------------------------------------------------------------------
 struct str_urba_batiments (
+	
+	
+	------------ DEBUG	----------------------------------------------------------------------------------
+	m_debug = true,
+	m_dbgPrefix ="urba | Batiments",
+	fn debug 	_txt  var:	 param:    =(
+		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		catch ()
+	),
+	
 	----------------------------------------------------------------------------------------------------------
 	------------  Membres	----------------------------------------------------------------------------------
 	----------------------------------------------------------------------------------------------------------
@@ -322,6 +346,8 @@ struct str_urba_batiments (
 			--- Actiualiser position pour reouverture prochaine ----
 			m_dialogPos = getDialogPos m_dialog
 			
+			m_urba.actualiser ()
+			
 			---- fermer la fenêtre ----
 			try destroydialog m_dialog catch ()
 			
@@ -364,7 +390,9 @@ struct str_urba_batiments (
 			actualiser ()
 			m_urba.actualiser ()
 		),
-		
+		fn get_presetsFacades =(
+			m_urba.facades.presets.get ()
+		),
 		
 		fn changerNom 	_nvNom =(
 			batCourant.nom = _nvNom
@@ -396,21 +424,26 @@ struct str_urba_batiments (
 			presets.sauvegarder		batCourant
 			actualiser ()
 			m_urba.actualiser ()
+		),
+		
+		
+		fn changer_facadeRdC 		_id	 =(
+			debug "changer_facadeRdC" var:_id
+			
+			batCourant.rdc_facade = ( m_urba.facades.presets.get_preset 	_id	 ).idUnique
+			presets.sauvegarder		batCourant
+			actualiser ()
+			m_urba.actualiser ()
+		),
+		fn changer_facadeEtages 	_id	 =(
+			debug "changer_facadeEtages" var:_id
+			
+			batCourant.etages_facade = ( m_urba.facades.presets.get_preset _id		 ).idUnique 
+			presets.sauvegarder		batCourant
+			actualiser ()
+			m_urba.actualiser ()
 		)
 		
-	/* 
-	surf_min			= 	50.,
-	surf_max 		= 	350.,
-	
-	toiture_type		=	"",
-	
-	etages_type		=	"",
-	etages_min			= 	50,
-	etages_max 		= 	350,
-	etages_hauteur 	= 	250,
-	
-	rdc_type			=	"",
-	rdc_hauteur 		= 	300 */
 )
 
 

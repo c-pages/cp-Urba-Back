@@ -64,10 +64,10 @@ rollout roll_urba_villes "urba_villes" width:279 height:290
 	button 'btn_ajouter_bat' "+" pos:[234,65] width:16 height:16 align:#left
 
 	label 'lbl_batiments' "Bâtiments:" pos:[11,66] width:52 height:14 align:#left
-	spinner 'spn_proba' "" pos:[118,218] width:147 height:16 align:#left
+	spinner 'spn_proba' "" pos:[118,218] width:145 height:16 align:#left
 
 	
-	label 'lbl_proba' "Probabilité:" pos:[13,218] width:55 height:14 align:#left
+	label 'lbl_proba' "Probabilité:" pos:[11,218] width:55 height:14 align:#left
 
 
 	button 'btn_supprimer_ville' "-" pos:[244,22] width:21 height:21 align:#left
@@ -76,11 +76,11 @@ rollout roll_urba_villes "urba_villes" width:279 height:290
 
 	spinner 'spn_surf_min' "" pos:[118,233] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
 	
-	label 'lbl_surf_min' "Surface min.:" pos:[13,233] width:68 height:15 align:#left
+	label 'lbl_surf_min' "Surface min.:" pos:[11,233] width:68 height:15 align:#left
 	label 'lbl21' "m²" pos:[249,234] width:19 height:15 align:#left
 	
 	spinner 'spn_surf_max' "" pos:[118,248] width:128 height:16 range:[0,1e+13,0] scale:1 align:#left
-	label 'lbl_surf_max' "Surface max.:" pos:[13,247] width:68 height:15 align:#left
+	label 'lbl_surf_max' "Surface max.:" pos:[11,247] width:68 height:15 align:#left
 	label 'lbl26' "m²" pos:[249,248] width:19 height:15 align:#left
 	------------  FONCTIONS	----------------------------------------------------------------------------------
 	---- Gere l'état du bouton  -----
@@ -182,7 +182,7 @@ rollout roll_urba_villes "urba_villes" width:279 height:290
 		--- les evenements -------
 		id = 0
 		for bat in listeBats do txt_corps += "on " + bat.idUnique + " picked do urba.villes.ajouter_batimentID " + (id +=1) as string + "\n"			
-		txt_corps += "on creerBat picked do ( urba.batiments.creer_nouveau (); urba.villes.ajouter_batimentID	urba.batiments.presets.count )\n"	
+		txt_corps += "on creerBat picked do ( urba.batiments.creer_nouveau (); urba.villes.ajouter_batimentID	(urba.batiments.presets.get()).count )\n"	
 		
 		txt_corps += ")"
 		
@@ -320,6 +320,8 @@ struct str_urba_villes (
 			m_estOuvert 		= false
 			--- Actiualiser position pour reouverture prochaine ----
 			m_dialogPos = getDialogPos m_dialog
+			
+			m_urba.actualiser ()
 			
 			---- fermer la fenêtre ----
 			try destroydialog m_dialog catch ()
