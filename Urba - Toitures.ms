@@ -236,13 +236,13 @@ struct str_urba_toitures (
 			m_estOuvert 		= true
 			if pos != unsupplied do	m_dialogPos = pos
 			---- creation de la fenetre ----
-			createDialog m_dialog 	bgcolor:				col_fenetreFond 	 \
-											fgcolor:				col_fenetreTxt 	\
+			createDialog m_dialog 	fgcolor:				col_fenetreTxt 	\
 											style:				#(#style_resizing) \
 											lockHeight:			true	\
 											lockWidth:			true	\
 											pos:					m_dialogPos
-			
+-- 			bgcolor:				col_fenetreFond 	 \
+-- 											
 			---- initialisation de la fenetre ----
 			m_dialog.m_prt	 	= this
 			m_dialog.initialiser ()
@@ -265,7 +265,7 @@ struct str_urba_toitures (
 			toitureCourante.nom = _nvNom
 			presets.sauvegarder		toitureCourante
 			actualiser ()
--- 			m_urba.batiments.actualiser ()
+			m_urba.batiments.actualiser ()
 		),
 		
 		
@@ -277,6 +277,7 @@ struct str_urba_toitures (
 		fn ajouter_toiture =(
 			local nvPreset = presets.creer_preset ()
 			toitureCourante = nvPreset
+			m_urba.batiments.actualiser ()
 			actualiser ()
 		),
 		fn supprimer_toiture 	_id	=(
@@ -303,6 +304,7 @@ struct str_urba_toitures (
 				selectionner_id 	( m_dialog.ddl_bats.selection - 1 )
 			)
 			actualiser ()
+			m_urba.batiments.actualiser ()
 			m_urba.actualiser ()
 		)
 	

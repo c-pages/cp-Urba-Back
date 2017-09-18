@@ -125,9 +125,9 @@ fn placer_modele 	model	knt_1	knt_2 	reverse:false		=(
 	if nbr_modeles > 0 then (
 		for i = 1 to nbr_modeles do (
 			
-			nv_modele 					= copy model
+			nv_modele 				= copy model
 			append nvxNodes 	nv_modele
-			ptsOuverts = get_pointsOuverts 	model
+			ptsOuverts 			= get_pointsOuverts 	model
 			
 			rotate nv_modele (angleaxis rot [0,0,1])
 			nv_modele.pos 				= (knt_1 + i * ecart - ecart/2) 

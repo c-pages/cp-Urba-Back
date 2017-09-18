@@ -300,13 +300,13 @@ struct str_urba_villes (
 -- 			m_dialogPos += [ 0, (GetDialogSize m_urba.m_dialog).y ]
 			
 			---- creation de la fenetre ----
-			createDialog m_dialog 	bgcolor:				col_fenetreFond 		\
-											fgcolor:				col_fenetreTxt 		\
+			createDialog m_dialog 	fgcolor:				col_fenetreTxt 		\
 											style:				#(#style_resizing) 	\
 											lockHeight:			true	\
 											lockWidth:			true	\
 											pos:					m_dialogPos
-			
+-- 			bgcolor:				col_fenetreFond 		\
+-- 											
 			---- initialisation de la fenetre ----
 			m_dialog.m_prt	 	= this
 			m_dialog.initialiser 	()

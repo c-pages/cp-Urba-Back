@@ -340,13 +340,13 @@ struct str_urba_batiments (
 			if pos != unsupplied do	m_dialogPos = pos
 				
 			---- creation de la fenetre ----
-			createDialog m_dialog 	bgcolor:				col_fenetreFond 		\
-											fgcolor:				col_fenetreTxt 		\
+			createDialog m_dialog 	fgcolor:				col_fenetreTxt 		\
 											style:				#(#style_resizing) 	\
 											lockHeight:			true	\
 											lockWidth:			true	\
 											pos:					m_dialogPos
-			
+-- 			bgcolor:				col_fenetreFond 		\
+-- 											
 			---- initialisation de la fenetre ----
 			m_dialog.m_prt	 	= this
 			m_dialog.initialiser ()
@@ -389,6 +389,14 @@ struct str_urba_batiments (
 			result
 		),
 		
+		fn a_facade		_bat		_idUniqueFacade	=(
+			local result = false
+			if 	_bat.rdc_facade		==	_idUniqueFacade  do
+				result = true
+			if 	_bat.etages_facade		==	_idUniqueFacade  do
+				result = true
+			result
+		),
 		
 		
 		

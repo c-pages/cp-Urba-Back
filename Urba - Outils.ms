@@ -146,6 +146,29 @@ struct str_urba_outils (
 	
 	
 	-------- Divers ------------------------------------------------
+	
+	fn get_angle_vecteur 	vec	=(
+		
+		local result = 0
+		local angle_tan = atan ( vec.y / vec.x )
+		
+		if vec.x >=0 then (
+			if vec.y >= 0 then 	result = angle_tan
+			else 	result = 360 + angle_tan
+		) else (		
+			if vec.y >= 0 then 	result = 180 + angle_tan
+			else result = 180 + angle_tan
+		)
+		
+		result
+	),
+	
+	fn get_largeurNodeModele 	_nd	=(
+		local  BB = nodeGetBoundingBox 	_nd	(matrix3 1)
+		local largeur = BB[2].x -  BB[1].x 
+		largeur
+	),
+	
 	fn get_paramsBatiment 	_nodeBat =(
 		
 		local porteurDeParams = str_params_batiment ()
@@ -185,6 +208,7 @@ struct str_urba_outils (
 		local tracee 		= param.tracee
 		local idSpline		= param.idSpline
 		get_surfSplineBB	tracee	idSpline
+
 	),
 	
 	fn pointLePlusHautsurY 	shp 	spline	=(
@@ -197,25 +221,27 @@ struct str_urba_outils (
 				result_id = i
 			)
 		)
+		
+		debug "pointLePlusHautsurY"	var:result_id
 		result_id
 	),
 
 	fn estPolygone_sensPositif 	shp	idSpline =(
 		
-		local result 			= false
-		local id_pointHaut = pointLePlusHautsurY  	shp	idSpline 
+		local result 			= true
+		local id_pointHaut 	= pointLePlusHautsurY  	shp	idSpline 
 		
-		local	id_pt_1 	= id_pointHaut - 1 	---- le point d'avant
+		local	id_pt_1 		= id_pointHaut - 1 	---- le point d'avant
 		local	id_pt_ori 	= id_pointHaut 		---- le point origine
-		local	id_pt_2 	= id_pointHaut + 1	---- le point d'apres
+		local	id_pt_2 		= id_pointHaut + 1	---- le point d'apres
 		
 		-- Boucler limite nombre des points
 		if id_pt_1 < 1 do id_pt_1 = numKnots shp	idSpline 
 		if id_pt_2 > numKnots shp	idSpline  do id_pt_2 = 1
 		
-		local	pt_1 	= getKnotPoint shp 	idSpline 	id_pt_1
+		local	pt_1 		= getKnotPoint shp 	idSpline 	id_pt_1
 		local	pt_ori 	= getKnotPoint shp 	idSpline 	id_pt_ori
-		local	pt_2 	= getKnotPoint shp 	idSpline 	id_pt_2
+		local	pt_2 		= getKnotPoint shp 	idSpline 	id_pt_2
 
 		local	vec1 =  normalize ( pt_1 - pt_ori )
 		local	vec2 =  normalize ( pt_2 - pt_ori )
@@ -249,7 +275,101 @@ struct str_urba_outils (
 		
 	),
 	
--- 	fn get_surface	
+	
+	
+	
+	nomModelTemp,
+	
+	fn preparer_modelFacade 	_node	_elementFacade	=  (
+		
+		nomModelTemp = ""
+		
+		---- fenetre pour le nom du model ----------
+		rollout roll_getNomModele "" width:269 height:61
+		(
+			editText 'edt_nom' "" pos:[94,10] width:159 height:16 align:#left
+			button 'btn_annuler' "Annuler" pos:[157,35] width:49 height:16 align:#left
+			
+			
+			button 'btn_valider' "Valider" pos:[205,35] width:49 height:16 align:#left
+			label 'lbl44' "Nom du modèle:" pos:[14,11] width:80 height:18 align:#left
+			
+			fn actualiser =(
+				btn_valider.enabled = not edt_nom.text == "" 
+			)
+			
+			on roll_getNomModele 	close 	do ()
+			on roll_getNomModele 	open 		do (
+				actualiser ()
+				setFocus edt_nom
+			)
+			on edt_nom 			changed _txt 	do actualiser ()
+			
+			on edt_nom 			entered _txt 	do (
+				nomModelTemp = edt_nom.text 
+				destroyDialog roll_getNomModele
+			)
+			
+			on btn_valider pressed do	(
+				nomModelTemp = edt_nom.text 
+				destroyDialog roll_getNomModele
+			)
+			on btn_annuler pressed do destroyDialog roll_getNomModele
+			
+		)
+		
+		createDialog	roll_getNomModele		 modal:true	 	escapeEnable:false
+		
+		
+		
+		
+		if nomModelTemp != "" do (		
+			
+			--- preparation du model -------
+			local nvModel_node = copy _node 
+			convertToPoly 	nvModel_node
+			local  BB = nodeGetBoundingBox 	nvModel_node	(matrix3 1)
+			nvModel_node.pivot = BB[1]
+			nvModel_node.rotation = quat 0 0 0 1
+			nvModel_node.pos  = [0,0,0]
+			
+			--- sauvegarde du fichier MAX ------
+			
+			local nomFichier =	GetDir  #userScripts	+	"\cp-Urba\lib\facades\\" + nomModelTemp + ".max"
+			saveNodes 		nvModel_node	 nomFichier	quiet:true
+			delete nvModel_node
+			
+			
+			---- creation du preset Model -----
+			local nvModele 		= m_urba.facades.modeles.creer_preset ()
+			nvModele.nom 		= nomModelTemp
+			nvModele.fichier 		= nomFichier
+			
+			m_urba.facades.modeles.sauvegarder nvModele
+			
+			---- maj de l'element de facade -----
+			_elementFacade.model = 	nvModele.idUnique
+			m_urba.facades.elementsDeFacade.sauvegarder 	_elementFacade
+			
+			nvModel
+			
+		)
+		
+		
+	),
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	-------- Modelisation Fondamentale-------------------------
@@ -298,7 +418,7 @@ struct str_urba_outils (
 		polyop.createEdge _object (verts+3) (verts+4)
 		polyop.createEdge _object (verts+4) (verts+1)
 		
-		polyop.createPolygon _object  #((verts+1),(verts+2),(verts+3),(verts+4))
+		polyop.createPolygon _object  #((verts+4),(verts+3),(verts+2),(verts+1))
 		
 		_object
 		
@@ -323,6 +443,7 @@ struct str_urba_outils (
 	),
 	
 	fn choisir_styleBatiment		_tracee 	_idSpline		_styleVille =(
+		
 		local surfaceBat = get_surfSplineBB		_tracee 	_idSpline
 		local id_stylesPossible	=	#()
 		local id_styleBatChoisi
@@ -375,22 +496,72 @@ struct str_urba_outils (
 	
 	
 	
+	listeDesPresetsModels	= #(),
+	listeDesNodesModels	= #(),
 	
 	
+	fn supprimer_modelesImportes =(
+		for nd in  listeDesNodesModels do
+			delete nd
+		listeDesPresetsModels	= #()
+		listeDesNodesModels	= #()
+	),
+	
+	fn trouver_nodeModel	_model 	=(
+		debug "trouver_nodeModel"
+		debug "_model" var:_model
+		local id = findItem 	listeDesPresetsModels		_model
+		debug "id" var:id
+		debug "listeDesNodesModels" var:listeDesNodesModels
+		debug "listeDesNodesModels[id]" var:listeDesNodesModels[id]
+		listeDesNodesModels[id]
+	),
 	
 	
-	
+	fn collecter_modeles 	_presetVille	=(
+		
+		
+		--- collect des presets des models ----
+		listeDesPresetsModels	= #()
+		for bat_idU in _presetVille.batiments do (
+			local bat = m_urba.batiments.presets.get_parIdUnique		bat_idU
+			
+			if bat.rdc_facade != "" do (
+				local facadeTmp = m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
+				for elem_idU in facadeTmp.elements do (
+					local elem = m_urba.facades.elementsDeFacade.get_parIdUnique		elem_idU
+					
+					if elem.type == 3 do (
+						local modelTmp = m_urba.facades.modeles.get_parIdUnique		elem.model
+						appendIfUnique listeDesPresetsModels	modelTmp
+					)
+				)
+			)
+		)
+		
+		
+		-- merger les modeles ---
+		listeDesNodesModels 				= #()
+		for presetModel in listeDesPresetsModels do (
+			
+			local selectBack = selection
+			
+			mergeMAXFile 	presetModel.fichier	#select 	#noRedraw	quiet:true
+			local modelImport = selection[1]
+			
+			append listeDesNodesModels 	modelImport
+			
+			select selectBack
+		)
+		
+	),
 	
 	
 	
 	-------- Generation des facades ------------------------------------------------------
 	fn creer_facade		_nodeBat	_knt_1		_knt_2 	_altitude 	_hauteur	_styleFacade	=(
-		debug  "creer_facade"
--- 		debug  "_knt_1"	var:_knt_1
--- 		debug  "_knt_2"	var:_knt_2
--- 		debug  "_styleFacade"	var:_styleFacade
 		
-		---- Analyse de la sequence d'élements de facades ------
+		---- ANALYSE de la SEQUENCE d'élements de facades ------
 		local largeurTotal 			= distance		_knt_1	_knt_2
 		local nbrElemExtensibles 	= 0
 		local largeurFixMin 			= 0
@@ -401,30 +572,39 @@ struct str_urba_outils (
 			case presetElement.type of (
 				1: (	----	extensible ----
 						nbrElemExtensibles += 1
-					)
+				)
 				2: (	----	largeur fixe ----
 						largeurFixMin += presetElement.largeur
-					)
+				)
 				3: (	----	model ----
-					
-					)
+					local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
+					local ndModel 		= trouver_nodeModel	presetModel
+					largeurFixMin +=	get_largeurNodeModele		ndModel
+				)
+				4: (	----	groupe ouverture ----
+						
+				)
+				5: (	----	groupe fermeture ----
+						
+				)
 			)
 		)
 		
 		largeurExtensible = ( largeurTotal - largeurFixMin )	/	nbrElemExtensibles
 		
-		debug  "largeurTotal"			var:largeurTotal
-		debug  "largeurFixMin"			var:largeurFixMin
 		
-		---- Creation des geometries ----------------------
+		
+		
+		---- CREATION des GEOMETRIES ----------------------
 		if largeurTotal > largeurFixMin	then (
--- 			
--- 			debug  "		nbrElemExtensibles"	var:nbrElemExtensibles
--- 			debug  "		largeurExtensible"		var:largeurExtensible
 			
 			local pt1 		= 	_knt_1
 			local pt2		
 			local normDir	=	normalize (_knt_2 - _knt_1)
+			local rot 		= get_angle_vecteur		normDir
+			local nvxNodes = #()
+			
+			
 			for idElem in _styleFacade.elements do (
 				local presetElement			= m_urba.facades.elementsDeFacade.get_parIdUnique idElem
 				case presetElement.type of (
@@ -437,20 +617,44 @@ struct str_urba_outils (
 							creerFaceVerticale 	_nodeBat	pt1 	pt2 	&_altitude		_hauteur	
 						)
 					3: (	----	model ----
-						
+							local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
+							local modelSource 	= trouver_nodeModel		presetModel
+							
+							local nv_modele 		= copy modelSource
+							append nvxNodes 	nv_modele
+							
+							rotate nv_modele (angleaxis rot [0,0,1])
+							nv_modele.pos 				= (pt1) 
+							nv_modele.pos.z 				= _altitude
+							pt2 = pt1 + normDir * (get_largeurNodeModele		modelSource)
 						)
 				)
 				pt1 = pt2
 			)
+			
+			
+			----	on attache tout les nodes créés	----
+			for nd in  nvxNodes do 
+				polyop.attach		_nodeBat	nd
+			
 			
 		) else (
 			debug  "		*********************************************************************"	
 			creerFaceVerticale 	_nodeBat	_knt_1 	_knt_2 	&_altitude 		_hauteur	
 		)
 		
+		
+		
+		
+-- 		---- on supprime les models importés ---
+-- 		for model in listeDesModels do
+-- 			delete model
 	),
 	
-		-------- Generation des facades ------------------------------------------------------
+	
+	
+	
+	-------- Generation des facades ------------------------------------------------------
 	fn creer_etage		_nodeBat 	_altitude 	_hauteur	_styleFacade	=(
 		
 		local param 		= get_paramsBatiment	_nodeBat		

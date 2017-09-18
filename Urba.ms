@@ -268,6 +268,7 @@ struct str_urba (
 		
 		fichier_presets		= "$userScripts\cp-Urba\urba_presets.ini",
 		
+		
 		---- STRUCTURES ----	
 	public
 		
@@ -276,9 +277,10 @@ struct str_urba (
 		facades 		= str_urba_facades 		m_urba:this,
 		toitures 		= str_urba_toitures 		m_urba:this,
 		
+		outils = str_urba_outils		m_urba:this,
+		
 	private
 		
-		outils = str_urba_outils		m_urba:this,
 		
 		tracee_origine,	---- le tracee piqué par l'utilisateur
 		tracee,				---- la copie du tracee que l'on va manipuler
@@ -295,7 +297,7 @@ struct str_urba (
 			m_estOuvert 		= true
 			
 			---- creation de la fenetre ----
-			createDialog m_dialog 	fgcolor:			col_fenetreFond 	\
+			createDialog m_dialog 	fgcolor:				col_fenetreFond 	\
 											style:				#(#style_resizing) \
 											pos:					m_pos		\
 											lockHeight:			true	 \	
@@ -304,13 +306,15 @@ struct str_urba (
 			--- chargement des presets ------
 			villes.presets.charger ()
 			batiments.presets.charger ()
-			facades.presets.charger ()
 			facades.elementsDeFacade.charger ()			
+			facades.presets.charger ()
 			toitures.presets.charger ()
+			facades.modeles.charger ()		
 			
 			---- fenetre ----
 			m_dialog.initialiser 	this
 			m_dialog.actualiser ()
+			
 		),
 		
 		fn fermer  silence:false =(		---- silence : fermer sans modifier l'état des preferences ---	
@@ -343,28 +347,29 @@ struct str_urba (
 		------------------------------------------------------------------------------------------------------------
 		fn generer 		_shape 	_idVille	= with redraw off (
 			
-			debug "Générer ville"
-			debug "Shape"	var:_shape.name
-			
 			max create mode
-			
-			local presetVille = ( villes.presets.get_preset	_idVille )
-			debug "Style"	var:presetVille.nom
 			
 			---- Status bar --------------------
 			progressStart "Urba: Génération de la ville ..." 
 			
+			--- recup preset de la ville ---------
+			local presetVille = ( villes.presets.get_preset	_idVille )			
+			
 			---- Gestion du tracee ------------
 			tracee_origine	=	_shape
-			tracee = copy	tracee_origine
-			tracee.name = uniqueName	"Urba - Tracee "
-			
-			---- Preparation du tracee -------
+			tracee 			= copy	tracee_origine
+			tracee.name 	= uniqueName	"Urba - Tracee "
 			outils.preparerShape tracee
+			
+			---- import des models utilisés -----
+			outils.collecter_modeles 	presetVille
 			
 			-- Création des batiments --
 			for idSpline = 1 to (numSplines tracee) do	
 				outils.creer_batiment	tracee	idSpline		presetVille
+			
+			---- suppression des imports--------
+			outils.supprimer_modelesImportes ()
 			
 			-- status bar ---
 			progressEnd() 
@@ -388,7 +393,7 @@ struct str_urba (
 ---------------		DEBUG	-----------------------------------------
 --- on vire les objets en trop
 for obj in objects do
-	if obj != $Line001	do delete obj
+	if obj != $Line001 and obj != $Box001	do delete obj
 
 
 try urba.fermer () catch ()
@@ -399,7 +404,7 @@ urba
 
 --- on vire les objets en trop
 for obj in objects do
-	if obj != $Line001	do delete obj
+	if obj != $Line001 and obj != $Box001	do delete obj
 ---------------		DEBUG	-----------------------------------------
 
 
