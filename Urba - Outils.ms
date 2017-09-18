@@ -168,6 +168,11 @@ struct str_urba_outils (
 		local largeur = BB[2].x -  BB[1].x 
 		largeur
 	),
+	fn get_hauteurNodeModele 	_nd	=(
+		local  BB = nodeGetBoundingBox 	_nd	(matrix3 1)
+		local hauteur = BB[2].z -  BB[1].z 
+		hauteur
+	),
 	
 	fn get_paramsBatiment 	_nodeBat =(
 		
@@ -404,10 +409,10 @@ struct str_urba_outils (
 		_object
 	),
 	
-	fn creerFaceVerticale 	_object	pt1 	pt2 	&z 	hauteur	=(
+	fn creerFaceVerticale 	_object	pt1 	pt2 	z 	hauteur	=(
 		
 		local verts = _object.verts.count
-		
+-- 		lo
 		polyop.createVert _object	[pt2.x, pt2.y, z]	
 		polyop.createVert _object	[pt1.x, pt1.y, z]
 		polyop.createVert _object	[pt1.x, pt1.y, z + hauteur]
@@ -444,7 +449,7 @@ struct str_urba_outils (
 	
 	fn choisir_styleBatiment		_tracee 	_idSpline		_styleVille =(
 		
-		local surfaceBat = get_surfSplineBB		_tracee 	_idSpline
+		local surfaceBat 			= get_surfSplineBB		_tracee 	_idSpline
 		local id_stylesPossible	=	#()
 		local id_styleBatChoisi
 		
@@ -508,37 +513,54 @@ struct str_urba_outils (
 	),
 	
 	fn trouver_nodeModel	_model 	=(
-		debug "trouver_nodeModel"
-		debug "_model" var:_model
-		local id = findItem 	listeDesPresetsModels		_model
-		debug "id" var:id
-		debug "listeDesNodesModels" var:listeDesNodesModels
-		debug "listeDesNodesModels[id]" var:listeDesNodesModels[id]
-		listeDesNodesModels[id]
+		if listeDesNodesModels.count >0 then (
+			debug "trouver_nodeModel"
+			debug "_model" var:_model
+			local id = findItem 	listeDesPresetsModels		_model
+			debug "id" var:id
+	-- 		debug "listeDesNodesModels" var:listeDesNodesModels
+	-- 		debug "listeDesNodesModels[id]" var:listeDesNodesModels[id]
+			listeDesNodesModels[id]
+		) else undefined
 	),
 	
 	
 	fn collecter_modeles 	_presetVille	=(
-		
+		debug "collecter_modeles"
 		
 		--- collect des presets des models ----
 		listeDesPresetsModels	= #()
+		
+		debug  "_presetVille.batiments" var:_presetVille.batiments
+		
 		for bat_idU in _presetVille.batiments do (
 			local bat = m_urba.batiments.presets.get_parIdUnique		bat_idU
 			
+			debug  "bat" var:bat
+			
 			if bat.rdc_facade != "" do (
-				local facadeTmp = m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
-				for elem_idU in facadeTmp.elements do (
+				
+				
+				local facadeTmpRdC 		= m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
+				local facadeTmpEtages		= m_urba.facades.presets.get_parIdUnique		bat.etages_facade
+				local listeDeElements		= facadeTmpRdC.elements + facadeTmpEtages.elements
+				debug  "listeDeElements" var:listeDeElements
+				
+				for elem_idU in listeDeElements do (
 					local elem = m_urba.facades.elementsDeFacade.get_parIdUnique		elem_idU
 					
+				debug  "elem" var:elem
 					if elem.type == 3 do (
 						local modelTmp = m_urba.facades.modeles.get_parIdUnique		elem.model
 						appendIfUnique listeDesPresetsModels	modelTmp
+						debug "modelTmp" var:modelTmp
+						
 					)
 				)
 			)
 		)
 		
+		debug "listeDesPresetsModels" var:listeDesPresetsModels
 		
 		-- merger les modeles ---
 		listeDesNodesModels 				= #()
@@ -553,6 +575,7 @@ struct str_urba_outils (
 			
 			select selectBack
 		)
+		debug "listeDesNodesModels" var:listeDesNodesModels
 		
 	),
 	
@@ -580,6 +603,7 @@ struct str_urba_outils (
 					local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
 					local ndModel 		= trouver_nodeModel	presetModel
 					largeurFixMin +=	get_largeurNodeModele		ndModel
+					
 				)
 				4: (	----	groupe ouverture ----
 						
@@ -608,15 +632,17 @@ struct str_urba_outils (
 			for idElem in _styleFacade.elements do (
 				local presetElement			= m_urba.facades.elementsDeFacade.get_parIdUnique idElem
 				case presetElement.type of (
-					1: (	----	extensible ----
+					1: (	----	EXTENSIBLE ----
 							pt2		=	pt1 + normDir * largeurExtensible
-							creerFaceVerticale 	_nodeBat	pt1 	pt2 	&_altitude 		_hauteur	
+							creerFaceVerticale 	_nodeBat	pt1 	pt2 	_altitude 		_hauteur	
 						)
-					2: (	----	largeur fixe ----
+					2: (	----	largeur FIXE ----
 							pt2		=	pt1 + normDir * presetElement.largeur
-							creerFaceVerticale 	_nodeBat	pt1 	pt2 	&_altitude		_hauteur	
+							creerFaceVerticale 	_nodeBat	pt1 	pt2 	_altitude		_hauteur	
 						)
-					3: (	----	model ----
+					3: (	----	MODEL ----
+							
+							-- placer le model -----
 							local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
 							local modelSource 	= trouver_nodeModel		presetModel
 							
@@ -626,11 +652,22 @@ struct str_urba_outils (
 							rotate nv_modele (angleaxis rot [0,0,1])
 							nv_modele.pos 				= (pt1) 
 							nv_modele.pos.z 				= _altitude
+							
+							-----	facette du dessus -----
 							pt2 = pt1 + normDir * (get_largeurNodeModele		modelSource)
+							
+							local hauteurQuiReste = _hauteur	- ( get_hauteurNodeModele modelSource )
+							debug "(pt1.z + ( get_hauteurNodeModele modelSource ) )" var:(pt1.z + ( get_hauteurNodeModele modelSource ) )
+							debug "hauteurQuiReste" var:hauteurQuiReste
+						
+							creerFaceVerticale 	_nodeBat	pt1 	pt2 	(_altitude + ( get_hauteurNodeModele modelSource ) )		hauteurQuiReste	
+							
+						
 						)
+					) -- fin case
+					
+					pt1 = pt2
 				)
-				pt1 = pt2
-			)
 			
 			
 			----	on attache tout les nodes créés	----
@@ -640,7 +677,7 @@ struct str_urba_outils (
 			
 		) else (
 			debug  "		*********************************************************************"	
-			creerFaceVerticale 	_nodeBat	_knt_1 	_knt_2 	&_altitude 		_hauteur	
+			creerFaceVerticale 	_nodeBat	_knt_1 	_knt_2 	_altitude 		_hauteur	
 		)
 		
 		
