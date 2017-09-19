@@ -12,6 +12,14 @@
 	
 ##########################################################################################################################
 
+	NOTES :
+	- pour calcul de l'aire d'une spline,  passer par poly ?	cf. -->		polyop.getFaceArea  ?
+	
+	
+	
+	
+##########################################################################################################################
+	
 	todo:
 	
 ##########################################################################################################################
@@ -286,7 +294,7 @@ struct str_urba (
 		tracee,				---- la copie du tracee que l'on va manipuler
 		
 	----------------------------------------------------------------------------------------------------------
-	------------  Fonctions	----------------------------------------------------------------------------------
+	------------  Fonctions	------------------------------------------------------------------------------
 	----------------------------------------------------------------------------------------------------------
 	public
 		fn actualiser = m_dialog.actualiser (),
@@ -347,41 +355,226 @@ struct str_urba (
 			
 		),
 		
-		----------------------
-		fn generer_ville 		_shape 	_idVille	= with redraw off (
+		
+	private
+		fn getDuree 	_tempsDeDepart =(
+			local tmps  = timeStamp()
+			tmps - _tempsDeDepart
+		),
+		
+		fn choisir_styleBatiment		_tracee 	_idSpline		_styleVille 	=(
 			
-			max create mode
+			local surfaceBat 			= outils.get_surfSplineBB		_tracee 	_idSpline
+			local id_stylesPossible	=	#()
+			local id_styleBatChoisi
 			
-			---- Status bar --------------------
-			progressStart "Urba: Génération de la ville ..." 
+	-- 		debug "surfaceBat" var:surfaceBat
 			
-			---- Recup preset de la ville ---------
-			local presetVille = ( villes.presets.get_preset	_idVille )			
+			for i = 1 to _styleVille.batiments.count do 
+				if _styleVille.surfaces_min[i] <= surfaceBat	and _styleVille.surfaces_max[i] >= surfaceBat	do
+					append id_stylesPossible	i
+				
+	-- 		debug "id_stylesPossible" var:id_stylesPossible
+-- 			seed 1234
 			
-			---- Gestion du tracee ------------
-			tracee_origine	=	_shape
-			tracee 			= copy	tracee_origine
-			tracee.name 	= uniqueName	"Urba - Tracee "
-			outils.preparerShape tracee
-			
-			---- Import des models utilisés -----
-			outils.collecter_modeles 	presetVille
-			
-			-- Création des batiments --
-			for idSpline = 1 to (numSplines tracee) do	 (
-				outils.creer_batiment	tracee	idSpline		presetVille
-				progressUpdate (idSpline as float/ numSplines tracee * 100 )
+			-- si plusieurs styles sont possibles --
+			if id_stylesPossible.count > 1 then (	
+				
+				local probaTotal = 0
+				for id_style in id_stylesPossible do
+					probaTotal += 	_styleVille.probabilites[id_style]
+				
+	-- 			debug "probaTotal" var:probaTotal
+				local randomProba = random	0.	probaTotal
+	-- 			debug "randomProba" var:randomProba
+				
+				local probaMinTmp 	= 0
+				local probaMaxTmp 	= 0
+				
+				for id_style in id_stylesPossible do (
+					probaMaxTmp = probaMinTmp + _styleVille.probabilites[id_style]
+					if randomProba >= probaMinTmp and randomProba <= probaMaxTmp do (
+						id_styleBatChoisi = _styleVille.batiments[ id_style ]
+					)
+					probaMinTmp = probaMaxTmp
+				)
+				
+				
+			-- si un seul style est possible --
+			) else if id_stylesPossible.count == 1 then (
+				
+				id_styleBatChoisi = _styleVille.batiments[ id_stylesPossible[1] ]
+				
 			)
-			---- Suppression des imports--------
-			outils.supprimer_modelesImportes ()
 			
-			-- Status bar ---
-			progressEnd() 
 			
-			select tracee
+			
+			batiments.presets.get_parIdUnique 	id_styleBatChoisi
+			
 			
 		),
 		
+	public
+		
+		fn regenerer_batiment 	_node = with redraw off (
+			
+			undo "Regénérer ville" on (
+				ecrire "regenerer_batiment"
+				debug "_node" var:_node
+				
+				debug "_node.etages" var:_node.modifiers[1].etages
+				debug "_node.style" var:_node.modifiers[1].style
+				local styleBack = _node.modifiers[1].style
+				local cmdPanelMode_back = getCommandPanelTaskMode ()
+				setCommandPanelTaskMode #create
+				
+				--- on recup les valeurs pour creer le preset ------
+				local presetBatTmp = batiments.presets.creer_preset()
+				
+				presetBatTmp.etages_min			=	_node.modifiers[1].etages
+				presetBatTmp.etages_max			=	_node.modifiers[1].etages
+				presetBatTmp.etages_hauteur	=	_node.modifiers[1].etages_hauteur
+				presetBatTmp.rdc_hauteur			=	_node.modifiers[1].rdc_hauteur
+				
+				presetBatTmp.rdc_facade			= 	batiments.get_idUFacade_rdc			_node.modifiers[1].style
+				presetBatTmp.etages_facade		= 	batiments.get_idUFacade_etages	_node.modifiers[1].style
+				presetBatTmp.toiture				= 	batiments.get_idUToiture				_node.modifiers[1].style
+				
+				
+				---- Import des models utilisés -----
+				outils.collecter_modeles_bat		presetBatTmp
+				
+				
+				--- creation du bouzin------
+				outils.creer_batiment		_node.modifiers[1].tracee[1].node		_node.modifiers[1].idSpline		presetBatTmp		nodeCible:_node
+				_node.modifiers[1].style = styleBack
+				
+				---- Suppression des imports--------
+				outils.supprimer_modelesImportes ()
+				
+				---- Supression du preset temporaire -----
+				batiments.presets.supprimer_preset 	presetBatTmp
+				
+				select _node
+				
+				setCommandPanelTaskMode 	cmdPanelMode_back
+				/* 
+				
+				get_idUFacade_rdc			_idUBat =
+				(presets.get_parIdUnique	_idUBat ).rdc_facade,
+			fn get_idUFacade_etages		_idUBat =
+				(presets.get_parIdUnique	_idUBat ).etages_facade,
+			fn get_idUToiture	
+				
+		toiture		=	"",
+		
+		etages_facade	=	"",
+		etages_min			= 	1,
+		etages_max 		= 	5,
+		etages_hauteur 	= 	250,
+		
+		rdc_facade			=	"",
+		rdc_hauteur 		= 	300
+				
+				--------- si on a un style, on construit le bat ----------------
+				if styleBat != undefined then (
+					---- creation du batiment --------------------
+					local nvBat = outils.creer_batiment	tracee	idSpline		styleBat
+				
+				) */
+			)
+		),
+		
+		----------------------
+		fn generer_ville 		_shape 	_idVille	= with redraw off (
+			
+			undo "Générer ville" on (
+				
+				ecrire "Générer ville"
+				local cmdPanelMode_back = getCommandPanelTaskMode ()
+				setCommandPanelTaskMode #create
+				
+				
+				---- Status bar et temps --------------------
+				local tmps_debut  = timeStamp()
+				local duree_prepa , duree_generation, tmps_debutGeneration
+				
+				escapeEnable = false
+				
+				---- Recup preset de la ville ---------
+				local presetVille = ( villes.presets.get_preset	_idVille )			
+				
+				---- Gestion du tracee ------------
+				tracee_origine	=	_shape
+				tracee 			= copy	tracee_origine
+				tracee.name 	= uniqueName	"Urba | Ville "
+				outils.preparerShape tracee
+				
+				---- Import des models utilisés -----
+				outils.collecter_modeles 	presetVille
+				
+				---- Status bar et temps --------------------
+				duree_prepa = (getDuree  tmps_debut)  as float / 1000
+				ecrire "Préparation (en s.)" var:duree_prepa				
+				progressStart "Urba | Génération des bâtiments" 
+				
+				-- Création des batiments --
+				tmps_debutGeneration  = timeStamp()				
+				local annul = false
+				local listeDesBats = #()
+				local listeDesBatimentLongAFaire = #()
+				for idSpline = 1 to (numSplines tracee)  while not annul	do	 (
+					
+					---- Status bar et temps --------------------
+					local debutDureeBat = timeStamp ()
+					progressUpdate (idSpline as float/ numSplines tracee * 100 )
+					
+					
+					--------- choisr style de batiment ---------
+					local styleBat = choisir_styleBatiment 		tracee		idSpline			presetVille
+					
+					--------- si on a un style, on construit le bat ----------------
+					if styleBat != undefined then (
+						---- creation du batiment --------------------
+						local nvBat = outils.creer_batiment	tracee	idSpline		styleBat
+						append listeDesBats nvBat
+					)
+					
+					---- gestion de l'annulation -----
+					if keyboard.escPressed do setProgressCancel true
+					if ( getProgressCancel ()	) do (
+						annul = true
+						ecrire "Annulation" 	 
+						---- on supprime les objets créés ---
+						for nod in listeDesBats do delete nod
+
+					)
+					
+					---- Status bar et temps --------------------
+-- 					local duree_bat = (getDuree  debutDureeBat	)  as float / 1000
+-- 					ecrire "Génération d'un batiment (en s.)" var:duree_bat				
+-- 					if duree_bat >1 do
+-- 						append listeDesBatimentLongAFaire nvBat
+				)
+-- 				if				
+-- 						delete tracee
+				---- Status bar et temps --------------------
+				duree_generation = (getDuree  tmps_debutGeneration as float ) / 1000
+				ecrire "Création des géométries (en s.)" var:duree_generation
+				ecrire "Total (en s.)" var:((getDuree  tmps_debut )  as float  / 1000)
+				progressEnd() 
+				
+				---- Suppression des imports--------
+				outils.supprimer_modelesImportes ()
+				
+				try select tracee catch ()
+-- 				select listeDesBatimentLongAFaire
+				
+				setCommandPanelTaskMode 	cmdPanelMode_back
+			) --- fin undo -----
+			
+		),
+
 		
 		
 		------------  Evenements	--------------------------------------------------------------------------------
@@ -397,7 +590,7 @@ struct str_urba (
 ---------------		DEBUG	-----------------------------------------
 --- on vire les objets en trop
 for obj in objects do
-	if obj != $Shape001 and obj != $Box001	do delete obj
+	if obj != $Shape001 and obj != $Shape002	do delete obj
 
 
 try urba.fermer () catch ()
@@ -408,10 +601,10 @@ urba
 
 --- on vire les objets en trop
 for obj in objects do
-	if obj != $Shape001 and obj != $Box001	do delete obj
+	if obj != $Shape001 and obj != $Shape002	do delete obj
 
 	
-debug_mode = false	
+-- debug_mode = false	
 ---------------		DEBUG	-----------------------------------------
 
 

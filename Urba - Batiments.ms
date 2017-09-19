@@ -372,6 +372,18 @@ struct str_urba_batiments (
 		
 									
 	------------	Manager des batiments		------------------------------------------------------------------------------------------
+		fn get_idUFacade_rdc			_idUBat = ( 
+			local bat = (presets.get_parIdUnique	_idUBat )
+			debug "bat" var:bat
+			bat.rdc_facade
+			
+		),
+		fn get_idUFacade_etages		_idUBat =
+			(presets.get_parIdUnique	_idUBat ).etages_facade,
+		fn get_idUToiture					_idUBat =
+			(presets.get_parIdUnique	_idUBat ).toiture,
+		
+		
 		
 		/* 
 		fn retirer_toitureID 	_id =(

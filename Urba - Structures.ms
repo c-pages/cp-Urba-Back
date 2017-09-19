@@ -34,7 +34,6 @@ struct str_urba_preset_modelFacade (
 	fichier			= ""			----	
 )
 
-
 ---- ELEMENT De Facade -----------------------------------------------------------------------------------------------------------------------------
 struct str_urba_preset_elementFacade (
 	idUnique			=	"",
