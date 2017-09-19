@@ -24,6 +24,7 @@
 
 
 
+include "$userScripts\cp-Urba\Urba - Construction.ms"
 
 ------- diverses struct porteuses de parametres ----------
 struct str_params_batiment (
@@ -58,7 +59,7 @@ struct str_urba_outils (
 		ep_ssBassement = 100,
 		ep_dalle = 20,
 		
-		
+		constr = str_urba_construction (),
 		
 		
 		-------- Divers ------------------------------------------------
@@ -136,6 +137,84 @@ struct str_urba_outils (
 			result
 			
 		),
+		
+		
+		
+	private
+		fn get_edge_lePlusGrand	_spline 	_idSpline =(
+			local 	longueurEdgeMax = 0
+			local	resultEdgeId
+			for i = 1 to ( numKnots _spline 	_idSpline) - 1 do (
+				local pt 			= getKnotPoint _spline 	_idSpline 	i
+				local pt_suivant	= getKnotPoint _spline 	_idSpline 	(i+1)
+				local longueurEdge = distance	pt	pt_suivant
+				if longueurEdge > longueurEdgeMax do (
+					longueurEdgeMax = longueurEdge
+					resultEdgeId = i
+				)
+			)
+			resultEdgeId
+		),
+		fn get_axePrincipal  			_spline 	_idSpline  =(
+			
+			local edgeLePlusLong 	= get_edge_lePlusGrand	_spline 	_idSpline 
+			local pts 					= #(	getKnotPoint _spline 	_idSpline 	edgeLePlusLong, 
+													getKnotPoint _spline 	_idSpline 	( edgeLePlusLong + 1) )
+			local axeVecteur 		= 	normalize (pts[2] - pts[1])
+			local axeMtrx				=  /* inverse */  ( matrixFromNormal		axeVecteur )
+-- 			translate	axeMtrx  pts[1]
+-- 			debug "----- 1 ----->	axeMtrx" var:axeMtrx
+			
+			if axeMtrx.row1	==	[0,0,-1]  then (
+				
+				axeMtrx =  (rotateYMatrix 180) *(rotateXMatrix 180) *  (rotateZMatrix -90) * axeMtrx
+-- 				debug "la on doit corriger un truc ?"
+				
+			) else if axeMtrx.row1	==	[0,0,1] do (
+				
+				axeMtrx =  (rotateYMatrix 180)  *(rotateXMatrix 180)  * (rotateZMatrix 90) * axeMtrx
+-- 				debug "la on doit corriger un truc ?"
+			)
+			
+-- 			debug "----- 2 ----->	axeMtrx" var:axeMtrx
+			-- debug--
+		-- 	local ptDebug = point transform:axeMtrx	
+		-- 	select ptDebug
+			
+			
+			axeMtrx
+			
+		),
+		fn get_BB_axePrincipal  	_spline 	_idSpline  =(
+			
+			local mtrx_axePrincipal	=	get_axePrincipal 	_spline	_idSpline
+			
+			local pt1 = ( getKnotPoint _spline 	_idSpline 	1 ) * inverse mtrx_axePrincipal
+			local xMin = xMax = pt1.x
+			local yMin = yMax = pt1.y
+			local zMin = zMax = pt1.z
+			
+			for i = 2 to ( numKnots _spline 	_idSpline) do (
+				local pt = ( getKnotPoint _spline 	_idSpline 	i ) * inverse mtrx_axePrincipal
+				if pt.x < xMin 		do xMin 		= pt.x
+				if pt.x > xMax 	do xMax 	= pt.x
+				if pt.y < yMin 		do yMin 	= pt.y
+				if pt.y > yMax 	do YMax 	= pt.y
+				if pt.z < zMin 		do zMin 		= pt.z
+				if pt.z > zMax 	do zMax 	= pt.z
+			)
+			
+			-- debug--
+-- 			local ptDebug1 = point transform:mtrx_axePrincipal	pos:([xMin, yMin,zMin]*  mtrx_axePrincipal)	size:200
+-- 			local ptDebug2 = point transform:mtrx_axePrincipal	pos:([xMax, yMax,zMax]*  mtrx_axePrincipal)	size:200
+-- 			select #(ptDebug1,ptDebug2)
+			
+			#([xMin, yMin, zMin]*  mtrx_axePrincipal, [xMax, yMax, zMax]*  mtrx_axePrincipal)
+			
+		),
+		
+		
+		
 	public
 		fn get_surfSplineBB 	tracee	idSpline	= (
 			
@@ -326,14 +405,15 @@ struct str_urba_outils (
 			local listeVertexPrFace = #()
 			for i = 1 to _listeDesPoints.count  do 
 				append listeVertexPrFace ( verts+i )
+			
+			
 			polyop.createPolygon _object  listeVertexPrFace
 			
-			_object
 		),
 		fn creerFaceVerticale 	_object	pt1 	pt2 	z 	hauteur	=(
 			
 			local verts = _object.verts.count
-	-- 		lo
+			
 			polyop.createVert _object	[pt2.x, pt2.y, z]	
 			polyop.createVert _object	[pt1.x, pt1.y, z]
 			polyop.createVert _object	[pt1.x, pt1.y, z + hauteur]
@@ -346,25 +426,29 @@ struct str_urba_outils (
 			
 			polyop.createPolygon _object  #((verts+4),(verts+3),(verts+2),(verts+1))
 			
-			_object
-			
 		),
 		fn creerFacesContour	 _nodeBat	 		altitude 		hauteur =(
 			
 			local param 		= get_paramsBatiment	_nodeBat		
 			local tracee 		= param.tracee
 			local idSpline		= param.idSpline
+			local listeDeFacesDunContour =#()
 			
 			for id_pt = 1 to ( numKnots 	tracee 	idSpline )  - 1 do	 (
 				knt_1 = getKnotPoint 	tracee 	idSpline 	id_pt
 				knt_2 = getKnotPoint 	tracee 	idSpline 	( id_pt + 1 )
-				creerFaceVerticale 	_nodeBat	knt_1		knt_2 	altitude 	hauteur
+				local nvlFace = creerFaceVerticale 	_nodeBat	knt_1		knt_2 	altitude 	hauteur
+				if nvlFace != undefined do
+					appendIfUnique listeDeFacesDunContour	nvlFace
 			)
 			
 			knt_1 = getKnotPoint 	tracee 	idSpline 	(numKnots 	tracee 	idSpline)
 			knt_2 = getKnotPoint 	tracee 	idSpline 	1
-			creerFaceVerticale 	_nodeBat		knt_1		knt_2 	altitude 	hauteur
+			local nvlFace = creerFaceVerticale 	_nodeBat	knt_1		knt_2 	altitude 	hauteur
+			if nvlFace != undefined do
+				appendIfUnique listeDeFacesDunContour	nvlFace
 			
+			listeDeFacesDunContour
 		),
 		
 		
@@ -377,6 +461,7 @@ struct str_urba_outils (
 			local nbrElemExtensibles 	= 0
 			local largeurFixMin 			= 0
 			local largeurExtensible 		= 0
+			local listeDeFacesDuneFacade =#()
 			
 			for idElem in _styleFacade.elements do (
 				local presetElement			= m_urba.facades.elementsDeFacade.get_parIdUnique idElem
@@ -422,15 +507,20 @@ struct str_urba_outils (
 					case presetElement.type of (
 						1: (	----	EXTENSIBLE ----
 								pt2		=	pt1 + normDir * largeurExtensible
-								creerFaceVerticale 	_nodeBat	pt1 	pt2 	_altitude 		_hauteur	
+								local nvlFace = creerFaceVerticale 	_nodeBat	pt1 	pt2 	_altitude 		_hauteur	
+								if nvlFace != undefined do
+									appendIfUnique listeDeFacesDuneFacade	nvlFace
+							
 							)
 						2: (	----	largeur FIXE ----
 								pt2		=	pt1 + normDir * presetElement.largeur
-								creerFaceVerticale 	_nodeBat	pt1 	pt2 	_altitude		_hauteur	
+								local nvlFace = creerFaceVerticale 	_nodeBat	pt1 	pt2 	_altitude 		_hauteur	
+								if nvlFace != undefined do
+									appendIfUnique listeDeFacesDuneFacade	nvlFace
 							)
 						3: (	----	MODEL ----
 								
-								-- placer le model -----
+								-- placer le model -----							
 								local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
 								local modelSource 	= trouver_nodeModel		presetModel
 								
@@ -440,7 +530,11 @@ struct str_urba_outils (
 								rotate nv_modele (angleaxis rot [0,0,1])
 								nv_modele.pos 				= (pt1) 
 								nv_modele.pos.z 				= _altitude
-								
+							
+								local facesDuNodeAvant 	= _nodeBat.faces.count
+								polyop.attach		_nodeBat	nv_modele
+								listeDeFacesDuneFacade += #{(facesDuNodeAvant + 1).._nodeBat.faces.count} as array
+							
 								-----	facette du dessus -----
 								pt2 = pt1 + normDir * (get_largeurNodeModele		modelSource)
 								
@@ -448,8 +542,11 @@ struct str_urba_outils (
 -- 								debug "(pt1.z + ( get_hauteurNodeModele modelSource ) )" var:(pt1.z + ( get_hauteurNodeModele modelSource ) )
 -- 								debug "hauteurQuiReste" var:hauteurQuiReste
 							
-								creerFaceVerticale 	_nodeBat	pt1 	pt2 	(_altitude + ( get_hauteurNodeModele modelSource ) )		hauteurQuiReste	
 								
+								local nvlFace = creerFaceVerticale 	_nodeBat	pt1 	pt2 	(_altitude + ( get_hauteurNodeModele modelSource ) )		hauteurQuiReste	
+								
+								if nvlFace != undefined do
+									appendIfUnique listeDeFacesDuneFacade	nvlFace
 							
 							)
 						) -- fin case
@@ -458,14 +555,14 @@ struct str_urba_outils (
 					)
 				
 				
-				----	on attache tout les nodes créés	----
-				for nd in  nvxNodes do 
-					polyop.attach		_nodeBat	nd
-				
+-- 				----	on attache tout les nodes créés	----
+-- 				for nd in  nvxNodes do 
+-- 					polyop.attach		_nodeBat	nd
+				listeDeFacesDuneFacade
 				
 			) else (
 -- 				debug  "		*********************************************************************"	
-				creerFaceVerticale 	_nodeBat	_knt_1 	_knt_2 	_altitude 		_hauteur	
+				#( 	creerFaceVerticale 	_nodeBat	_knt_1 	_knt_2 	_altitude 		_hauteur	)
 			)
 			
 			
@@ -480,16 +577,177 @@ struct str_urba_outils (
 			local param 		= get_paramsBatiment	_nodeBat		
 			local tracee 		= param.tracee
 			local idSpline		= param.idSpline
+			local listeDeFacesDunEtage =#()
 			
 			for id_pt = 1 to ( numKnots 	tracee 	idSpline )  - 1 do	 (
 				knt_1 = getKnotPoint 	tracee 	idSpline 	id_pt
 				knt_2 = getKnotPoint 	tracee 	idSpline 	( id_pt + 1 )
-				creer_facade		_nodeBat	knt_1		knt_2 	_altitude 	_hauteur	_styleFacade
+				local nvlsFaces = creer_facade		_nodeBat	knt_1		knt_2 	_altitude 	_hauteur	_styleFacade
+				listeDeFacesDunEtage	+= nvlsFaces
 			)
 			
 			knt_1 = getKnotPoint 	tracee 	idSpline 	(numKnots 	tracee 	idSpline)
-			knt_2 = getKnotPoint 	tracee 	idSpline 	1
-			creer_facade		_nodeBat	knt_1		knt_2 	_altitude 	_hauteur	_styleFacade
+			knt_2 = getKnotPoint 	tracee 	idSpline 	1			
+			local nvlsFaces = creer_facade		_nodeBat	knt_1		knt_2 	_altitude 	_hauteur	_styleFacade
+			listeDeFacesDunEtage	+= nvlsFaces
+			listeDeFacesDunEtage
+		),
+		fn creer_toitPlat 	_nodeBat	&z		=(
+			debug "creer_toitPlat"
+			local param 		= get_paramsBatiment	_nodeBat		
+			local tracee 		= param.tracee
+			local idSpline		= param.idSpline
+			
+			--- plancher ---
+			if ep_dalle  != 0 do (
+				creerFacesContour	_nodeBat	z 	ep_dalle
+				z += ep_dalle
+			) 
+			
+			--- creation de la facette globale-----
+			local listeDesPoints = #()
+			for i = 1 to numKnots tracee 	idSpline do (
+				pt = getKnotPoint tracee 	idSpline 	i 
+				pt.z = z
+				append listeDesPoints  pt
+			)
+			local faceDuToit	=	creerFace 	_nodeBat	listeDesPoints
+			
+		),
+		fn creer_toitTerrasse 	_nodeBat	&z		=(
+			debug "creer_toitTerrasse"
+			local param 		= get_paramsBatiment	_nodeBat		
+			local tracee 		= param.tracee
+			local idSpline		= param.idSpline
+			
+			 --- plancher ---
+			if ep_dalle  != 0 do (
+				creerFacesContour	_nodeBat	z 	ep_dalle
+				z += ep_dalle
+			) 
+			
+			--- creation de la facette globale-----
+			local listeDesPoints = #()
+			for i = 1 to numKnots tracee 	idSpline do (
+				pt = getKnotPoint tracee 	idSpline 	i 
+				pt.z = z
+				append listeDesPoints  pt
+			)
+			local faceDuToit	=	creerFace 	_nodeBat	listeDesPoints
+			local selecBack = selection
+			select _nodeBat
+			constr.accrotere		_nodeBat	#(faceDuToit)
+			select	selecBack
+		),
+		fn creer_toitPentes 	_nodeBat	&z	pentes	=(
+			debug "creer_toitDeuxPentes"
+			
+			local param 		= get_paramsBatiment	_nodeBat		
+			local tracee 		= param.tracee
+			local idSpline		= param.idSpline
+			
+			local	 mtrx_axeP	=	get_axePrincipal	 tracee	idSpline
+			local	 BB_axeP	=	get_BB_axePrincipal 	tracee	idSpline
+			translate mtrx_axeP	BB_axeP[1]
+			debug "BB_axeP"	var:BB_axeP
+			
+			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
+-- 			local diag_axeP 	=  diag_vec
+			largeur 	=	diag_axeP.x
+			longeur 	= 	diag_axeP.z
+			hauteur = 	largeur /2
+-- 			get_axePrincipal
+			
+			debug "diag_axeP" var:diag_axeP
+			debug "largeur" var:largeur
+			debug "longeur" var:longeur
+			
+			local nvlsFaces = #()
+			case pentes of (
+				1: (
+					---- Premier Pan ---
+					pt1 = (  [0,0,0]  *  mtrx_axeP )
+					pt2 = (  [0,0,longeur]  *  mtrx_axeP )
+					pt3 = (  [largeur,0,longeur]  *  mtrx_axeP )
+					pt4 = (  [largeur ,0,0]  *  mtrx_axeP )
+					pt1.z = pt2.z = z
+					pt3.z = pt4.z =  z + hauteur /2
+					listeDesPoints = #(pt1, pt2, pt3, pt4)
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					dbgPt = point pos:pt1
+					
+					---- Second Pan ---
+					pt5 = (  [largeur,0,longeur]  *  mtrx_axeP )
+					pt6 = (  [largeur ,0,0]  *  mtrx_axeP )
+					pt5.z = pt6.z = z 
+					listeDesPoints = #(pt4, pt3, pt5, pt6)
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					---- Fronton 1 ---
+					listeDesPoints = #(pt1, pt4, pt6 )
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					---- Fronton 2 ---
+					listeDesPoints = #(pt2, pt5, pt3 )
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+				)
+				2: (
+					---- Premier Pan ---
+					pt1 = (  [0,0,0]  *  mtrx_axeP )
+					pt2 = (  [0,0,longeur]  *  mtrx_axeP )
+					pt3 = (  [largeur/2,0,longeur]  *  mtrx_axeP )
+					pt4 = (  [largeur /2,0,0]  *  mtrx_axeP )
+					pt1.z = pt2.z = z
+					pt3.z = pt4.z =  z + hauteur
+					listeDesPoints = #(pt1, pt2, pt3, pt4)
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					dbgPt = point pos:pt1
+					
+					---- Second Pan ---
+					pt5 = (  [largeur,0,longeur]  *  mtrx_axeP )
+					pt6 = (  [largeur ,0,0]  *  mtrx_axeP )
+					pt5.z = pt6.z = z 
+					listeDesPoints = #(pt4, pt3, pt5, pt6)
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					---- Fronton 1 ---
+					listeDesPoints = #(pt1, pt4, pt6 )
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					---- Fronton 2 ---
+					listeDesPoints = #(pt2, pt5, pt3 )
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+				)
+			4: (
+					---- Premier Pan ---
+					pt1 = (  [0,0,0]  *  mtrx_axeP )
+					pt2 = (  [0,0,longeur]  *  mtrx_axeP )
+					pt3 = (  [largeur/2,0,longeur - largeur/2]  *  mtrx_axeP )
+					pt4 = (  [largeur /2,0,largeur/2]  *  mtrx_axeP )
+					pt1.z = pt2.z = z
+					pt3.z = pt4.z =  z + hauteur
+					listeDesPoints = #(pt1, pt2, pt3, pt4)
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					---- Second Pan ---
+					pt5 = (  [largeur,0,longeur]  *  mtrx_axeP )
+					pt6 = (  [largeur ,0,0]  *  mtrx_axeP )
+					pt5.z = pt6.z = z 
+					listeDesPoints = #(pt4, pt3, pt5, pt6)
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					---- Fronton 1 ---
+					listeDesPoints = #(pt1, pt4, pt6 )
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+					---- Fronton 2 ---
+					listeDesPoints = #(pt2, pt5, pt3 )
+					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+					
+				)
 			
 		),
 		
@@ -503,7 +761,8 @@ struct str_urba_outils (
 			if ep_dalle  != 0 do (
 				creerFacesContour	_nodeBat	z 	ep_dalle
 				z += ep_dalle
-			)  */
+			) 
+			*/
 			
 			--- un etage ---
 			local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.rdc_facade
@@ -515,6 +774,39 @@ struct str_urba_outils (
 			
 			-- le nombre d'étages --
 			local nbrEtages = random 		_presetBat.etages_min 		_presetBat.etages_max
+			local listeDeFacesDunEtage =#()
+			if nbrEtages != 0 do (
+				
+				--- plancher ---
+				if ep_dalle  != 0 do (
+					local nvlsFaces = creerFacesContour	_nodeBat	z 	ep_dalle
+					listeDeFacesDunEtage  += nvlsFaces
+					z += ep_dalle
+				) 
+				
+				--- un etage ---
+				local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.etages_facade
+				local nvlsFaces = 	creer_etage	_nodeBat	z 	_presetBat.etages_hauteur		styleFacade
+				listeDeFacesDunEtage  += nvlsFaces
+				z += _presetBat.etages_hauteur
+				
+				
+			
+				--- on copie l'etage x fois ----
+				for i = 2 to nbrEtages do (
+					local vertsfin = _nodeBat.verts.count
+					polyop.detachFaces _nodeBat listeDeFacesDunEtage delete:false	
+					local vertsABouger = #{(vertsfin+1).._nodeBat.verts.count}
+					polyop.moveVert 	_nodeBat 	vertsABouger [0,0, ( _presetBat.etages_hauteur + ep_dalle ) *  (i-1) ]
+					z += ep_dalle
+					z += _presetBat.etages_hauteur
+				)
+				
+			)
+			
+			nbrEtages
+			
+			/* 
 			
 			for i = 1 to nbrEtages do (
 				
@@ -530,30 +822,25 @@ struct str_urba_outils (
 				z += _presetBat.etages_hauteur
 				
 			)
-			nbrEtages
+			nbrEtages */
 		),
-		fn creer_toitTerrasse 	_nodeBat	&z	_presetBat	=(
+		fn creer_toiture 			_nodeBat	&z	_presetBat	=(
 			
 			local param 		= get_paramsBatiment	_nodeBat		
 			local tracee 		= param.tracee
 			local idSpline		= param.idSpline
 			
-			 --- plancher ---
-			if ep_dalle  != 0 do (
-				creerFacesContour	_nodeBat	z 	ep_dalle
-				z += ep_dalle
-			) 
+			local typeDeToit = _presetBat.toiture
 			
-			
-			local listeDesPoints = #()
-			for i = 1 to numKnots tracee 	idSpline do (
-				pt = getKnotPoint tracee 	idSpline 	i 
-				pt.z = z
-				
-	-- 			insertItem   pt listeDesPoints 1
-				append listeDesPoints  pt
+			case typeDeToit of (
+				1:			creer_toitPlat			_nodeBat	&z	
+				2:			creer_toitPentes		_nodeBat	&z	1
+				3:			creer_toitPentes		_nodeBat	&z	2
+				4: 		creer_toitPentes		_nodeBat	&z	4
+				5: 		creer_toitTerrasse	_nodeBat	&z	
+				default:	creer_toitPlat			_nodeBat	&z	
 			)
-			creerFace 	_nodeBat	listeDesPoints
+			
 		),
 		fn creer_ssBassement  	_nodeBat	&z	=(s
 			creerFacesContour	 _nodeBat	z 	ep_ssBassement
@@ -814,7 +1101,7 @@ struct str_urba_outils (
 			creer_ssBassement	nvBatiment		&zCourant
 			creer_rdc 				nvBatiment		&zCourant		_presetBat
 			nbrEtages = creer_etages			nvBatiment		&zCourant		_presetBat
-			creer_toitTerrasse	nvBatiment		&zCourant		_presetBat
+			creer_toiture	nvBatiment		&zCourant		_presetBat
 			
 			---- maj des data du node du batiment  --------
 			nvBatiment.modifiers[1].style 					= _presetBat.idUnique

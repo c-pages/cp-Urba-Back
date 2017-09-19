@@ -55,6 +55,12 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	local m_titre
 	local ui_parametres
 	
+	local  affichage_typesToitures	=	#(	"Plate", 			
+														"1 pan", 	
+														"2 pans",	
+														"4 pans", 			
+														"Acrotère " )		
+												
 	------------  UI	----------------------------------------------------------------------------------		
 
 	---- le bouton pour fermer la fenetre ----
@@ -120,8 +126,7 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 			spn_rdc_hauteur.value 			= m_prt.batCourant.rdc_hauteur
 -- 			ddl_toiture....		= m_prt.batCourant.toiture
 			
-			get_presetsFacades
-			
+-- 			get_presetsFacades
 			
 			
 			
@@ -140,14 +145,17 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 			
 			
 			--- liste des toitures -----
-			local listTmp =#()
+			ddl_toiture.items = affichage_typesToitures
+			/* local listTmp =#()
 			for toit in m_prt.get_presetsToitures () do
 				append listTmp toit.nom
-			ddl_toiture.items = listTmp
+			ddl_toiture.items = listTmp */
 			
 			if m_prt.batCourant.toiture	!= "" then (				
-				local toitureTmp = m_prt.m_urba.toitures.presets.get_parIdUnique		m_prt.batCourant.toiture
-				ddl_toiture.selection = m_prt.m_urba.toitures.presets.trouver_ID					toitureTmp				
+-- 				local toitureTmp = m_prt.m_urba.toitures.presets.get_parIdUnique		m_prt.batCourant.toiture
+-- 				ddl_toiture.selection = m_prt.m_urba.toitures.presets.trouver_ID					toitureTmp		
+				ddl_toiture.selection = m_prt.batCourant.toiture
+				
 			) else 	ddl_toiture.selection = 0
 			
 			
@@ -505,7 +513,7 @@ struct str_urba_batiments (
 		fn changer_toiture 	_id	 =(
 			debug "changer_toiture" var:_id
 			
-			batCourant.toiture = ( m_urba.toitures.presets.get_preset 	_id		 ).idUnique 
+			batCourant.toiture = _id--( m_urba.toitures.presets.get_preset 	_id		 ).idUnique 
 			presets.sauvegarder		batCourant
 			actualiser ()
 			m_urba.actualiser ()

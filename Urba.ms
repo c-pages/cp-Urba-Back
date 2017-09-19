@@ -570,11 +570,12 @@ struct str_urba (
 				try select tracee catch ()
 -- 				select listeDesBatimentLongAFaire
 				
+				local cmdPanelMode_back = getCommandPanelTaskMode ()
+				
 				setCommandPanelTaskMode 	cmdPanelMode_back
 			) --- fin undo -----
 			
 		),
-
 		
 		
 		------------  Evenements	--------------------------------------------------------------------------------
@@ -589,20 +590,20 @@ struct str_urba (
 
 ---------------		DEBUG	-----------------------------------------
 --- on vire les objets en trop
-for obj in objects do
-	if obj != $Shape001 and obj != $Shape002	do delete obj
+-- for obj in objects do
+-- 	if obj != $Shape001 and obj != $Shape002	and obj != $Shape005		and obj != $Shape006		and obj != $Shape007	do delete obj
 
 
 try urba.fermer () catch ()
 clearListener ()
 global urba  	=	str_urba () --	m_labib:Labib
-urba.ouvrir ()
-urba
+
 
 --- on vire les objets en trop
-for obj in objects do
-	if obj != $Shape001 and obj != $Shape002	do delete obj
-
+-- for obj in objects do
+-- 	if obj != $Shape001 and obj != $Shape002	and obj != $Shape005		and obj != $Shape006		and obj != $Shape007	do delete obj
+urba.ouvrir ()
+urba
 	
 -- debug_mode = false	
 ---------------		DEBUG	-----------------------------------------

@@ -70,7 +70,7 @@ struct str_urba_preset_batiment (
 	
 	nom 				= 	"Nouveau bâtiment",
 	
-	toiture		=	"",
+	toiture		=	1,
 	
 	etages_facade	=	"",
 	etages_min			= 	1,
