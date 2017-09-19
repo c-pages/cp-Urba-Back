@@ -223,7 +223,7 @@ rollout roll_urba "urba " width:279 height:85
 	)
 	
 	
-	on btn_generer picked 	_shape do m_prt.generer	_shape	ddl_villes.selection
+	on btn_generer picked 	_shape do m_prt.generer_ville	_shape	ddl_villes.selection
 	
 	
 )
@@ -341,18 +341,21 @@ struct str_urba (
 				else	ouvrir ()
 			
 		),
+		--------------------------------------------------------------------------------------
 		
+		fn maj_ville 	_shape	_idVille =(
+			
+		),
 		
-		
-		------------------------------------------------------------------------------------------------------------
-		fn generer 		_shape 	_idVille	= with redraw off (
+		----------------------
+		fn generer_ville 		_shape 	_idVille	= with redraw off (
 			
 			max create mode
 			
 			---- Status bar --------------------
 			progressStart "Urba: Génération de la ville ..." 
 			
-			--- recup preset de la ville ---------
+			---- Recup preset de la ville ---------
 			local presetVille = ( villes.presets.get_preset	_idVille )			
 			
 			---- Gestion du tracee ------------
@@ -361,17 +364,18 @@ struct str_urba (
 			tracee.name 	= uniqueName	"Urba - Tracee "
 			outils.preparerShape tracee
 			
-			---- import des models utilisés -----
+			---- Import des models utilisés -----
 			outils.collecter_modeles 	presetVille
 			
 			-- Création des batiments --
-			for idSpline = 1 to (numSplines tracee) do	
+			for idSpline = 1 to (numSplines tracee) do	 (
 				outils.creer_batiment	tracee	idSpline		presetVille
-			
-			---- suppression des imports--------
+				progressUpdate (idSpline as float/ numSplines tracee * 100 )
+			)
+			---- Suppression des imports--------
 			outils.supprimer_modelesImportes ()
 			
-			-- status bar ---
+			-- Status bar ---
 			progressEnd() 
 			
 			select tracee
@@ -393,7 +397,7 @@ struct str_urba (
 ---------------		DEBUG	-----------------------------------------
 --- on vire les objets en trop
 for obj in objects do
-	if obj != $Line001 and obj != $Box001	do delete obj
+	if obj != $Shape001 and obj != $Box001	do delete obj
 
 
 try urba.fermer () catch ()
@@ -404,7 +408,10 @@ urba
 
 --- on vire les objets en trop
 for obj in objects do
-	if obj != $Line001 and obj != $Box001	do delete obj
+	if obj != $Shape001 and obj != $Box001	do delete obj
+
+	
+debug_mode = false	
 ---------------		DEBUG	-----------------------------------------
 
 

@@ -22,8 +22,6 @@
 
 
 
-
-
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------  Presets				 --------------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -102,6 +100,36 @@ struct str_urba_preset_ville (
 
 
 
+/* 
+
+struct	str_urba_datas_ville (
+	fichier ="",
+	
+	ville				=	str_urba_preset_ville (),
+	
+	batiments 		= str_presetsMGR 	preset_type:	str_urba_preset_batiment	\
+													fichier:			fichier	\
+													prefixUnique:	"Bat",
+	
+	toitures 			= str_presetsMGR 	preset_type:	str_urba_preset_toiture	\
+													fichier:			fichier	\
+													prefixUnique:	"Toit",
+	
+	facades 			= str_presetsMGR 	preset_type:	str_urba_preset_facade	\
+													fichier:			fichier	\
+													prefixUnique:	"Fac",	
+	
+	elemsFacade	= str_presetsMGR 	preset_type:	str_urba_preset_elementFacade	\
+													fichier:			fichier	\
+													prefixUnique:	"ElemF",
+	
+	modeles			= str_presetsMGR 	preset_type:	str_urba_preset_modelFacade	\
+													fichier:			fichier	\
+													prefixUnique:	"Mod"
+	
+)
+
+ */
 
 
 

@@ -753,15 +753,26 @@ struct str_urba_outils (
 	),
 	fn creer_toitTerrasse 	_nodeBat	&z	=(
 		
+		local param 		= get_paramsBatiment	_nodeBat		
+		local tracee 		= param.tracee
+		local idSpline		= param.idSpline
+		
+		 --- plancher ---
+		if ep_dalle  != 0 do (
+			creerFacesContour	_nodeBat	z 	ep_dalle
+			z += ep_dalle
+		) 
+		
+		
 		local listeDesPoints = #()
-		for i = 1 to numKnots tracee 	id_subSpline do (
-			pt = getKnotPoint tracee 	id_subSpline 	i 
+		for i = 1 to numKnots tracee 	idSpline do (
+			pt = getKnotPoint tracee 	idSpline 	i 
 			pt.z = z
 			
-			insertItem   pt listeDesPoints 1
--- 			append listeDesPoints  pt
+-- 			insertItem   pt listeDesPoints 1
+			append listeDesPoints  pt
 		)
-		creerFace listeDesPoints
+		creerFace 	_nodeBat	listeDesPoints
 	),
 	fn creer_ssBassement  _nodeBat	&z	=(s
 		creerFacesContour	 _nodeBat	z 	ep_ssBassement
@@ -788,9 +799,19 @@ struct str_urba_outils (
 			debug "	----->	styleBat" var:styleBat.nom
 			
 			---- creation du node -----
-			local nvBatiment 	= creerPolyVide ()		
-			nvBatiment.name 	= uniqueName "Urba | Batiment - "
-			nvBatiment.parent 	= _tracee
+			local nvBatiment 		= creerPolyVide ()		
+			nvBatiment.name 		= uniqueName "Urba | Batiment - "
+			nvBatiment.parent 		= _tracee
+			nvBatiment.wirecolor 	= _tracee.wirecolor
+			
+			-- centrer le pivot du batiment
+			local centre = [0,0,0]
+			for id_pt = 1 to ( numKnots 	_tracee 	_idSpline ) do	 (
+				centre += ( getKnotPoint 	_tracee 	_idSpline 	id_pt )
+			)
+			centre = centre / ( numKnots 	_tracee 	_idSpline )
+			nvBatiment.pivot = centre
+			
 			
 			---- on ajoute le modifer --
 			ajouterModifier_batiment		nvBatiment
@@ -804,6 +825,7 @@ struct str_urba_outils (
 			creer_ssBassement	nvBatiment		&zCourant
 			creer_rdc 				nvBatiment		&zCourant		styleBat
 			creer_etages			nvBatiment		&zCourant		styleBat
+			creer_toitTerrasse	nvBatiment		&zCourant	
 			
 		) else (
 		
@@ -813,13 +835,15 @@ struct str_urba_outils (
 		
 		nvBatiment
 		
+	),
+	
+	-------------------------------------------------------------------------
+	fn get_villeDatas 	_idUVIlle	=(
+		
 	)
 	
 	
 ) -- fin struct -------------------------------
-
-
-
 
 
 
