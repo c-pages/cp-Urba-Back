@@ -37,6 +37,81 @@ struct str_styleVille (
 	idSpline
 )
 
+struct str_equationPlan (
+		------------ DEBUG	----------------------------------------------------------------------------------
+		m_debug = true,
+		m_dbgPrefix ="str_equationPlan",
+		fn debug 	_txt  var:	 param:    =(
+			try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+			catch ()
+		),
+		
+		a,
+		b,
+		c,
+		d,
+		normal ,
+		
+		fn creerFrom_2vecs_et_1Point	_vec1 	_vec2  	_point	=(
+			
+			debug "creerFrom_2vecs_et_1Point"
+			---le vec normal du plan-----
+			local norm1 = normalize _vec1
+			local norm2 = normalize _vec2		
+			normal =  cross    norm2 	norm1
+			
+			--- definition equation ---------
+			a = normal.x
+			b = normal.y
+			c = normal.z		
+			d = -( a*_point.x + b*_point.y + c*_point.z )
+			
+			debug "a" var:a
+			debug "b" var:b
+			debug "c" var:c
+			debug "d" var:d
+		),
+		fn projeter_point_verticalement 		_pt 	=(
+			debug "projeter_point_verticalement"
+			local result = copy _pt
+			result.z =  -( a*_pt.x + b*_pt.y + d ) / c
+			result
+			
+		),
+		
+
+		fn get_intersection_segment	_segPt1		_segPt2			=(
+			
+			local k	= -( a * _segPt1.x 		+	b * _segPt1.y 	+	c * _segPt1.z 	+ d ) 	/	( a * ( _segPt2.x -  _segPt1.x ) + b * ( _segPt2.y -  _segPt1.y )  + c * ( _segPt2.z -  _segPt1.z )  )
+
+			local ptResult 	= [0,0,0]
+			ptResult.x 			=  _segPt1.x + k * ( _segPt2.x 	-  _segPt1.x )
+			ptResult.y 			=  _segPt1.y + k * ( _segPt2.y 	-  _segPt1.y )
+			ptResult.z 			=  _segPt1.z + k * ( _segPt2.z 	-  _segPt1.z )
+			
+			ptResult
+			
+		),
+		fn coupe_segment	_segPt1		_segPt2			=(
+			
+			local pointIntersect = get_intersection_segment 	_segPt1		_segPt2 		
+			-- debug-------
+-- 			point pos:pointIntersect isSelected:true
+			
+			local vecSeg 	= _segPt2 - _segPt1
+			local vecInter = pointIntersect - _segPt1
+			
+			if dot vecSeg vecInter >0 and length vecSeg > length vecInter then
+				true
+			else
+				false
+			
+		)
+		
+		
+		
+		
+)
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------  MODELISATION et autre -----------------------------------------------------------------------------------------------
@@ -245,8 +320,7 @@ struct str_urba_outils (
 			local idSpline		= param.idSpline
 			get_surfSplineBB	tracee	idSpline
 
-		),
-		
+		),		
 		
 	-------- Gestion des models importés ---------------------------
 	private
@@ -452,7 +526,21 @@ struct str_urba_outils (
 		),
 		
 		
+		
+		
+		
+		fn creerPlan 	_pt1 		_pt2 	_pt3 =(
+			
+			local plan = str_equationPlan ()
+			local vec_1 = _pt2 - _pt1
+			local vec_2 = _pt3 - _pt1
+		
+			plan.creerFrom_2vecs_et_1Point		vec_1	vec_2		_pt1
+			
+			plan
+		),
 		-------- Generation des facades ------------------------------------------------------
+		
 	private
 		fn creer_facade		_nodeBat	_knt_1		_knt_2 	_altitude 	_hauteur	_styleFacade	=(
 			
@@ -649,77 +737,192 @@ struct str_urba_outils (
 			local	 mtrx_axeP	=	get_axePrincipal	 tracee	idSpline
 			local	 BB_axeP	=	get_BB_axePrincipal 	tracee	idSpline
 			translate mtrx_axeP	BB_axeP[1]
-			debug "BB_axeP"	var:BB_axeP
 			
 			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
--- 			local diag_axeP 	=  diag_vec
-			largeur 	=	diag_axeP.x
-			longeur 	= 	diag_axeP.z
-			hauteur = 	largeur /2
--- 			get_axePrincipal
+			local largeur 		=	diag_axeP.x
+			local longeur 		= 	diag_axeP.z
+			local hauteur 		= 	largeur /2
 			
-			debug "diag_axeP" var:diag_axeP
-			debug "largeur" var:largeur
-			debug "longeur" var:longeur
-			
-			local nvlsFaces = #()
+			local nvlsFaces 	= #()
 			case pentes of (
-				1: (
-					---- Premier Pan ---
-					pt1 = (  [0,0,0]  *  mtrx_axeP )
-					pt2 = (  [0,0,longeur]  *  mtrx_axeP )
-					pt3 = (  [largeur,0,longeur]  *  mtrx_axeP )
-					pt4 = (  [largeur ,0,0]  *  mtrx_axeP )
-					pt1.z = pt2.z = z
-					pt3.z = pt4.z =  z + hauteur /2
-					listeDesPoints = #(pt1, pt2, pt3, pt4)
-					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+				1: ( ---------- 1 PENTE ----------------------------------------------------------------------------------------------------
+						--- gestion de l'angle de la pente .... ----
+						hauteur = hauteur/4
+						
+						local pt_0 = (  [0,0,0]  *  mtrx_axeP )
+						local pt_1 = (  [0,0,longeur]  *  mtrx_axeP )
+						local pt_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )
+						
+						local vec1 = pt_1 - pt_0
+						local vec2 = pt_2 - pt_0
+						
+						local pt_Origine = pt_0
+						pt_Origine.z =  z 
 					
-					dbgPt = point pos:pt1
-					
-					---- Second Pan ---
-					pt5 = (  [largeur,0,longeur]  *  mtrx_axeP )
-					pt6 = (  [largeur ,0,0]  *  mtrx_axeP )
-					pt5.z = pt6.z = z 
-					listeDesPoints = #(pt4, pt3, pt5, pt6)
-					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
-					
-					---- Fronton 1 ---
-					listeDesPoints = #(pt1, pt4, pt6 )
-					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
-					
-					---- Fronton 2 ---
-					listeDesPoints = #(pt2, pt5, pt3 )
-					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+						local plan_pente = str_equationPlan ()
+						plan_pente.creerFrom_2vecs_et_1Point		vec1	vec2		pt_Origine
+						
+						local pointsPente = #()
+						local pointsMurs   =#()
+						for i = 1 to numKnots tracee 	idSpline do (
+							local pt = getKnotPoint tracee 	idSpline 	i 		
+							append pointsMurs  pt					
+							local pt_result = plan_pente.projeter_point_verticalement 	pt
+-- 							ptNd = point pos:pt_result
+							append pointsPente  pt_result
+							
+						)
+						
+						--- creation de la face du dessus ----
+						append nvlsFaces ( creerFace  _nodeBat		pointsPente )
+						
+						---- creation des raccord mur ----------
+						for i = 1 to pointsMurs.count - 1 do (
+							local ptMur1 		= pointsMurs[i]
+							local ptMur2 		= pointsMurs[i+1]
+							local ptPente3 	= pointsPente[i+1]
+							local ptPente4	= pointsPente[i]
+							
+							local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
+							append nvlsFaces ( creerFace  _nodeBat		pointsRaccord )
+						)
+						local ptMur1 		= pointsMurs[pointsMurs.count]
+						local ptMur2 		= pointsMurs[1]
+						local ptPente3 	= pointsPente[1]
+						local ptPente4	= pointsPente[pointsMurs.count]
+						
+						local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
+						append nvlsFaces ( creerFace  _nodeBat		pointsRaccord )
+						
 				)
-				2: (
-					---- Premier Pan ---
-					pt1 = (  [0,0,0]  *  mtrx_axeP )
-					pt2 = (  [0,0,longeur]  *  mtrx_axeP )
-					pt3 = (  [largeur/2,0,longeur]  *  mtrx_axeP )
-					pt4 = (  [largeur /2,0,0]  *  mtrx_axeP )
-					pt1.z = pt2.z = z
-					pt3.z = pt4.z =  z + hauteur
-					listeDesPoints = #(pt1, pt2, pt3, pt4)
-					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+				2: (---------- 2 PENTES ----------------------------------------------------------------------------------------------------
 					
-					dbgPt = point pos:pt1
 					
-					---- Second Pan ---
-					pt5 = (  [largeur,0,longeur]  *  mtrx_axeP )
-					pt6 = (  [largeur ,0,0]  *  mtrx_axeP )
-					pt5.z = pt6.z = z 
-					listeDesPoints = #(pt4, pt3, pt5, pt6)
-					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
+-- 						hauteur = hauteur/4
+						translate mtrx_axeP	[0,0,z]
 					
-					---- Fronton 1 ---
-					listeDesPoints = #(pt1, pt4, pt6 )
-					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
-					
-					---- Fronton 2 ---
-					listeDesPoints = #(pt2, pt5, pt3 )
-					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
-					
+						--- Plan de la Pente 1  ----
+						local pt_P1_0 = (  [0,0,0]  *  mtrx_axeP )
+						local pt_P1_1 = (  [0,0,longeur]  *  mtrx_axeP )
+						local pt_P1_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )						
+						local plan_pente1 = creerPlan pt_P1_0	pt_P1_1	pt_P1_2
+						
+						--- Plan de la Pente 2  ----
+						local pt_P2_0 = (  [largeur,0,longeur]  *  mtrx_axeP )
+						local pt_P2_1 = (  [largeur,0,0]  *  mtrx_axeP )
+						local pt_P2_2 = (  [0 ,hauteur,longeur]  *  mtrx_axeP )						
+						local plan_pente2 = creerPlan pt_P2_0	pt_P2_1	pt_P2_2
+						
+						--- Plan faitage ------
+						local pt_F_0 = (  [largeur /2 ,0,0]  *  mtrx_axeP )
+						local pt_F_1 = (  [largeur /2 ,0,longeur]  *  mtrx_axeP )
+						local pt_F_2	=	pt_F_0 + [0,0,100]												
+						local plan_verticaleFaitage =  creerPlan 	pt_F_0		pt_F_1		pt_F_2
+						
+						
+						
+						---- creation des liste des points-----------
+						local pointsPente = #()
+						local pointsPente1 = #()
+						local pointsPente2 = #()
+						local pointsMurs   =#()
+						for i = 1 to numKnots tracee 	idSpline  do (
+							
+							local j = i+1
+							if j > numKnots tracee 	idSpline do j = 1
+							
+							
+							--- point Mur ----
+							local pt 			= 	getKnotPoint tracee 	idSpline 	i 		
+							pt.z = z
+							append pointsMurs  pt		
+							
+							--- point pente ----
+							local pt_pente1 = plan_pente1.projeter_point_verticalement 	pt
+							local pt_pente2 = plan_pente2.projeter_point_verticalement 	pt
+							if pt_pente1.z < pt_pente2.z then (
+								append pointsPente  	pt_pente1
+								append pointsPente1 	pt_pente1
+								
+							) else  (
+								append pointsPente  	pt_pente2
+								append pointsPente2  	pt_pente2
+							)
+							
+							--- point mur - faitage ----
+							local pt_suivant 	=  getKnotPoint tracee 	idSpline 	j
+							pt_suivant.z = z
+							local intersect = plan_verticaleFaitage.coupe_segment	pt 	pt_suivant							
+							if intersect do (
+								local pt_faitage_mur = plan_verticaleFaitage.get_intersection_segment 	pt 	pt_suivant
+								append pointsMurs  	pt_faitage_mur
+								local pt_faitage_pente = plan_pente1.projeter_point_verticalement 	pt_faitage_mur
+								append pointsPente  pt_faitage_pente
+								
+								
+								append pointsPente1 	pt_faitage_pente
+								append pointsPente2 	pt_faitage_pente
+							)
+							
+							---- points
+							
+							
+						)
+						/* 
+						--- point Mur ----
+						local pt 			= 	getKnotPoint tracee 	idSpline 	(numKnots tracee 	idSpline)
+						pt.z = z
+						append pointsMurs  pt		
+						
+						--- point pente ----
+						local pt_pente = plan_pente.projeter_point_verticalement 	pt
+						append pointsPente  pt_pente
+						
+						--- point Mur ----
+						local pt_suivant 	=  getKnotPoint tracee 	idSpline 	1
+						pt_suivant.z = z
+						local intersect = plan_verticaleFaitage.coupe_segment	pt 	pt_suivant
+						
+						if intersect do (
+							
+							local pt_faitage_mur = plan_verticaleFaitage.get_intersection_segment 	pt 	pt_suivant
+							append pointsMurs  	pt_faitage_mur
+							
+							local pt_faitage_pente = plan_pente.projeter_point_verticalement 	pt_faitage_mur
+							append pointsPente  pt_faitage_pente
+							
+						)
+						 */
+						
+						
+						
+						
+						
+						--------- creation des faces ---------------------
+						
+		
+						
+						--- les murs ----
+						for i = 1 to pointsMurs.count  do (
+							
+							local j = i+1
+							if j > pointsMurs.count do j = 1
+							
+							local ptMur1 		= pointsMurs[ i ]
+							local ptMur2 		= pointsMurs[ j ]
+							local ptPente3 	= pointsPente[ j ]
+							local ptPente4	= pointsPente[ i ]
+							
+							local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
+							append nvlsFaces ( creerFace  _nodeBat		pointsRaccord )
+						) 
+						
+						
+						--- les pentes -----
+						append nvlsFaces ( creerFace  _nodeBat		pointsPente1 )
+						append nvlsFaces ( creerFace  _nodeBat		pointsPente2 )
+						
+						
 				)
 			4: (
 					---- Premier Pan ---
@@ -748,7 +951,7 @@ struct str_urba_outils (
 					append nvlsFaces ( creerFace  _nodeBat		listeDesPoints )
 					
 				)
-			
+			)
 		),
 		
 		
@@ -830,7 +1033,7 @@ struct str_urba_outils (
 			local tracee 		= param.tracee
 			local idSpline		= param.idSpline
 			
-			local typeDeToit = _presetBat.toiture
+			local typeDeToit =  _presetBat.toiture
 			
 			case typeDeToit of (
 				1:			creer_toitPlat			_nodeBat	&z	
@@ -842,7 +1045,7 @@ struct str_urba_outils (
 			)
 			
 		),
-		fn creer_ssBassement  	_nodeBat	&z	=(s
+		fn creer_ssBassement  	_nodeBat	&z	=(
 			creerFacesContour	 _nodeBat	z 	ep_ssBassement
 			z += ep_ssBassement
 		),
@@ -1116,7 +1319,7 @@ struct str_urba_outils (
 			
 		)
 	
-	
+	 
 ) -- fin struct -------------------------------
 
 

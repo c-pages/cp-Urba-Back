@@ -589,9 +589,14 @@ struct str_urba (
 
 
 ---------------		DEBUG	-----------------------------------------
---- on vire les objets en trop
--- for obj in objects do
--- 	if obj != $Shape001 and obj != $Shape002	and obj != $Shape005		and obj != $Shape006		and obj != $Shape007	do delete obj
+------ on vire les objets en trop
+
+-- debugCleaner=false
+debugCleaner=true
+
+if debugCleaner do
+	for obj in objects do
+		if obj != $Shape001 and obj != $Shape002	and obj != $Shape005		and obj != $Shape006		and obj != $Shape007	and obj != $Plane001	do delete obj
 
 
 try urba.fermer () catch ()
@@ -599,13 +604,14 @@ clearListener ()
 global urba  	=	str_urba () --	m_labib:Labib
 
 
---- on vire les objets en trop
--- for obj in objects do
--- 	if obj != $Shape001 and obj != $Shape002	and obj != $Shape005		and obj != $Shape006		and obj != $Shape007	do delete obj
+------- on vire les objets en trop
+if debugCleaner do
+	for obj in objects do
+		if obj != $Shape001 and obj != $Shape002	and obj != $Shape005		and obj != $Shape006		and obj != $Shape007	and obj != $Plane001	do delete obj
 urba.ouvrir ()
+debug_mode = false	
 urba
 	
--- debug_mode = false	
 ---------------		DEBUG	-----------------------------------------
 
 
