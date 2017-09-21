@@ -491,7 +491,7 @@ struct str_urba (
 			undo "Regénérer ville" on (
 				
 				--- on recup les valeurs pour creer le preset ------
-				local presetBatTmp = batiments.presets.creer_preset	
+				local presetBatTmp = batiments.presets.creer_preset	()
 				
 				presetBatTmp.etages_min			=	_node.modifiers[1].etages
 				presetBatTmp.etages_max			=	_node.modifiers[1].etages
@@ -502,6 +502,9 @@ struct str_urba (
 				presetBatTmp.etages_facade		= 	batiments.get_idUFacade_etages	_node.modifiers[1].style
 				presetBatTmp.toiture				= 	batiments.get_idUToiture				_node.modifiers[1].style
 				
+				---- Import des models utilisés -----
+				local importReussi = outils.preparer_imports		#(presetBatTmp.idUnique)
+				
 				--- on regnere le batiment ----				
 				local styleBack 	= _node.modifiers[1].style
 				outils.appliquer_presetBat 		_node 	presetBatTmp	majPreset:false
@@ -510,6 +513,8 @@ struct str_urba (
 				---- supprimer le preset temp -----
 				batiments.presets.supprimer_preset		presetBatTmp
 				
+				---- Suppression des imports--------
+				outils.supprimer_modelesImportes ()
 			)
 		),
 		
@@ -582,7 +587,7 @@ struct str_urba (
 						local presetBat = choisir_styleBatiment 		tracee		idSpline			presetVille
 						
 						--------- si on a un style, on construit le bat ----------------
-						if styleBat != undefined then (
+						if presetBat != undefined then (
 							---- creation du batiment --------------------
 							local nvBat = outils.creer_batiment	tracee	idSpline		presetBat
 							append listeDesBats nvBat
@@ -662,7 +667,7 @@ global urba  	=	str_urba () --	m_labib:Labib
 if debugCleaner do
 	for obj in objects do
 		if obj != $Shape001 and obj != $Shape002	and obj != $Shape005		and obj != $Shape006		and obj != $Shape007	and obj != $Line001	and obj != $'Pavillon - Fenetre triple'		and obj != $'Pavillon - Porte Fenetre triple' do delete obj
-debug_mode = true	
+debug_mode = false
 	
 
 urba.ouvrir ()	

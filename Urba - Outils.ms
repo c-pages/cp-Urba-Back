@@ -370,10 +370,18 @@ struct str_urba_outils (
 			
 			--- collect des presets des models ----
 			listeDesPresetsModels	= #()
+			local facadeTmpRdC , facadeTmpEtages
+			local listeDeElements	= #()
 			
-			local facadeTmpRdC 		= m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
-			local facadeTmpEtages		= m_urba.facades.presets.get_parIdUnique		bat.etages_facade
-			local listeDeElements		= facadeTmpRdC.elements + facadeTmpEtages.elements
+			if bat.rdc_facade != "" do(
+				facadeTmpRdC 		= m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
+				listeDeElements += facadeTmpRdC.elements
+			)
+			if bat.etages_facade != "" do (
+				facadeTmpEtages	= m_urba.facades.presets.get_parIdUnique		bat.etages_facade
+				listeDeElements += facadeTmpEtages.elements
+			)
+			
 			
 			for elem_idU in listeDeElements do if  elem_idU != undefined do (
 				local elem = m_urba.facades.elementsDeFacade.get_parIdUnique		elem_idU
@@ -813,6 +821,7 @@ struct str_urba_outils (
 						local pointsMurs   =#()
 						for i = 1 to numKnots tracee 	idSpline do (
 							local pt = getKnotPoint tracee 	idSpline 	i 		
+							pt.z =  z 
 							append pointsMurs  pt					
 							local pt_result = plan_pente.projeter_point_verticalement 	pt
 -- 							ptNd = point pos:pt_result
@@ -844,9 +853,6 @@ struct str_urba_outils (
 				)
 				2: (---------- 2 PENTES ----------------------------------------------------------------------------------------------------
 					
--- 						translate mtrx_axeP	[0,0,z]
-					
--- 						hauteur = hauteur/4
 					
 						--- Plan de la Pente 1  ----
 						local pt_P1_0 = (  [0,0,0]  *  mtrx_axeP )
@@ -876,25 +882,6 @@ struct str_urba_outils (
 						local plan_pente2 = str_equationPlan ()
 						plan_pente2.creerFrom_2vecs_et_1Point	vecP2_1		vecP2_2		pt_Origine
 					
-					/* 
-						--- Plan de la Pente 1  ----
-						local pt_P1_0 = (  [0,0,0]  *  mtrx_axeP )
-						local pt_P1_1 = (  [0,0,longeur]  *  mtrx_axeP )
-						local pt_P1_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )	
-						
-						point pos:pt_P1_0
-						
-						
-						local plan_pente1 = creerPlan 	pt_P1_0		pt_P1_1		pt_P1_2
-						
-						--- Plan de la Pente 2  ----
-						local pt_P2_0 = (  [largeur,0,longeur]  *  mtrx_axeP )
-						local pt_P2_1 = (  [largeur,0,0]  *  mtrx_axeP )
-						local pt_P2_2 = (  [0 ,hauteur,longeur]  *  mtrx_axeP )						
-						local plan_pente2 = creerPlan pt_P2_0	pt_P2_1		pt_P2_2
-						
-						point pos:pt_P2_0
-						 */
 						--- Plan faitage ------
 						local pt_F_0 = (  [largeur /2 ,0,0]  *  mtrx_axeP )
 						local pt_F_1 = (  [largeur /2 ,0,longeur]  *  mtrx_axeP )
@@ -1030,57 +1017,45 @@ struct str_urba_outils (
 		),
 		fn creer_etages 			_nodeBat	&z	_presetBat	=(
 			
-			-- le nombre d'étages --
-			local nbrEtages = random 		_presetBat.etages_min 		_presetBat.etages_max
-			local listeDeFacesDunEtage =#()
-			if nbrEtages != 0 do (
+			local nbrEtages  = 0
+			if _presetBat.etages_facade != "" then (
 				
-				--- plancher ---
-				if ep_dalle  != 0 do (
-					local nvlsFaces = creerFacesContour	_nodeBat	z 	ep_dalle
+				-- le nombre d'étages --
+				nbrEtages = random 		_presetBat.etages_min 		_presetBat.etages_max
+				local listeDeFacesDunEtage =#()
+				if nbrEtages != 0 do (
+					
+					--- plancher ---
+					if ep_dalle  != 0 do (
+						local nvlsFaces = creerFacesContour	_nodeBat	z 	ep_dalle
+						listeDeFacesDunEtage  += nvlsFaces
+						z += ep_dalle
+					) 
+					
+					--- un etage ---
+					local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.etages_facade
+					local nvlsFaces = 	creer_etage	_nodeBat	z 	_presetBat.etages_hauteur		styleFacade
 					listeDeFacesDunEtage  += nvlsFaces
-					z += ep_dalle
-				) 
-				
-				--- un etage ---
-				local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.etages_facade
-				local nvlsFaces = 	creer_etage	_nodeBat	z 	_presetBat.etages_hauteur		styleFacade
-				listeDeFacesDunEtage  += nvlsFaces
-				z += _presetBat.etages_hauteur
-				
-				
-			
-				--- on copie l'etage x fois ----
-				for i = 2 to nbrEtages do (
-					local vertsfin = _nodeBat.verts.count
-					polyop.detachFaces _nodeBat listeDeFacesDunEtage delete:false	
-					local vertsABouger = #{(vertsfin+1).._nodeBat.verts.count}
-					polyop.moveVert 	_nodeBat 	vertsABouger [0,0, ( _presetBat.etages_hauteur + ep_dalle ) *  (i-1) ]
-					z += ep_dalle
 					z += _presetBat.etages_hauteur
+					
+					
+				
+					--- on copie l'etage x fois ----
+					for i = 2 to nbrEtages do (
+						local vertsfin = _nodeBat.verts.count
+						polyop.detachFaces _nodeBat listeDeFacesDunEtage delete:false	
+						local vertsABouger = #{(vertsfin+1).._nodeBat.verts.count}
+						polyop.moveVert 	_nodeBat 	vertsABouger [0,0, ( _presetBat.etages_hauteur + ep_dalle ) *  (i-1) ]
+						z += ep_dalle
+						z += _presetBat.etages_hauteur
+					)
+					
 				)
 				
-			)
+			)  
 			
 			nbrEtages
 			
-			/* 
-			
-			for i = 1 to nbrEtages do (
-				
-				--- plancher ---
-				if ep_dalle  != 0 do (
-					creerFacesContour	_nodeBat	z 	ep_dalle
-					z += ep_dalle
-				) 
-				
-				--- un etage ---
-				local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.etages_facade
-				creer_etage	_nodeBat	z 	_presetBat.etages_hauteur		styleFacade
-				z += _presetBat.etages_hauteur
-				
-			)
-			nbrEtages */
 		),
 		fn creer_toiture 			_nodeBat	&z	_presetBat	=(
 			
@@ -1127,7 +1102,9 @@ struct str_urba_outils (
 					
 					etages					type: #integer 	ui:spn_etages
 					etages_hauteur 		type: #float 		ui:spn_etages_hauteur					
-					rdc_hauteur 			type: #float		ui:spn_rdc_hauteur
+					rdc_hauteur 			type: #float		ui:spn_rdc_hauteur			
+					
+					mtrxAxePrincipal		type: #matrix3	
 					
 				)
 				
@@ -1252,8 +1229,9 @@ struct str_urba_outils (
 			
 			---- on ajoute le modifer --
 			ajouterModifier_batiment		nvBatiment
-			nvBatiment.modifiers[1].tracee[1] 	= 	( nodeTransformMonitor node:_tracee 	forwardTransformChangeMsgs:false )
-			nvBatiment.modifiers[1].idSpline		=	_idSpline
+			nvBatiment.modifiers[1].tracee[1] 			= 	( nodeTransformMonitor node:_tracee 	forwardTransformChangeMsgs:false )
+			nvBatiment.modifiers[1].idSpline				=	_idSpline
+			nvBatiment.modifiers[1].mtrxAxePrincipal	=	get_axePrincipal		_tracee 	_idSpline
 			
 			nvBatiment
 		),
@@ -1419,6 +1397,7 @@ struct str_urba_outils (
 		
 		fn creer_batiment  	_tracee		_idSpline	_presetBat	 	=(
 			local nvBatiment  = creer_nodeBatiment 		_tracee	_idSpline	
+			maj_presetBat 			nvBatiment		_presetBat
 			construire_batiment		nvBatiment		_presetBat
 			nvBatiment
 		)
