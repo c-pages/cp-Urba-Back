@@ -351,16 +351,12 @@ struct str_urba_outils (
 			--- collect des presets des models ----
 			listeDesPresetsModels	= #()
 			
--- 			debug  "_presetVille.batiments" var:_presetVille.batiments
 			local annul = false
 			for bat_idU in _presetVille.batiments while not annul		do (
 				
 				local bat = m_urba.batiments.presets.get_parIdUnique		bat_idU
 				
--- 				debug  "bat" var:bat
-				
 				if bat.rdc_facade != "" do (
-					
 					
 					local facadeTmpRdC 		= m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
 					local facadeTmpEtages		= m_urba.facades.presets.get_parIdUnique		bat.etages_facade
@@ -542,7 +538,7 @@ struct str_urba_outils (
 		-------- Generation des facades ------------------------------------------------------
 		
 	private
-		fn creer_facade		_nodeBat	_knt_1		_knt_2 	_altitude 	_hauteur	_styleFacade	=(
+		fn creer_facade			_nodeBat	_knt_1		_knt_2 	_altitude 	_hauteur	_styleFacade	=(
 			
 			---- ANALYSE de la SEQUENCE d'élements de facades ------
 			local largeurTotal 			= distance		_knt_1	_knt_2
@@ -551,62 +547,126 @@ struct str_urba_outils (
 			local largeurExtensible 		= 0
 			local listeDeFacesDuneFacade =#()
 			
+			local grp_ouvert 			= false
+			local grp_extensibles 	= 0
+			local grp_largeurMin 	= 0
+			
 			for idElem in _styleFacade.elements do (
-				local presetElement			= m_urba.facades.elementsDeFacade.get_parIdUnique idElem
-				case presetElement.type of (
-					1: (	----	extensible ----
-							nbrElemExtensibles += 1
-					)
-					2: (	----	largeur fixe ----
-							largeurFixMin += presetElement.largeur
-					)
-					3: (	----	model ----
-						local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
-						local ndModel 		= trouver_nodeModel	presetModel
-						largeurFixMin +=	get_largeurNodeModele		ndModel
-						
-					)
-					4: (	----	groupe ouverture ----
-							
-					)
-					5: (	----	groupe fermeture ----
-							
-					)
+				
+				local presetElement			= m_urba.facades.elementsDeFacade.get_parIdUnique	idElem
+				
+				if grp_ouvert then (	
+					
+-- 			debug "GRP_OUVERT" 
+					case presetElement.type of (
+						1: (	----	extensible ----
+								grp_extensibles += 1
+						)
+						2: (	----	largeur fixe ----
+								grp_largeurMin += presetElement.largeur
+						)
+						3: (	----	model ----
+								local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
+								local ndModel 		= trouver_nodeModel	presetModel
+								grp_largeurMin +=	get_largeurNodeModele		ndModel
+						)
+						/* 
+						4: (	----	groupe ouverture ----
+								grp_ouvert = true
+						) */
+						5: (	----	groupe fermeture ----
+								grp_ouvert = false
+								
+						)
+					) -- fin case of---------------------------------------
+					
+					
+				) else ( --- pas dans groupe-------------------------
+					
+-- 			debug "GRP_FERMé" 
+					case presetElement.type of (
+						1: (	----	extensible ----
+								nbrElemExtensibles += 1
+						)
+						2: (	----	largeur fixe ----
+								largeurFixMin += presetElement.largeur
+						)
+						3: (	----	model ----
+								local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
+								local ndModel 		= trouver_nodeModel	presetModel
+								largeurFixMin +=	get_largeurNodeModele		ndModel
+						)
+						4: (	----	groupe ouverture ----
+								grp_ouvert = true
+						)
+						/* 5: (	----	groupe fermeture ----
+								
+						) */
+					) --- fin case of -------------------
+					
 				)
+				
 			)
+		
+			debug "CREATION des GEOMETRIES" 
+			debug "largeurTotal" var:largeurTotal
+			local	nbreRepetitionsGrp = 0
+			if grp_largeurMin != 0 then (
+				local LargeurRestantAvtGrp 	= 	largeurTotal - largeurFixMin 			
+				nbreRepetitionsGrp 				= 	floor ( LargeurRestantAvtGrp / grp_largeurMin )		
+				
+			debug " ( LargeurRestantAvtGrp / grp_largeurMin )" var: ( LargeurRestantAvtGrp / grp_largeurMin )	
+			debug "nbreRepetitionsGrp" var:nbreRepetitionsGrp	
+				local	largeurRestant 			= 	LargeurRestantAvtGrp  -  nbreRepetitionsGrp * grp_largeurMin			
+				largeurExtensible					=	largeurRestant	/	( grp_extensibles * nbreRepetitionsGrp	+ nbrElemExtensibles )
+			) else (
+				if nbrElemExtensibles != 0 then
+					largeurExtensible				=	(largeurTotal	-  largeurFixMin ) /	 nbrElemExtensibles 
+			)	
 			
-			largeurExtensible = ( largeurTotal - largeurFixMin )	/	nbrElemExtensibles
-			
-			
+-- 			debug "LargeurRestantAvtGrp" var:LargeurRestantAvtGrp
+-- 			debug "largeurRestant" var:largeurRestant
+			debug "largeurExtensible" var:largeurExtensible
 			
 			
 			---- CREATION des GEOMETRIES ----------------------
-			if largeurTotal > largeurFixMin	then (
+			if largeurTotal > ( largeurFixMin	+ grp_largeurMin	) then (
 				
-				local pt1 		= 	_knt_1
+				local pt1 			= 	_knt_1
 				local pt2		
-				local normDir	=	normalize (_knt_2 - _knt_1)
-				local rot 		= get_angle_vecteur		normDir
-				local nvxNodes = #()
+				local normDir		=	normalize (_knt_2 - _knt_1)
+				local rot 			= get_angle_vecteur		normDir
+				local nvxNodes 	= #()
+				local idDebutGroupe 	= 0
+				local nbrGroupCrees 	= 0
 				
-				
-				for idElem in _styleFacade.elements do (
+				local i =0
+				while i <  _styleFacade.elements.count do (
+					i += 1
+					local idElem = _styleFacade.elements[i]
+					
 					local presetElement			= m_urba.facades.elementsDeFacade.get_parIdUnique idElem
+-- 					
+-- 					debug "presetElement"  var:presetElement
+					
 					case presetElement.type of (
 						1: (	----	EXTENSIBLE ----
+							
+					debug "EXTENSIBLE" 
 								pt2		=	pt1 + normDir * largeurExtensible
 								local nvlFace = creerFaceVerticale 	_nodeBat	pt1 	pt2 	_altitude 		_hauteur	
 								if nvlFace != undefined do
 									appendIfUnique listeDeFacesDuneFacade	nvlFace
-							
 							)
 						2: (	----	largeur FIXE ----
+					debug "FIXE" 
 								pt2		=	pt1 + normDir * presetElement.largeur
 								local nvlFace = creerFaceVerticale 	_nodeBat	pt1 	pt2 	_altitude 		_hauteur	
 								if nvlFace != undefined do
 									appendIfUnique listeDeFacesDuneFacade	nvlFace
 							)
 						3: (	----	MODEL ----
+					debug "MODEL" 
 								
 								-- placer le model -----							
 								local presetModel	= m_urba.facades.modeles.get_parIdUnique 		presetElement.model
@@ -616,7 +676,7 @@ struct str_urba_outils (
 								append nvxNodes 	nv_modele
 								
 								rotate nv_modele (angleaxis rot [0,0,1])
-								nv_modele.pos 				= (pt1) 
+								nv_modele.pos 				= pt1
 								nv_modele.pos.z 				= _altitude
 							
 								local facesDuNodeAvant 	= _nodeBat.faces.count
@@ -637,10 +697,21 @@ struct str_urba_outils (
 									appendIfUnique listeDeFacesDuneFacade	nvlFace
 							
 							)
-						) -- fin case
-						
-						pt1 = pt2
-					)
+						4: (
+							nbrGroupCrees += 1
+							grp_ouvert = true
+							idDebutGroupe = i - 1
+						)
+						5: (
+							if nbrGroupCrees < nbreRepetitionsGrp do
+								i = idDebutGroupe
+							grp_ouvert = false
+						)
+							
+					) -- fin case ---------------------------
+					
+					pt1 = pt2
+				)
 				
 				
 -- 				----	on attache tout les nodes créés	----
@@ -660,7 +731,7 @@ struct str_urba_outils (
 	-- 		for model in listeDesModels do
 	-- 			delete model
 		),
-		fn creer_etage		_nodeBat 	_altitude 	_hauteur	_styleFacade	=(
+		fn creer_etage			_nodeBat 	_altitude 	_hauteur	_styleFacade	=(
 			
 			local param 		= get_paramsBatiment	_nodeBat		
 			local tracee 		= param.tracee
@@ -680,7 +751,7 @@ struct str_urba_outils (
 			listeDeFacesDunEtage	+= nvlsFaces
 			listeDeFacesDunEtage
 		),
-		fn creer_toitPlat 	_nodeBat	&z		=(
+		fn creer_toitPlat 			_nodeBat	&z		=(
 			debug "creer_toitPlat"
 			local param 		= get_paramsBatiment	_nodeBat		
 			local tracee 		= param.tracee
@@ -727,7 +798,7 @@ struct str_urba_outils (
 			constr.accrotere		_nodeBat	#(faceDuToit)
 			select	selecBack
 		),
-		fn creer_toitPentes 	_nodeBat	&z	pentes	=(
+		fn creer_toitPentes 		_nodeBat	&z	pentes	=(
 			debug "creer_toitDeuxPentes"
 			
 			local param 		= get_paramsBatiment	_nodeBat		
@@ -741,7 +812,7 @@ struct str_urba_outils (
 			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
 			local largeur 		=	diag_axeP.x
 			local longeur 		= 	diag_axeP.z
-			local hauteur 		= 	largeur /2
+			local hauteur 		= 	largeur /2 --* random .3 1.5
 			
 			local nvlsFaces 	= #()
 			case pentes of (
@@ -1126,7 +1197,7 @@ struct str_urba_outils (
 			CustAttributes.add 	tmpMod 	batimentCA_def	--#Unique BaseObject : false
 			
 		),
-		fn ajouterModifier_ville 	_node	=(
+		fn ajouterModifier_ville 			_node	=(
 			
 			--- le modifier ----
 			local tmpMod = emptymodifier ()
