@@ -54,7 +54,7 @@ struct str_equationPlan (
 		
 		fn creerFrom_2vecs_et_1Point	_vec1 	_vec2  	_point	=(
 			
-			debug "creerFrom_2vecs_et_1Point"
+-- 			debug "creerFrom_2vecs_et_1Point"
 			---le vec normal du plan-----
 			local norm1 = normalize _vec1
 			local norm2 = normalize _vec2		
@@ -66,13 +66,13 @@ struct str_equationPlan (
 			c = normal.z		
 			d = -( a*_point.x + b*_point.y + c*_point.z )
 			
-			debug "a" var:a
-			debug "b" var:b
-			debug "c" var:c
-			debug "d" var:d
+-- 			debug "a" var:a
+-- 			debug "b" var:b
+-- 			debug "c" var:c
+-- 			debug "d" var:d
 		),
 		fn projeter_point_verticalement 		_pt 	=(
-			debug "projeter_point_verticalement"
+-- 			debug "projeter_point_verticalement"
 			local result = copy _pt
 			result.z =  -( a*_pt.x + b*_pt.y + d ) / c
 			result
@@ -131,6 +131,7 @@ struct str_urba_outils (
 		m_urba,
 		
 	private
+		dossier_modelesFacades = GetDir  #userScripts	+	"\cp-Urba\lib\facades\\" ,
 		ep_ssBassement = 100,
 		ep_dalle = 20,
 		
@@ -338,67 +339,30 @@ struct str_urba_outils (
 				listeDesNodesModels[id]
 			) else undefined
 		),
-	public
-		fn supprimer_modelesImportes =(
-			for nd in  listeDesNodesModels do
-				delete nd
-			listeDesPresetsModels	= #()
-			listeDesNodesModels	= #()
-		),
-		fn collecter_modeles 	_presetVille	=(
-			debug "collecter_modeles"
+		fn importerModel	_presetMod =(
+			local selectBack = selection
 			
-			--- collect des presets des models ----
-			listeDesPresetsModels	= #()
-			
-			local annul = false
-			for bat_idU in _presetVille.batiments while not annul		do (
-				
-				local bat = m_urba.batiments.presets.get_parIdUnique		bat_idU
-				
-				if bat.rdc_facade != "" do (
-					
-					local facadeTmpRdC 		= m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
-					local facadeTmpEtages		= m_urba.facades.presets.get_parIdUnique		bat.etages_facade
-					local listeDeElements		= facadeTmpRdC.elements + facadeTmpEtages.elements
--- 					debug  "listeDeElements" var:listeDeElements
-					
-					for elem_idU in listeDeElements do (
-						local elem = m_urba.facades.elementsDeFacade.get_parIdUnique		elem_idU
-						
--- 					debug  "elem" var:elem
-						if elem.type == 3 do (
-							local modelTmp = m_urba.facades.modeles.get_parIdUnique		elem.model
-							appendIfUnique listeDesPresetsModels	modelTmp
--- 							debug "modelTmp" var:modelTmp
-							
-						)
-					)
-				)
-				if keyboard.escPressed do annul = true
+			local adresseFichier = dossier_modelesFacades + _presetMod.fichier
+			if not doesFileExist adresseFichier then (
+				adresseFichier = getOpenFileName 	caption:( "Le fichier "+  _presetMod.fichier +" est manquant" )\
+																filename:dossier_modelesFacades \
+																types:"Max(*.max)|*.max|All|*.*|" \
+																historyCategory:"Urba"
+				if adresseFichier !=undefined do 
+					_presetMod.fichier = filenameFromPath	adresseFichier
+					m_urba.facades.modeles.sauvegarder 	_presetMod
 			)
-			if not annul then  (
--- 				debug "listeDesPresetsModels" var:listeDesPresetsModels
+			if adresseFichier !=undefined then (
+				mergeMAXFile 	adresseFichier 	#select 	#noRedraw	#deleteOldDups 	quiet:true
+				local modelImport = selection[1]
 				
-				-- merger les modeles ---
-				listeDesNodesModels 				= #()
-				for presetModel in listeDesPresetsModels do (
-					
-					local selectBack = selection
-					
-					mergeMAXFile 	presetModel.fichier	#select 	#noRedraw	quiet:true
-					local modelImport = selection[1]
-					
-					append listeDesNodesModels 	modelImport
-					
-					select selectBack
-				)
--- 				debug "listeDesNodesModels" var:listeDesNodesModels
-				ok
-			) else undefined
-			
+				append listeDesNodesModels 	modelImport
+				
+				select selectBack
+				
+				true
+			) else false
 		),
-		
 		fn collecter_modeles_bat 	_presetBat	=(
 			debug "collecter_modeles"
 			
@@ -406,39 +370,61 @@ struct str_urba_outils (
 			
 			--- collect des presets des models ----
 			listeDesPresetsModels	= #()
-			if bat.rdc_facade != "" do (
+			
+			local facadeTmpRdC 		= m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
+			local facadeTmpEtages		= m_urba.facades.presets.get_parIdUnique		bat.etages_facade
+			local listeDeElements		= facadeTmpRdC.elements + facadeTmpEtages.elements
+			
+			for elem_idU in listeDeElements do if  elem_idU != undefined do (
+				local elem = m_urba.facades.elementsDeFacade.get_parIdUnique		elem_idU
 				
-				local facadeTmpRdC 		= m_urba.facades.presets.get_parIdUnique		bat.rdc_facade
-				local facadeTmpEtages		= m_urba.facades.presets.get_parIdUnique		bat.etages_facade
-				local listeDeElements		= facadeTmpRdC.elements + facadeTmpEtages.elements
-				
-				for elem_idU in listeDeElements do (
-					local elem = m_urba.facades.elementsDeFacade.get_parIdUnique		elem_idU
-					
-					if elem.type == 3 do (
-						local modelTmp = m_urba.facades.modeles.get_parIdUnique		elem.model
-						appendIfUnique listeDesPresetsModels	modelTmp
--- 							debug "modelTmp" var:modelTmp
-						
-					)
+				--- gestion des modeles pour Facades ------------
+				if elem.type == 3 do (
+					local modelTmp = m_urba.facades.modeles.get_parIdUnique		elem.model
+					appendIfUnique listeDesPresetsModels	modelTmp
 				)
 			)
-			
-			-- merger les modeles ---
-			listeDesNodesModels 				= #()
-			for presetModel in listeDesPresetsModels do (
-				
-				local selectBack = selection
-				
-				mergeMAXFile 	presetModel.fichier	#select 	#noRedraw	quiet:true
-				local modelImport = selection[1]
-				
-				append listeDesNodesModels 	modelImport
-				
-				select selectBack
-			)
--- 				
 		),
+	public
+		fn preparer_imports 	_presetsBats =(
+			debug "collecter_modeles"
+			
+			--- collect des presets des models -----------------------------
+			listeDesPresetsModels	= #()
+			
+			local annul = false
+			for bat_idU in _presetsBats while not annul		do (
+				local bat = m_urba.batiments.presets.get_parIdUnique		bat_idU
+				collecter_modeles_bat	bat
+				if keyboard.escPressed do annul = true
+			)
+			if not annul then  (
+				-- merger les modeles ---
+				listeDesNodesModels 				= #()
+				for presetModel in listeDesPresetsModels  while not annul	do (
+					local importReussi = importerModel	presetModel
+					if not importReussi do (
+						annul = true
+						messageBox  ("Erreur lors de l'import d'un model !\nModel : " + presetModel.nom )
+					)
+					if keyboard.escPressed do annul = true
+				)
+			) 
+			
+			if annul then  false
+				else true
+			
+		),
+		fn supprimer_modelesImportes =(
+			for nd in  listeDesNodesModels do
+				delete nd
+			listeDesPresetsModels	= #()
+			listeDesNodesModels	= #()
+		),
+		
+		
+		
+		
 		
 		
 		-------- Modelisation Fondamentale-------------------------
@@ -712,24 +698,12 @@ struct str_urba_outils (
 					
 					pt1 = pt2
 				)
-				
-				
--- 				----	on attache tout les nodes créés	----
--- 				for nd in  nvxNodes do 
--- 					polyop.attach		_nodeBat	nd
 				listeDeFacesDuneFacade
 				
 			) else (
 -- 				debug  "		*********************************************************************"	
 				#( 	creerFaceVerticale 	_nodeBat	_knt_1 	_knt_2 	_altitude 		_hauteur	)
 			)
-			
-			
-			
-			
-	-- 		---- on supprime les models importés ---
-	-- 		for model in listeDesModels do
-	-- 			delete model
 		),
 		fn creer_etage			_nodeBat 	_altitude 	_hauteur	_styleFacade	=(
 			
@@ -738,17 +712,16 @@ struct str_urba_outils (
 			local idSpline		= param.idSpline
 			local listeDeFacesDunEtage =#()
 			
-			for id_pt = 1 to ( numKnots 	tracee 	idSpline )  - 1 do	 (
+			for id_pt = 1 to ( numKnots 	tracee 	idSpline )  do	 (
+				local j = ( id_pt + 1 )
+				if id_pt == ( numKnots 	tracee 	idSpline ) do j = 1
+				
 				knt_1 = getKnotPoint 	tracee 	idSpline 	id_pt
-				knt_2 = getKnotPoint 	tracee 	idSpline 	( id_pt + 1 )
+				knt_2 = getKnotPoint 	tracee 	idSpline 	j
 				local nvlsFaces = creer_facade		_nodeBat	knt_1		knt_2 	_altitude 	_hauteur	_styleFacade
 				listeDeFacesDunEtage	+= nvlsFaces
 			)
 			
-			knt_1 = getKnotPoint 	tracee 	idSpline 	(numKnots 	tracee 	idSpline)
-			knt_2 = getKnotPoint 	tracee 	idSpline 	1			
-			local nvlsFaces = creer_facade		_nodeBat	knt_1		knt_2 	_altitude 	_hauteur	_styleFacade
-			listeDeFacesDunEtage	+= nvlsFaces
 			listeDeFacesDunEtage
 		),
 		fn creer_toitPlat 			_nodeBat	&z		=(
@@ -808,6 +781,7 @@ struct str_urba_outils (
 			local	 mtrx_axeP	=	get_axePrincipal	 tracee	idSpline
 			local	 BB_axeP	=	get_BB_axePrincipal 	tracee	idSpline
 			translate mtrx_axeP	BB_axeP[1]
+						
 			
 			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
 			local largeur 		=	diag_axeP.x
@@ -824,14 +798,16 @@ struct str_urba_outils (
 						local pt_1 = (  [0,0,longeur]  *  mtrx_axeP )
 						local pt_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )
 						
+					
 						local vec1 = pt_1 - pt_0
 						local vec2 = pt_2 - pt_0
 						
 						local pt_Origine = pt_0
 						pt_Origine.z =  z 
+-- 						point pos:pt_Origine	 isSelected:true
 					
 						local plan_pente = str_equationPlan ()
-						plan_pente.creerFrom_2vecs_et_1Point		vec1	vec2		pt_Origine
+						plan_pente.creerFrom_2vecs_et_1Point	vec1	vec2		pt_Origine
 						
 						local pointsPente = #()
 						local pointsMurs   =#()
@@ -868,22 +844,57 @@ struct str_urba_outils (
 				)
 				2: (---------- 2 PENTES ----------------------------------------------------------------------------------------------------
 					
+-- 						translate mtrx_axeP	[0,0,z]
 					
 -- 						hauteur = hauteur/4
-						translate mtrx_axeP	[0,0,z]
 					
 						--- Plan de la Pente 1  ----
 						local pt_P1_0 = (  [0,0,0]  *  mtrx_axeP )
 						local pt_P1_1 = (  [0,0,longeur]  *  mtrx_axeP )
-						local pt_P1_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )						
-						local plan_pente1 = creerPlan pt_P1_0	pt_P1_1	pt_P1_2
+						local pt_P1_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )	
+					
+						local vecP1_1 = pt_P1_1 - pt_P1_0
+						local vecP1_2 = pt_P1_2 - pt_P1_0
+						
+						local pt_Origine = pt_P1_0
+						pt_Origine.z =  z 
+						local plan_pente1 = str_equationPlan ()
+						plan_pente1.creerFrom_2vecs_et_1Point	vecP1_1		vecP1_2		pt_Origine
+					
+					
+					
+						--- Plan de la Pente 1  ----
+						local pt_P2_0 = (  [largeur,0,longeur]  *  mtrx_axeP )
+						local pt_P2_1 = (  [largeur,0,0]  *  mtrx_axeP )
+						local pt_P2_2 = (  [0 ,hauteur,longeur]  *  mtrx_axeP )			
+					
+						local vecP2_1 = pt_P2_1 - pt_P2_0
+						local vecP2_2 = pt_P2_2 - pt_P2_0
+						
+						local pt_Origine = pt_P2_0
+						pt_Origine.z =  z 
+						local plan_pente2 = str_equationPlan ()
+						plan_pente2.creerFrom_2vecs_et_1Point	vecP2_1		vecP2_2		pt_Origine
+					
+					/* 
+						--- Plan de la Pente 1  ----
+						local pt_P1_0 = (  [0,0,0]  *  mtrx_axeP )
+						local pt_P1_1 = (  [0,0,longeur]  *  mtrx_axeP )
+						local pt_P1_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )	
+						
+						point pos:pt_P1_0
+						
+						
+						local plan_pente1 = creerPlan 	pt_P1_0		pt_P1_1		pt_P1_2
 						
 						--- Plan de la Pente 2  ----
 						local pt_P2_0 = (  [largeur,0,longeur]  *  mtrx_axeP )
 						local pt_P2_1 = (  [largeur,0,0]  *  mtrx_axeP )
 						local pt_P2_2 = (  [0 ,hauteur,longeur]  *  mtrx_axeP )						
-						local plan_pente2 = creerPlan pt_P2_0	pt_P2_1	pt_P2_2
+						local plan_pente2 = creerPlan pt_P2_0	pt_P2_1		pt_P2_2
 						
+						point pos:pt_P2_0
+						 */
 						--- Plan faitage ------
 						local pt_F_0 = (  [largeur /2 ,0,0]  *  mtrx_axeP )
 						local pt_F_1 = (  [largeur /2 ,0,longeur]  *  mtrx_axeP )
@@ -935,36 +946,9 @@ struct str_urba_outils (
 								append pointsPente2 	pt_faitage_pente
 							)
 							
-							---- points
 							
 							
 						)
-						/* 
-						--- point Mur ----
-						local pt 			= 	getKnotPoint tracee 	idSpline 	(numKnots tracee 	idSpline)
-						pt.z = z
-						append pointsMurs  pt		
-						
-						--- point pente ----
-						local pt_pente = plan_pente.projeter_point_verticalement 	pt
-						append pointsPente  pt_pente
-						
-						--- point Mur ----
-						local pt_suivant 	=  getKnotPoint tracee 	idSpline 	1
-						pt_suivant.z = z
-						local intersect = plan_verticaleFaitage.coupe_segment	pt 	pt_suivant
-						
-						if intersect do (
-							
-							local pt_faitage_mur = plan_verticaleFaitage.get_intersection_segment 	pt 	pt_suivant
-							append pointsMurs  	pt_faitage_mur
-							
-							local pt_faitage_pente = plan_pente.projeter_point_verticalement 	pt_faitage_mur
-							append pointsPente  pt_faitage_pente
-							
-						)
-						 */
-						
 						
 						
 						
@@ -1225,88 +1209,119 @@ struct str_urba_outils (
 	------ preparations ------------------------------------------
 	private
 		nomModelTemp,
-	public
-		fn preparerShape 	_tracee	=(
+		fn positionnerPivot_modele	 _node =(
+			local segmentsOuverts 	= polyop.getOpenEdges _node
+			local pointsSegsOuverts 	=#()
+			local pointsResult 			=[0,0,0]
+			for seg in segmentsOuverts do (
+				local ptsDuSegment = polyop.getVertsUsingEdge   _node	seg
+				for pt in ptsDuSegment do
+					appendIfUnique pointsSegsOuverts	pt
+			)
 			
-			local subSplineOuvertes =#()
+			--- on cherche le point  ------
+			format "pointsSegsOuverts : %\n" pointsSegsOuverts
 			
-			--- on ne garde que les shape fermé et on tounre tout ds le mm sens-----
-			for idSpline = 1 to (numSplines _tracee) do
-				if isClosed  _tracee	idSpline	then	(				
-					--- on fait tourner les spline dans le meme sens ----
-					if not estPolygone_sensPositif 	_tracee 	idSpline do
-						reverse		_tracee	idSpline				
-				) else (
-					insertItem  idSpline	subSplineOuvertes 	1
+			for idPt in pointsSegsOuverts do (
+				
+				if idPt == pointsSegsOuverts[1] then pointsResult = _node.verts[ idPt ].pos
+				else (
+					local pt =_node.verts[ idPt ].pos
+					if pt.x < pointsResult.x do pointsResult = pt
+					if pt.y < pointsResult.y do pointsResult = pt
+					if pt.z < pointsResult.z do pointsResult = pt
 				)
+			)
+			_node.pivot = pointsResult
 			
-			---- on supprimer les spline ouvertes --
-			for id in subSplineOuvertes do
-				deleteSpline _tracee	id
+		),
+		fn  creer_nodeBatiment 		_tracee	_idSpline	=(
 			
-			---- on ajoute le custom attribut au tracee--
-			ajouterModifier_ville	_tracee
+			local nvBatiment 		= creerPolyVide ()		
+			nvBatiment.name 		= uniqueName "Urba | Batiment - "
+			nvBatiment.parent 		= _tracee
+			nvBatiment.wirecolor 	= _tracee.wirecolor
 			
+			-- centrer le pivot du batiment
+			local centre = [0,0,0]
+			for id_pt = 1 to ( numKnots 	_tracee 	_idSpline ) do	 (
+				centre += ( getKnotPoint 	_tracee 	_idSpline 	id_pt )
+			)
+			centre = centre / ( numKnots 	_tracee 	_idSpline )
+			nvBatiment.pivot = centre
+			
+			---- on ajoute le modifer --
+			ajouterModifier_batiment		nvBatiment
+			nvBatiment.modifiers[1].tracee[1] 	= 	( nodeTransformMonitor node:_tracee 	forwardTransformChangeMsgs:false )
+			nvBatiment.modifiers[1].idSpline		=	_idSpline
+			
+			nvBatiment
 		),
 		fn preparer_modelFacade 	_node	_elementFacade	=  (
 			
-			nomModelTemp = ""
+			nomModelTemp = _node.name
 			
 			---- fenetre pour le nom du model ----------
 			rollout roll_getNomModele "" width:269 height:61
 			(
+				local b_valider = false
 				editText 'edt_nom' "" pos:[94,10] width:159 height:16 align:#left
 				button 'btn_annuler' "Annuler" pos:[157,35] width:49 height:16 align:#left
-				
-				
 				button 'btn_valider' "Valider" pos:[205,35] width:49 height:16 align:#left
 				label 'lbl44' "Nom du modèle:" pos:[14,11] width:80 height:18 align:#left
 				
+				--------------------------------------------------------------------------				
 				fn actualiser =(
 					btn_valider.enabled = not edt_nom.text == "" 
-				)
-				
-				on roll_getNomModele 	close 	do ()
-				on roll_getNomModele 	open 		do (
+				)				
+				fn initialiser =	(
+					edt_nom.text = nomModelTemp
 					actualiser ()
-					setFocus edt_nom
-				)
-				on edt_nom 			changed _txt 	do actualiser ()
-				
-				on edt_nom 			entered _txt 	do (
+					setFocus edt_nom					
+				)				
+				fn valider =(					
+					b_valider = true
 					nomModelTemp = edt_nom.text 
 					destroyDialog roll_getNomModele
 				)
 				
-				on btn_valider pressed do	(
-					nomModelTemp = edt_nom.text 
-					destroyDialog roll_getNomModele
-				)
-				on btn_annuler pressed do destroyDialog roll_getNomModele
+				--------------------------------------------------------------------------				
+				on roll_getNomModele 	close 			do 	if not b_valider do nomModelTemp = ""
+				on roll_getNomModele 	open 				do 	initialiser 	()
+				on edt_nom 				changed _txt 	do 	actualiser 	()				
+				on edt_nom 				entered 	_txt 	do 	valider 		()				
+				on btn_valider 			pressed 			do	valider 		()
+				on btn_annuler 			pressed 			do 	destroyDialog roll_getNomModele
 				
-			)
-			
+			) ----------- Fin rollout -----------------------------
 			createDialog	roll_getNomModele		 modal:true	 	escapeEnable:false
 			
 			
 			
 			
-			if nomModelTemp != "" do (		
+			if nomModelTemp != "" do (	
+				
+				debug "preparation du model"
+				debug "nomModelTemp" var:nomModelTemp
 				
 				--- preparation du model -------
 				local nvModel_node = copy _node 
 				convertToPoly 	nvModel_node
 				local  BB = nodeGetBoundingBox 	nvModel_node	(matrix3 1)
-				nvModel_node.pivot = BB[1]
+				positionnerPivot_modele _node
 				nvModel_node.rotation = quat 0 0 0 1
 				nvModel_node.pos  = [0,0,0]
 				
-				--- sauvegarde du fichier MAX ------
 				
-				local nomFichier =	GetDir  #userScripts	+	"\cp-Urba\lib\facades\\" + nomModelTemp + ".max"
+				debug "sauvegarde du fichier MAX du model"
+				
+				--- sauvegarde du fichier MAX ------
+				local nomFichier =	dossier_modelesFacades + nomModelTemp + ".max"
+				debug "nomFichier" var:nomFichier
 				saveNodes 		nvModel_node	 nomFichier	quiet:true
 				delete nvModel_node
 				
+				debug "creation du preset du model"
 				
 				---- creation du preset Model -----
 				local nvModele 		= m_urba.facades.modeles.creer_preset ()
@@ -1319,77 +1334,94 @@ struct str_urba_outils (
 				_elementFacade.model = 	nvModele.idUnique
 				m_urba.facades.elementsDeFacade.sauvegarder 	_elementFacade
 				
+				debug "Model créé."
+				
 				nvModel
 				
 			)
 			
 			
 		),
-		
-		
-	-------- Génération des batiments ---------------------------
-	public		
-		fn creer_batiment  	_tracee		_idSpline	_presetBat	 	nodeCible:	=(
+	public	
+		fn preparerShape 	_shape	=(
 			
--- 			debug "creer_batiment"
+			local subSplineOuvertes =#()
+			local resultTracee	= copy	_shape
+			resultTracee.name 	= uniqueName	"Urba | Ville "
 			
-			local nvBatiment 	
-			 
-			if nodeCible == unsupplied then (
-				---- creation du node -----
-				nvBatiment 		= creerPolyVide ()		
-				nvBatiment.name 		= uniqueName "Urba | Batiment - "
-				nvBatiment.parent 		= _tracee
-				nvBatiment.wirecolor 	= _tracee.wirecolor
-				
-				-- centrer le pivot du batiment
-				local centre = [0,0,0]
-				for id_pt = 1 to ( numKnots 	_tracee 	_idSpline ) do	 (
-					centre += ( getKnotPoint 	_tracee 	_idSpline 	id_pt )
+			convertToSplineShape 	resultTracee
+			
+			--- on ne garde que les shape fermé et on tounre tout ds le mm sens-----
+			for idSpline = 1 to (numSplines resultTracee) do
+				if isClosed  resultTracee	idSpline	then	(				
+					--- on fait tourner les spline dans le meme sens ----
+					if not estPolygone_sensPositif 	resultTracee 	idSpline do
+						reverse		resultTracee	idSpline				
+				) else (
+					insertItem  idSpline	subSplineOuvertes 	1
 				)
-				centre = centre / ( numKnots 	_tracee 	_idSpline )
-				nvBatiment.pivot = centre
-				
-				---- on ajoute le modifer --
-				ajouterModifier_batiment		nvBatiment
-				nvBatiment.modifiers[1].tracee[1] 	= 	( nodeTransformMonitor node:_tracee 	forwardTransformChangeMsgs:false )
-				nvBatiment.modifiers[1].idSpline		=	_idSpline
-				
-			) else (
-				--- on vide le node de ses sous objets (poitns faces)----
-				viderPoly nodeCible
-				
-				nvBatiment = nodeCible				
-			)
 			
+			---- on supprimer les spline ouvertes --
+			for id in subSplineOuvertes do
+				deleteSpline resultTracee	id
 			
+			---- on ajoute le custom attribut au tracee--
+			ajouterModifier_ville		resultTracee
 			
+			resultTracee
 			
+		),
+		
+		
+		
+		
+	private
+		fn construire_batiment		_node	_presetBat =(
 			
+			--- on recupere les parametre sur le node ---------
+			local param 		= get_paramsBatiment	_node		
+			local tracee 		= param.tracee
+			local idSpline		= param.idSpline
 			
 			--------- la position d'origine  en Z ---------
-			local zCourant 	= 		_tracee.pos.z	- ep_ssBassement
+			local zCourant 	= 		tracee.pos.z	- ep_ssBassement
 			local nbrEtages = 0
 			
 			--- construction du ploy ------
-			creer_ssBassement	nvBatiment		&zCourant
-			creer_rdc 				nvBatiment		&zCourant		_presetBat
-			nbrEtages = creer_etages			nvBatiment		&zCourant		_presetBat
-			creer_toiture	nvBatiment		&zCourant		_presetBat
+			creer_ssBassement					_node		&zCourant
+			creer_rdc 								_node		&zCourant		_presetBat
+			nbrEtages = creer_etages			_node		&zCourant		_presetBat
+			creer_toiture							_node		&zCourant		_presetBat
 			
+			---majDu nbre d'etage -------
+			_node.modifiers[1].etages 		= nbrEtages
+		),
+	
+	-------- Génération des batiments ---------------------------
+	public		
+		
+		fn maj_presetBat 		_nodeBat	_presetBat =(
 			---- maj des data du node du batiment  --------
-			nvBatiment.modifiers[1].style 					= _presetBat.idUnique
-			nvBatiment.modifiers[1].etages 					= nbrEtages
-			nvBatiment.modifiers[1].etages_hauteur 		= _presetBat.etages_hauteur
-			nvBatiment.modifiers[1].rdc_hauteur			= _presetBat.etages_hauteur
+			_nodeBat.modifiers[1].style 					= _presetBat.idUnique
+			_nodeBat.modifiers[1].etages_hauteur 	= _presetBat.etages_hauteur
+			_nodeBat.modifiers[1].rdc_hauteur			= _presetBat.etages_hauteur
+		),
+		fn appliquer_presetBat 		_nodeBat	_presetBat 		majPreset:true	=(
 			
-			nvBatiment
+			--- maj des parametres ---
+			if majPreset	do	maj_presetBat 		_nodeBat	_presetBat
+			
+			--- maj du poly -----
+			viderPoly 	_nodeBat					
+			construire_batiment		_nodeBat	_presetBat
 			
 		),
-		fn get_villeDatas 	_idUVIlle	=(
-			
+		
+		fn creer_batiment  	_tracee		_idSpline	_presetBat	 	=(
+			local nvBatiment  = creer_nodeBatiment 		_tracee	_idSpline	
+			construire_batiment		nvBatiment		_presetBat
+			nvBatiment
 		)
-	
 	 
 ) -- fin struct -------------------------------
 

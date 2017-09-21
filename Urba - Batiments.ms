@@ -42,7 +42,7 @@
 ------------------------------------------------------------------------------
 ----------	Fenetre								 -------------------------
 ------------------------------------------------------------------------------
-rollout roll_urba_batiments "urba_batiments" width:279 height:230
+rollout roll_urba_batiments "urba_batiments" width:279 height:240
 (
 	------------  Membres	----------------------------------------------------------------------------------
 	---- Pointeurs ----
@@ -60,12 +60,14 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 														"2 pans",	
 														"4 pans", 			
 														"Acrotère " )		
-												
+	
+														
+-- 	fn previs_filt 		obj = superclassof obj == shape
+		
 	------------  UI	----------------------------------------------------------------------------------		
 
 	---- le bouton pour fermer la fenetre ----
 	ImgTag 'ui_btnFermer' "X" pos:[roll_urba_batiments.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
-	
 	button 'btn_supprimer_bat' "-" pos:[244,22] width:21 height:21 align:#left
 	button 'btn_ajouter_bat' "+" pos:[224,22] width:21 height:21 align:#left
 	dropdownList 'ddl_bats' "" pos:[9,22] width:216 height:21 align:#left
@@ -96,6 +98,10 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	label 'lbl23' "Etages:" pos:[12,95] width:38 height:15 align:#left
 	dropdownList 'ddl_rdc' "" pos:[119,160] width:144 height:21 align:#left
 	label 'lbl24' "RdC:" pos:[12,164] width:25 height:15 align:#left
+	pickButton 'pickBtn_previs' "PickButton" pos:[118,208] width:142 height:19 align:#left	autodisplay:true--filter:previs_filt
+	
+	label 'lbl_previs' "Prévisualiser :" pos:[12,210] width:73 height:15 align:#left
+	checkbox 'chk_previs' "" pos:[99,211] width:12 height:13 align:#left
 	
 	------------  Fonctions	----------------------------------------------------------------------------------
 	---- Gere l'état du bouton  -----
@@ -115,6 +121,8 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 		for bat in m_prt.presets.get () do
 			append listTmp bat.nom
 		ddl_bats.items = listTmp
+		
+		chk_previs.checked = m_prt.previs_actif
 		
 		---parametres -----
 		local enable_ui = true
@@ -196,7 +204,7 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	fn initialiser = (
 		ui_parametres = #(btn_supprimer_bat, edt_bat_nom, lbl_elem_nom , spn_etages_min, lbl_elem_largeur, spn_etages_max, lbl14,   spn_etages_hauteur, lbl18, spn_rdc_hauteur,
 		lbl19, ddl_toiture, lbl22, ddl_etages, lbl23, ddl_rdc, lbl24 )
-
+		
 		
 		
 		
@@ -214,16 +222,13 @@ rollout roll_urba_batiments "urba_batiments" width:279 height:230
 	
 	------------  Evenements	----------------------------------------------------------------------------------
 	
+	on pickBtn_previs 	picked 	obj 	do 	m_prt.set_previsNode 	 obj
+	on chk_previs 		changed state do 	m_prt.set_previsActif  state
 	
+	on btn_ajouter_bat 		pressed 		do 	m_prt.creer_nouveau ()
+	on btn_supprimer_bat 	pressed 		do 	m_prt.supprimer_batiment ddl_bats.selection
 	
-		---- Drag ----
-	
-	---- Fermer ----
-	
-	on btn_ajouter_bat 		pressed 	do 	m_prt.creer_nouveau ()
-	on btn_supprimer_bat 	pressed 	do 	m_prt.supprimer_batiment ddl_bats.selection
-	
-	on edt_bat_nom 		entered  	txt 		do 	m_prt.changerNom		txt
+	on edt_bat_nom 		entered  txt 	do 	m_prt.changerNom		txt
 	
 	on spn_etages_min 			changed 	val	do 	m_prt.changer_etagesMin			val
 	on spn_etages_max 		changed 	val	do 	m_prt.changer_etagesMax			val
@@ -298,7 +303,10 @@ struct str_urba_batiments (
 		
 		---- la batiment actuelement selectionnée ----
 		batCourant,
-
+	
+	public
+		previs_node ,
+		previs_actif =false,
 		
 		------------	UI		------------------------------------------------------------------------------------------
 	public
@@ -326,7 +334,13 @@ struct str_urba_batiments (
 	
 	public
 	------------	UI		------------------------------------------------------------------------------------------
-		fn actualiser 	= if m_estOuvert do m_dialog.actualiser (),
+		fn actualiser 	= (
+			
+			if m_estOuvert do m_dialog.actualiser ()
+			
+			if previs_actif	 do m_urba.appliquerPreset_batiment 	previs_node	batCourant
+			
+		),
 		fn selectionner 	_preset 	=(
 			local id_preset = presets.trouver_ID 	_preset
 			batCourant = _preset
@@ -505,11 +519,12 @@ struct str_urba_batiments (
 		fn changer_facadeEtages 	_id	 =(
 			debug "changer_facadeEtages" var:_id
 			
-			batCourant.etages_facade = ( m_urba.facades.presets.get_preset _id		 ).idUnique 
+			batCourant.etages_facade = ( m_urba.facades.presets.get_preset _id ).idUnique 
 			presets.sauvegarder		batCourant
 			actualiser ()
 			m_urba.actualiser ()
 		),
+		
 		fn changer_toiture 	_id	 =(
 			debug "changer_toiture" var:_id
 			
@@ -517,7 +532,28 @@ struct str_urba_batiments (
 			presets.sauvegarder		batCourant
 			actualiser ()
 			m_urba.actualiser ()
+		),
+		
+		fn set_previsActif	_state =(
+			previs_actif 	= 	_state
+			actualiser ()
+		),
+		
+		fn set_previsNode	_nodePicked =(
+			if not 	m_urba.est_nodeUrba	_nodePicked do (
+				if superclassOf _nodePicked == shape then (
+					previs_node = m_urba.generer_batiment 	_nodePicked	1	batCourant
+				) else (
+					previs_node = _nodePicked
+				)
+			)
+			previs_actif = true
+			actualiser ()
 		)
+		
+		
+		
+		
 		
 )
 

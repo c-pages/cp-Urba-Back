@@ -258,8 +258,8 @@ struct str_urba_villes (
 	private
 		---- Valeurs par défaut ----
 		defaut_proba 			= 100.,
-		defaut_surfaceMin 	= 50.,
-		defaut_surfaceMax 	= 300.,
+		defaut_surfaceMin 	= 0.,
+		defaut_surfaceMax 	= 50000.,
 									
 									
 									
