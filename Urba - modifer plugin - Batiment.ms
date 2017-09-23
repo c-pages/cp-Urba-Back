@@ -20,14 +20,101 @@ extends:Editable_poly replaceUI:true version:1
 	
 	
 	
+	---- le model dessiné d'un batiment vide ------------------
 	local traceeLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
 
-	local ep_ssBassement = 	-100
+	
+	---- constantes------------------
+	local ep_ssBassement 	= 	100
+	local ep_dalle 			= 20
+	local ep_mur	 			= 20
+	local ep_couvertine	 	= 5
 	
 	
 	-------------------------------------------------------------------------------------------------------------------------------------------------
 	--------------- Structures  ----------------------------------------------------------------------------------------------------------------------	
 	-------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	
+struct str_plan (
+		------------ DEBUG	----------------------------------------------------------------------------------
+		m_debug = true,
+		m_dbgPrefix ="str_plan",
+		fn debug 	_txt  var:	 param:    =(
+			try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+			catch ()
+		),
+		
+		a,
+		b,
+		c,
+		d,
+		normal ,
+		
+		fn creerFrom_2vecs_et_1Point	_vec1 	_vec2  	_point	=(
+			
+-- 			debug "creerFrom_2vecs_et_1Point"
+			---le vec normal du plan-----
+			local norm1 = normalize _vec1
+			local norm2 = normalize _vec2		
+			normal =  cross    norm2 	norm1
+			
+			--- definition equation ---------
+			a = normal.x
+			b = normal.y
+			c = normal.z		
+			d = -( a*_point.x + b*_point.y + c*_point.z )
+			
+-- 			debug "a" var:a
+-- 			debug "b" var:b
+-- 			debug "c" var:c
+-- 			debug "d" var:d
+		),
+		fn projeter_point_verticalement 		_pt 	=(
+-- 			debug "projeter_point_verticalement"
+			local result = copy _pt
+			result.z =  -( a*_pt.x + b*_pt.y + d ) / c
+			result
+			
+		),
+		
+
+		fn get_intersection_segment	_segPt1		_segPt2			=(
+			
+			local k	= -( a * _segPt1.x 		+	b * _segPt1.y 	+	c * _segPt1.z 	+ d ) 	/	( a * ( _segPt2.x -  _segPt1.x ) + b * ( _segPt2.y -  _segPt1.y )  + c * ( _segPt2.z -  _segPt1.z )  )
+
+			local ptResult 	= [0,0,0]
+			ptResult.x 			=  _segPt1.x + k * ( _segPt2.x 	-  _segPt1.x )
+			ptResult.y 			=  _segPt1.y + k * ( _segPt2.y 	-  _segPt1.y )
+			ptResult.z 			=  _segPt1.z + k * ( _segPt2.z 	-  _segPt1.z )
+			
+			ptResult
+			
+		),
+		fn coupe_segment	_segPt1		_segPt2			=(
+			
+			local pointIntersect = get_intersection_segment 	_segPt1		_segPt2 		
+			-- debug-------
+-- 			point pos:pointIntersect isSelected:true
+			
+			local vecSeg 	= _segPt2 - _segPt1
+			local vecInter = pointIntersect - _segPt1
+			
+			if dot vecSeg vecInter >0 and length vecSeg > length vecInter then
+				true
+			else
+				false
+			
+		)
+		
+		
+		
+		
+)
+	
+	
+	
+	----------- Creation des geometries----------------------------------------------------------------------
 	struct geo (
 		
 		fn vider =(
@@ -44,7 +131,6 @@ extends:Editable_poly replaceUI:true version:1
 			-- les vertex --
 			for pt in  _listeDesPoints do (
 				polyop.createVert delegate	pt
-			format "pt:%\n" pt
 			)
 			
 			-- les edges --
@@ -82,7 +168,7 @@ extends:Editable_poly replaceUI:true version:1
 			
 			local facesDuContour =#()
 			local listePts = #()
-			format "hauteur" var:hauteur
+			
 			if hauteur <0 then
 				listePts = for i = ptsContours.count to 1 by -1 collect ptsContours[i]
 			else listePts = ptsContours
@@ -215,23 +301,315 @@ extends:Editable_poly replaceUI:true version:1
 	
 	
 	
-	
+		
+	----------- selections niveau sous objet ----------------------
 	struct construire (
 		
-		fn ssBassement  	_tracee	&z	=(
-			geo.creerFacesContour	 _tracee		z 	ep_ssBassement
-			z += ep_ssBassement
-		),
 		
-		fn creer_RdC 				_tracee	&z	_presetBat	=(
+		------------ FACADES-------------------------
+		fn ssBassement  	_this		&z	=(
 			
+			geo.creerFacesContour	 	_this.tracee		z 	ep_ssBassement
+			z += ep_ssBassement
+			
+			geo.creerFacesContour	 	_this.tracee		z 	ep_dalle
+			z += ep_dalle
+			
+			
+		),
+		fn RdC 				_this		&z	=(
 			
 			--- un etage ---
-			local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.rdc_facade
-			creer_etage	_nodeBat	z 	_presetBat.rdc_hauteur	styleFacade
-			z += _presetBat.rdc_hauteur
+-- 			local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.rdc_facade
+-- 			creer_etage	_nodeBat	z 	_presetBat.rdc_hauteur	styleFacade
+-- 			z += _presetBat.rdc_hauteur
 			
-		)
+			geo.creerFacesContour	 _this.tracee		z 	_this.rdc_hauteur			
+			z += _this.rdc_hauteur	
+			
+		),
+		fn etages 			_this		&z			=(
+			
+			local etages_hauteur	= _this.etages_hauteur
+			local etages_nbre		= _this.etages_nbre
+			
+			local facesDunEtage =#()
+			
+			if etages_nbre != 0 do (
+				
+				--- creation de l'etage modele ---------------------
+				--- plancher ---
+				if ep_dalle  != 0 do (
+					local nvlsFaces = geo.creerFacesContour	_this.tracee	z 	ep_dalle
+					facesDunEtage  += nvlsFaces
+					z += ep_dalle
+				) 
+				
+				local nvlsFaces = geo.creerFacesContour	_this.tracee	z 	etages_hauteur
+				facesDunEtage  += nvlsFaces		
+				z += etages_hauteur
+				
+				
+				--- on copie l'etage x fois ----
+				for i = 2 to etages_nbre do (
+					local vertsfin = polyop.getNumEdges delegate
+					polyop.detachFaces delegate	 facesDunEtage delete:false	
+					local vertsABouger = #{(vertsfin+1)..(polyop.getNumEdges delegate)}
+					polyop.moveVert 	delegate 	vertsABouger [0,0, ( etages_hauteur + ep_dalle ) *  (i-1) ]
+					z += ep_dalle
+					z += etages_hauteur
+				)
+				
+			)
+			
+			
+		),
+		
+		
+		
+		
+		
+		------------ TOITURES-------------------------
+		
+		fn toitPentes 		_this		&z		=(
+			debug "creer_toitDeuxPentes"
+			
+			
+			local	 mtrx_axeP	=	_this.mtrx_axePrincipal
+			local	 BB_axeP	=	_this.BB_axePrincipal
+			translate mtrx_axeP	BB_axeP[1]
+			
+			
+			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
+			local largeur 		=	diag_axeP.x
+			local longeur 		= 	diag_axeP.z
+			local hauteur 		= 	largeur /2 --* random .3 1.5
+			
+			local nvlsFaces 	= #()
+			case _this.toit_pentes of (
+				1: ( ---------- 1 PENTE ----------------------------------------------------------------------------------------------------
+						--- gestion de l'angle de la pente .... ----
+-- 						hauteur = hauteur/4
+						
+						local pt_0 = (  [0,0,0]  *  mtrx_axeP )
+						local pt_1 = (  [0,0,longeur]  *  mtrx_axeP )
+						local pt_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )
+						
+					
+						local vec1 = pt_1 - pt_0
+						local vec2 = pt_2 - pt_0
+						
+						local pt_Origine = pt_0
+						pt_Origine.z =  z 
+-- 						point pos:pt_Origine	 isSelected:true
+					
+						local plan_pente = str_plan ()
+						plan_pente.creerFrom_2vecs_et_1Point	vec1	vec2		pt_Origine
+						
+						local pointsPente = #()
+						local pointsMurs   =#()
+						for i = 1 to  _this.tracee.count do (
+							
+							local j = i+1
+							if j >  _this.tracee.count  do j = 1
+							
+							
+							--- point Mur ----
+							local pt 			= 	_this.tracee[i]	
+							pt.z = z
+							append pointsMurs  pt		
+							
+							
+							
+							local pt_result = plan_pente.projeter_point_verticalement 	pt
+							append pointsPente  pt_result
+							
+						)
+						
+						--- creation de la face du dessus ----
+						append nvlsFaces ( geo.creerFace  	pointsPente )
+						
+						---- creation des raccord mur ----------
+						for i = 1 to pointsMurs.count  do (
+							
+							local j = i+1
+							if j >  pointsMurs.count  do j = 1
+							
+							local ptMur1 		= pointsMurs[i]
+							local ptMur2 		= pointsMurs[j]
+							local ptPente3 	= pointsPente[j]
+							local ptPente4	= pointsPente[i]
+							
+							local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
+							append nvlsFaces ( geo.creerFace  	pointsRaccord )
+						)
+					
+				)
+				2: (---------- 2 PENTES ----------------------------------------------------------------------------------------------------
+					
+					
+						--- Plan de la Pente 1  ----
+						local pt_P1_0 = (  [0,0,0]  *  mtrx_axeP )
+						local pt_P1_1 = (  [0,0,longeur]  *  mtrx_axeP )
+						local pt_P1_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )	
+					
+						local vecP1_1 = pt_P1_1 - pt_P1_0
+						local vecP1_2 = pt_P1_2 - pt_P1_0
+						
+						local pt_Origine = pt_P1_0
+						pt_Origine.z =  z 
+						local plan_pente1 = str_plan ()
+						plan_pente1.creerFrom_2vecs_et_1Point	vecP1_1		vecP1_2		pt_Origine
+					
+					
+					
+						--- Plan de la Pente 1  ----
+						local pt_P2_0 = (  [largeur,0,longeur]  *  mtrx_axeP )
+						local pt_P2_1 = (  [largeur,0,0]  *  mtrx_axeP )
+						local pt_P2_2 = (  [0 ,hauteur,longeur]  *  mtrx_axeP )			
+					
+						local vecP2_1 = pt_P2_1 - pt_P2_0
+						local vecP2_2 = pt_P2_2 - pt_P2_0
+						
+						local pt_Origine = pt_P2_0
+						pt_Origine.z =  z 
+						local plan_pente2 = str_plan ()
+						plan_pente2.creerFrom_2vecs_et_1Point	vecP2_1		vecP2_2		pt_Origine
+					
+						--- Plan verticale faitage ------
+						local pt_F_0 = (  [largeur /2 ,0,0]  *  mtrx_axeP )
+						local pt_F_1 = (  [largeur /2 ,0,longeur]  *  mtrx_axeP )
+						local pt_F_2	=	pt_F_0 + [0,0,100]				
+						
+						local vec_F_1 = pt_F_1 - pt_F_0
+						local vec_F_2 = pt_F_2 - pt_F_0				
+						
+						local pt_Origine = pt_F_0
+						pt_Origine.z =  z 
+						
+						local plan_verticaleFaitage = str_plan ()
+						plan_verticaleFaitage.creerFrom_2vecs_et_1Point	vec_F_1		vec_F_2		pt_Origine
+						
+						
+						
+						---- creation des liste des points-----------
+						local pointsPente = #()
+						local pointsPente1 = #()
+						local pointsPente2 = #()
+						local pointsMurs   =#()
+						for i = 1 to  _this.tracee.count do (
+							
+							local j = i+1
+							if j >  _this.tracee.count  do j = 1
+							
+							
+							--- point Mur ----
+							local pt 			= 	_this.tracee[i]	
+							pt.z = z
+							append pointsMurs  pt		
+							
+							--- point pente ----
+							local pt_pente1 = plan_pente1.projeter_point_verticalement 	pt
+							local pt_pente2 = plan_pente2.projeter_point_verticalement 	pt
+							if pt_pente1.z < pt_pente2.z then (
+								append pointsPente  	pt_pente1
+								append pointsPente1 	pt_pente1
+								
+							) else  (
+								append pointsPente  	pt_pente2
+								append pointsPente2  	pt_pente2
+							)
+							
+							--- point mur - faitage ----
+							local pt_suivant 	= 	_this.tracee[j]	
+							pt_suivant.z = z
+							local intersect = plan_verticaleFaitage.coupe_segment	pt 	pt_suivant							
+							if intersect do (
+								local pt_faitage_mur = plan_verticaleFaitage.get_intersection_segment 	pt 	pt_suivant
+								append pointsMurs  	pt_faitage_mur
+								local pt_faitage_pente = plan_pente1.projeter_point_verticalement 	pt_faitage_mur
+								append pointsPente  pt_faitage_pente
+								
+								
+								append pointsPente1 	pt_faitage_pente
+								append pointsPente2 	pt_faitage_pente
+							)
+							
+							
+							
+						)
+						
+						
+						
+						
+						--------- creation des geometries ---------------------
+						--- les murs ----
+						for i = 1 to pointsMurs.count  do (
+							
+							local j = i+1
+							if j > pointsMurs.count do j = 1
+							
+							local ptMur1 		= pointsMurs[ i ]
+							local ptMur2 		= pointsMurs[ j ]
+							local ptPente3 	= pointsPente[ j ]
+							local ptPente4	= pointsPente[ i ]
+							
+							local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
+							append nvlsFaces ( geo.creerFace  	pointsRaccord )
+						) 
+						
+						
+						--- les pentes -----
+						append nvlsFaces ( geo.creerFace  		pointsPente1 )
+						append nvlsFaces ( geo.creerFace  		pointsPente2 )
+						
+						
+				)
+			)
+		),
+			
+		fn acrotere		_this		_face		= (
+			
+			--- les murs -----
+			polyop.bevelFaces delegate 	#(_face) 	0 	-ep_mur
+			local faceAExtruder = #{_face+1..(polyop.getNumFaces delegate)} as array
+			polyop.extrudeFaces  delegate 	faceAExtruder 	_this.acrotere_hauteur
+			
+			--- la couvertine  -----
+			polyop.bevelFaces delegate 	faceAExtruder		0 	ep_couvertine
+			polyop.extrudeFaces delegate 	faceAExtruder		ep_couvertine
+			
+		),
+		
+		
+		fn toit 		_this		&z =(
+			case _this.toit_type of (
+				1: (	---- PLAT	----
+					local tracee = for pt in _this.tracee collect [pt.x,pt.y,z]
+					geo.creerFace		tracee
+				)
+				2: (	---- ACROTERE	----
+					
+					local tracee 		= _this.tracee
+					
+					--- dalle ---
+					if ep_dalle  != 0 do (
+						geo.creerFacesContour	_this.tracee 	z 	ep_dalle
+						z += ep_dalle
+					) 
+					
+					--- creation de la facette globale-----
+					local tracee 		= for pt in _this.tracee collect [pt.x,pt.y,z]
+					local faceDuToit 	= geo.creerFace		tracee
+					
+					construire.acrotere	_this	faceDuToit
+					
+				)
+				3: (	---- PENTES	----
+					construire.toitPentes			_this		&z 
+				)
+			)
+		)			
 		
 	) ---- fin struct construire ------------------
 	
@@ -378,9 +756,12 @@ extends:Editable_poly replaceUI:true version:1
 		---- creation de la surface de base -------
 		init_surfaceDeBase ()
 		
-		---- ssBassement ------
-		local zCourant = 0
-		construire.ssBassement 	this.tracee	&zCourant
+		local zCourant = -( ep_ssBassement + ep_dalle )
+		
+		construire.ssBassement 	this	&zCourant
+		construire.RdC 				this	&zCourant
+		construire.etages				this	&zCourant
+		construire.toit					this	&zCourant
 		
 		redrawviews ()
 	)
@@ -390,9 +771,12 @@ extends:Editable_poly replaceUI:true version:1
 	
 	fn tourner_axeP	 =(
 		
-		local mtrxTmp = this.mtrx_axePrincipal
+		this.axeP_estTourne = not this.axeP_estTourne 
 		
-		rotateZ	mtrxTmp	90
+		local angle_rotation = if this.axeP_estTourne then -90 else 90
+		
+		local mtrxTmp = this.mtrx_axePrincipal 
+		rotateZ	mtrxTmp			angle_rotation
 		this.mtrx_axePrincipal = mtrxTmp
 		
 	)
@@ -429,7 +813,7 @@ extends:Editable_poly replaceUI:true version:1
 		mtrx_axePrincipal		type:#matrix3	
 		BB_axePrincipal		type:#point3Tab		tabSize:2			tabSizeVariable:false
 		
-		
+		axeP_estTourne		type:#boolean			default:false
 		/* 
 		idSpline	type: #integer 			--ui:ui_largeur 				default:60.
 		
@@ -461,6 +845,15 @@ extends:Editable_poly replaceUI:true version:1
 		etages_hauteur	type: #float 		default:250.	ui:spn_hauteur
 		etages_nbre		type: #integer		default:1		ui:spn_nbres
 		
+	)
+	
+	
+	
+	parameters params_toiture rollout:roll_toiture			(
+		
+		toit_pentes			type: #radiobtnIndex 	default:1		ui:rdo_pentes
+		toit_type			type: #integer 			default:1		ui:ddl_toiture
+		acrotere_hauteur	type: #float 				default:50.		ui:spn_acrotere_hauteur
 	)
 	
 	
@@ -526,12 +919,20 @@ extends:Editable_poly replaceUI:true version:1
 	)
 	
 	
-	rollout roll_rdc "RdC" 
+	rollout roll_rdc "RdC" width:162 height:42
 	(
 		dropdownList 'ddl_facade' "" pos:[51,1] width:111 height:21 align:#left
 		label 'lbl_facade' "Façade:" pos:[5,5] width:38 height:15 align:#left
 		spinner 'spn_hauteur' "" pos:[50,22] width:111 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 		label 'lbl_hateur' "Hauteur:" pos:[5,22] width:45 height:15 align:#left
+		on ddl_facade selected sel do
+	(
+	
+		)
+		on spn_hauteur changed val do
+	(
+	creerBatiment ()
+		)
 	)
 	
 	
@@ -545,17 +946,44 @@ extends:Editable_poly replaceUI:true version:1
 		
 		spinner 'spn_hauteur' "" pos:[50,38] width:111 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 		label 'lbl_hauteur' "Hauteur:" pos:[5,38] width:45 height:15 align:#left
+		
+		
+		on spn_nbres 		changed val do	creerBatiment ()
+		on spn_hauteur 	changed val do	creerBatiment ()
 	)
 	
 	
 	rollout roll_Toiture "Toiture" 
 	(
-		dropdownList 'ddl_toiture' "" pos:[51,1] width:111 height:21 align:#left
+		dropdownList 'ddl_toiture' "" pos:[51,1] width:111 height:21 items:#("Plate", "Acrotère", "Pentes") align:#left
 		label 'lbl_facade' "Toiture:" pos:[5,5] width:38 height:15 align:#left
+		radiobuttons 'rdo_pentes' "Pentes" pos:[5,24] width:29 height:46 labels:#("1", "2") align:#left
+		spinner 'spn_acrotere_hauteur' "" pos:[50,55] width:111 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+		label 'lbl_hauteur' "Hauteur:" pos:[5,55] width:45 height:15 align:#left
+		
+		fn actualiser =(
+			rdo_pentes.enabled 					= ddl_toiture.selection == 3
+			spn_acrotere_hauteur.enabled 	= ddl_toiture.selection == 2
+			lbl_hauteur.enabled 					= ddl_toiture.selection == 2
+		)
+		
+		
+		
+		on roll_Toiture open do
+			actualiser()
+		on ddl_toiture selected sel 	do
+		(
+					actualiser	()
+					creerBatiment ()
+				)
+		on rdo_pentes changed stat 	do
+			creerBatiment ()
+		on spn_acrotere_hauteur changed val 	do
+			creerBatiment ()
 	)
 	
 	
-	rollout roll_infos "Infos" width:162 height:113
+	rollout roll_infos "Infos"
 	(
 		label 'lbl16' "Surface:" pos:[4,2] width:43 height:14 align:#left
 		label 'lbl_surface' "" pos:[52,2] width:103 height:16 align:#left --enabled:false
@@ -580,6 +1008,7 @@ extends:Editable_poly replaceUI:true version:1
 		on btn_rotation pressed  do
 	(
 		tourner_axeP ()
+		creerBatiment ()
 		)
 	)
 	
