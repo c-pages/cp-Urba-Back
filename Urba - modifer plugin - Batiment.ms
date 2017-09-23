@@ -21,7 +21,7 @@ extends:Editable_poly replaceUI:true version:1
 	
 	
 	---- le model dessiné d'un batiment vide ------------------
-	local traceeLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
+	local traceLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
 
 	
 	---- constantes------------------
@@ -31,7 +31,7 @@ extends:Editable_poly replaceUI:true version:1
 	local ep_couvertine	 	= 5
 	
 	
-	
+	local murs_types = #("Gouttereaux", "Pignons", "Gouttereaux + Pignons")
 	
 	
 	-------------------------------------------------------------------------------------------------------------------------------------------------
@@ -196,14 +196,14 @@ extends:Editable_poly replaceUI:true version:1
 		
 		
 		----- Shape -------------------
-		fn edge_lePlusGrand			_tracee 	=(
+		fn edge_lePlusGrand			_trace 	=(
 			local longueurEdgeMax = 0
 			local	resultPts = #()
-			for i = 1 to _tracee.count do (
+			for i = 1 to _trace.count do (
 				local j = i+1
-				if j > _tracee.count  do j = 1
-				local pt 			= _tracee[	i ]
-				local pt_suivant	= _tracee[	j ]
+				if j > _trace.count  do j = 1
+				local pt 			= _trace[	i ]
+				local pt_suivant	= _trace[	j ]
 				local longueurEdge = distance	pt	pt_suivant
 				if longueurEdge > longueurEdgeMax do (
 					longueurEdgeMax = longueurEdge
@@ -246,9 +246,9 @@ extends:Editable_poly replaceUI:true version:1
 			
 			axeMtrx		
 		), */
-		fn mtrx_axePrincipal  			_tracee  	=(
+		fn mtrx_axePrincipal  			_trace  	=(
 			
-			local ptsEdgeLePlusLong 	= get.edge_lePlusGrand	_tracee
+			local ptsEdgeLePlusLong 	= get.edge_lePlusGrand	_trace
 			
 			local axeVecteur 		= 	normalize (ptsEdgeLePlusLong[2] - ptsEdgeLePlusLong[1])
 			local axeMtrx				=  ( matrixFromNormal		axeVecteur )
@@ -282,17 +282,17 @@ extends:Editable_poly replaceUI:true version:1
 			#([xMin, yMin, zMin]*  mtrxAxePrincipal, [xMax, yMax, zMax]*  mtrxAxePrincipal)
 			
 		), */
-		fn BB_axePrincipal				_tracee  		_mtrxAxe  	=(
+		fn BB_axePrincipal				_trace  		_mtrxAxe  	=(
 			
 -- 			local mtrxAxePrincipal	=	get.mtrx_axePrincipal 	_spline	_idSpline
 			
-			local pt1 = _tracee[1] * inverse _mtrxAxe
+			local pt1 = _trace[1] * inverse _mtrxAxe
 			local xMin = xMax = pt1.x
 			local yMin = yMax = pt1.y
 			local zMin = zMax = pt1.z
 			
-			for i = 2 to _tracee.count do (
-				local pt = _tracee[i] * inverse _mtrxAxe
+			for i = 2 to _trace.count do (
+				local pt = _trace[i] * inverse _mtrxAxe
 				if pt.x < xMin 		do xMin 		= pt.x
 				if pt.x > xMax 	do xMax 	= pt.x
 				if pt.y < yMin 		do yMin 	= pt.y
@@ -375,10 +375,10 @@ extends:Editable_poly replaceUI:true version:1
 		------------ FACADES-------------------------
 		fn ssBassement  	_this		&z	=(
 			
-			geo.creerFacesContour	 	_this.tracee		z 	ep_ssBassement
+			geo.creerFacesContour	 	_this.trace		z 	ep_ssBassement
 			z += ep_ssBassement
 			
-			geo.creerFacesContour	 	_this.tracee		z 	ep_dalle
+			geo.creerFacesContour	 	_this.trace		z 	ep_dalle
 			z += ep_dalle
 			
 			
@@ -390,7 +390,7 @@ extends:Editable_poly replaceUI:true version:1
 -- 			creer_etage	_nodeBat	z 	_presetBat.rdc_hauteur	styleFacade
 -- 			z += _presetBat.rdc_hauteur
 			
-			geo.creerFacesContour	 _this.tracee		z 	_this.rdc_hauteur			
+			geo.creerFacesContour	 _this.trace		z 	_this.rdc_hauteur			
 			z += _this.rdc_hauteur	
 			
 		),
@@ -406,12 +406,12 @@ extends:Editable_poly replaceUI:true version:1
 				--- creation de l'etage modele ---------------------
 				--- plancher ---
 				if ep_dalle  != 0 do (
-					local nvlsFaces = geo.creerFacesContour	_this.tracee	z 	ep_dalle
+					local nvlsFaces = geo.creerFacesContour	_this.trace	z 	ep_dalle
 					facesDunEtage  += nvlsFaces
 					z += ep_dalle
 				) 
 				
-				local nvlsFaces = geo.creerFacesContour	_this.tracee	z 	etages_hauteur
+				local nvlsFaces = geo.creerFacesContour	_this.trace	z 	etages_hauteur
 				facesDunEtage  += nvlsFaces		
 				z += etages_hauteur
 				
@@ -466,7 +466,7 @@ extends:Editable_poly replaceUI:true version:1
 						local vec2 = pt_2 - pt_0
 						
 						local pt_Origine = pt_0
-						pt_Origine.z =  z 
+						pt_Origine.z =  z + _this.toit_hauteur
 -- 						point pos:pt_Origine	 isSelected:true
 					
 						local plan_pente = str_plan ()
@@ -474,20 +474,20 @@ extends:Editable_poly replaceUI:true version:1
 						
 						local pointsPente = #()
 						local pointsMurs   =#()
-						for i = 1 to  _this.tracee.count do (
+						for i = 1 to  _this.trace.count do (
 							
 							local j = i+1
-							if j >  _this.tracee.count  do j = 1
+							if j >  _this.trace.count  do j = 1
 							
 							
 							--- point Mur ----
-							local pt 			= 	_this.tracee[i]	
-							pt.z = z
+							local pt 			= 	_this.trace[i]	
 							append pointsMurs  pt		
 							
 							
 							
 							local pt_result = plan_pente.projeter_point_verticalement 	pt
+							pt_result.z += _this.toit_hauteur
 							append pointsPente  pt_result
 							
 						)
@@ -523,7 +523,7 @@ extends:Editable_poly replaceUI:true version:1
 						local vecP1_2 = pt_P1_2 - pt_P1_0
 						
 						local pt_Origine = pt_P1_0
-						pt_Origine.z =  z 
+						pt_Origine.z =  z + _this.toit_hauteur
 						local plan_pente1 = str_plan ()
 						plan_pente1.creerFrom_2vecs_et_1Point	vecP1_1		vecP1_2		pt_Origine
 					
@@ -538,7 +538,7 @@ extends:Editable_poly replaceUI:true version:1
 						local vecP2_2 = pt_P2_2 - pt_P2_0
 						
 						local pt_Origine = pt_P2_0
-						pt_Origine.z =  z 
+						pt_Origine.z =  z + _this.toit_hauteur
 						local plan_pente2 = str_plan ()
 						plan_pente2.creerFrom_2vecs_et_1Point	vecP2_1		vecP2_2		pt_Origine
 					
@@ -563,14 +563,14 @@ extends:Editable_poly replaceUI:true version:1
 						local pointsPente1 = #()
 						local pointsPente2 = #()
 						local pointsMurs   =#()
-						for i = 1 to  _this.tracee.count do (
+						for i = 1 to  _this.trace.count do (
 							
 							local j = i+1
-							if j >  _this.tracee.count  do j = 1
+							if j >  _this.trace.count  do j = 1
 							
 							
 							--- point Mur ----
-							local pt 			= 	_this.tracee[i]	
+							local pt 			= 	_this.trace[i]	
 							pt.z = z
 							append pointsMurs  pt		
 							
@@ -587,7 +587,7 @@ extends:Editable_poly replaceUI:true version:1
 							)
 							
 							--- point mur - faitage ----
-							local pt_suivant 	= 	_this.tracee[j]	
+							local pt_suivant 	= 	_this.trace[j]	
 							pt_suivant.z = z
 							local intersect = plan_verticaleFaitage.coupe_segment	pt 	pt_suivant							
 							if intersect do (
@@ -639,7 +639,7 @@ extends:Editable_poly replaceUI:true version:1
 			--- les murs -----
 			polyop.bevelFaces delegate 	#(_face) 	0 	-ep_mur
 			local faceAExtruder = #{_face+1..(polyop.getNumFaces delegate)} as array
-			polyop.extrudeFaces  delegate 	faceAExtruder 	_this.acrotere_hauteur
+			polyop.extrudeFaces  delegate 	faceAExtruder 	_this.toit_hauteur
 			
 			--- la couvertine  -----
 			polyop.bevelFaces delegate 	faceAExtruder		0 	ep_couvertine
@@ -650,22 +650,22 @@ extends:Editable_poly replaceUI:true version:1
 		fn toit 		_this		&z =(
 			case _this.toit_type of (
 				1: (	---- PLAT	----
-					local tracee = for pt in _this.tracee collect [pt.x,pt.y,z]
-					geo.creerFace		tracee
+					local trace = for pt in _this.trace collect [pt.x,pt.y,z]
+					geo.creerFace		trace
 				)
 				2: (	---- ACROTERE	----
 					
-					local tracee 		= _this.tracee
+					local trace 		= _this.trace
 					
 					--- dalle ---
 					if ep_dalle  != 0 do (
-						geo.creerFacesContour	_this.tracee 	z 	ep_dalle
+						geo.creerFacesContour	_this.trace 	z 	ep_dalle
 						z += ep_dalle
 					) 
 					
 					--- creation de la facette globale-----
-					local tracee 		= for pt in _this.tracee collect [pt.x,pt.y,z]
-					local faceDuToit 	= geo.creerFace		tracee
+					local trace 		= for pt in _this.trace collect [pt.x,pt.y,z]
+					local faceDuToit 	= geo.creerFace		trace
 					
 					construire.acrotere	_this	faceDuToit
 					
@@ -697,15 +697,9 @@ extends:Editable_poly replaceUI:true version:1
 		
 		gw.setTransform (matrix3 1)
 		
-		/* 
 		
-		affiche_axe				type:#boolean			default:false	ui:ckb_axe
-		affiche_trace			type:#boolean			default:false	ui:ckb_trace
-		affiche_pignons		type:#boolean			default:false	ui:ckb_pignons
-		affiche_gouttereaux
-		*/
-		
-		for o in objects where classof o ==urba_batiment  do (
+		for o in objects where classof o ==urba_batiment  do	
+			if o.isSelected do (
 			
 			local largeurFleche = 100
 			local BB_axeP 	= o.BB_axePrincipal
@@ -717,30 +711,30 @@ extends:Editable_poly replaceUI:true version:1
 			local largeur 		=	diag_axeP.x
 			local longeur 		= 	diag_axeP.z
 			
-			---- dessin du tracee -----------------
+			---- dessin du trace -----------------
 -- 				gw.setColor	#line	blue
--- 				gw.Polyline 	(o.tracee as array )		true
+-- 				gw.Polyline 	(o.trace as array )		true
 			
-			---- les points du tracee -----
-			for i = 1 to o.tracee.count do (
-				pt = o.tracee[i]
+			---- les points du trace -----
+			for i = 1 to o.trace.count do (
+				pt = o.trace[i]
 				local j = i + 1
-				if j > o.tracee.count do j = 1
+				if j > o.trace.count do j = 1
 				
 				if o.affiche_trace do
 					gw.text 		(pt + [10,0,0]) 	(i as string)  	color:yellow
 				
 				local col = red
-				local estPignon = findItem o.idTracee_pignons i != 0 
+				local estPignon = findItem o.idtrace_pignons i != 0 
 				if estPignon then (
 					if o.affiche_pignons do (
 						gw.setColor	#line	blue
-						gw.polyline #( pt, o.tracee[j] )	false
+						gw.polyline #( pt, o.trace[j] )	false
 					)
 				)else (
 					if o.affiche_gouttereaux do (
 						gw.setColor	#line	red
-						gw.polyline #( pt, o.tracee[j] )	false
+						gw.polyline #( pt, o.trace[j] )	false
 					)
 				)
 			)
@@ -791,18 +785,18 @@ extends:Editable_poly replaceUI:true version:1
 	
 
 	fn maj_pignonsEtGouttereaux =(
-		this.idTracee_pignons 			=#()
-		this.idTracee_gouttereaux 	=#()
+		this.idtrace_pignons 			=#()
+		this.idtrace_gouttereaux 	=#()
 		
 		
-		for i =1 to this.tracee.count do (
+		for i =1 to this.trace.count do (
 			local j = i+1
-			if j > this.tracee.count do j = 1
+			if j > this.trace.count do j = 1
 			
-			local orientation = get.orientation_axeP	this	(this.tracee[j]-this.tracee[i])
+			local orientation = get.orientation_axeP	this	(this.trace[j]-this.trace[i])
 			case orientation of (
-				#perpendiculaire: append 	this.idTracee_pignons			i
-				#parallele: 			append 	this.idTracee_gouttereaux		i
+				#perpendiculaire: append 	this.idtrace_pignons			i
+				#parallele: 			append 	this.idtrace_gouttereaux		i
 			)
 			
 		)
@@ -812,13 +806,13 @@ extends:Editable_poly replaceUI:true version:1
 	
 	
 	
-	fn init_surfaceDeBase 	= (
+	fn init_geometrie 	= (
 		
 		---- creation de la surface de base -------
 		geo.vider ()
-		geo.creerFace  this.tracee
+		geo.creerFace  this.trace
 		
-		----- calcul de la surface du tracee ------
+		----- calcul de la surface du trace ------
 		this.surface = get.surface ()
 		this.roll_infos.actualiser ()
 		
@@ -827,7 +821,7 @@ extends:Editable_poly replaceUI:true version:1
 	fn creerBatiment =(
 		
 		---- creation de la surface de base -------
-		init_surfaceDeBase ()
+		init_geometrie ()
 		
 		local zCourant = -( ep_ssBassement + ep_dalle )
 		
@@ -838,58 +832,56 @@ extends:Editable_poly replaceUI:true version:1
 		
 		redrawviews ()
 	)
-	
-	
 	fn tourner_axeP	  =(
 		
-		local mtrxTmp = get.mtrx_axePrincipal	this.tracee 	
+		local mtrxTmp = get.mtrx_axePrincipal	this.trace 	
 		rotateZ	mtrxTmp			this.rotation_axeP
 		this.mtrx_axePrincipal = mtrxTmp		
-		this.BB_axePrincipal		=		get.BB_axePrincipal		this.tracee 		this.mtrx_axePrincipal
+		this.BB_axePrincipal		=		get.BB_axePrincipal		this.trace 		this.mtrx_axePrincipal
 		maj_pignonsEtGouttereaux ()
 		
 		--- recreation du batiment -----
 		creerBatiment ()
 	)	
-	fn set_tracee	 	_nvTracee 	=(
+	fn set_trace	 	_nvtrace 	=(
 		
 		local subSplineOuvertes 		=#()
-		local nvTraceeTMP 				= copy _nvTracee
-		local id_premierTraceeFerme 	= 0
+		local nvtraceTMP 				= copy _nvtrace
+		local id_premiertraceFerme 	= 0
 		
 		--- on ne prend que la premiere spline fermée-----
-		convertToSplineShape nvTraceeTMP
+		convertToSplineShape nvtraceTMP
 		local b_trouve = false
-		for idSpline = 1 to (numSplines nvTraceeTMP) while not b_trouve	do
-			if isClosed  nvTraceeTMP	idSpline	then	(
-				id_premierTraceeFerme = idSpline
+		for idSpline = 1 to (numSplines nvtraceTMP) while not b_trouve	do
+			if isClosed  nvtraceTMP	idSpline	then	(
+				id_premiertraceFerme = idSpline
 				b_trouve = true
 			)
 			
 		---- si on a trouvé la spline --------------------
-		if id_premierTraceeFerme != 0 do (
+		if id_premiertraceFerme != 0 do (
 			
 			--- on fait tourner les spline dans le meme sens ----
-			if not get.est_sensPositif 	nvTraceeTMP 	id_premierTraceeFerme do
-				reverse		nvTraceeTMP	id_premierTraceeFerme
+			if not get.est_sensPositif 	nvtraceTMP 	id_premiertraceFerme do
+				reverse		nvtraceTMP	id_premiertraceFerme
 			
-			---- mise a jour de tracee -----------
-			this.tracee = #()	
-			for id_pt = 1 to ( numKnots 	nvTraceeTMP 	id_premierTraceeFerme ) do	 (
-				ptSpline = ( getKnotPoint 	nvTraceeTMP 	id_premierTraceeFerme 	id_pt )
-				append this.tracee 	ptSpline
+			---- mise a jour de trace -----------
+			this.trace = #()	
+			for id_pt = 1 to ( numKnots 	nvtraceTMP 	id_premiertraceFerme ) do	 (
+				ptSpline = ( getKnotPoint 	nvtraceTMP 	id_premiertraceFerme 	id_pt )
+				append this.trace 	ptSpline
 			)
 			
 			--- Axe principal-------------------
-			this.mtrx_axePrincipal	=		get.mtrx_axePrincipal	this.tracee 	
-			this.BB_axePrincipal		=		get.BB_axePrincipal		this.tracee 		this.mtrx_axePrincipal
+			this.mtrx_axePrincipal	=		get.mtrx_axePrincipal	this.trace 	
+			this.BB_axePrincipal		=		get.BB_axePrincipal		this.trace 		this.mtrx_axePrincipal
 			
 			maj_pignonsEtGouttereaux ()
 			
 		)
 		
 		--- suppression de tracée temp -------------
-		delete nvTraceeTMP
+		delete nvtraceTMP
 		
 	)	
 	
@@ -924,10 +916,10 @@ extends:Editable_poly replaceUI:true version:1
 	-------------------------------------------------------------------------------------------------------------------------------------------------
 	parameters params_main rollout:roll_params			(
 		
-		------- TRACEES 			------------------
-		tracee						type:#point3Tab 		tabSize:0 			tabSizeVariable:true
-		idTracee_pignons			type:#intTab 			tabSize:0 			tabSizeVariable:true
-		idTracee_gouttereaux	type:#intTab	 		tabSize:0 			tabSizeVariable:true
+		------- traceS 			------------------
+		trace						type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+		idtrace_pignons			type:#intTab 			tabSize:0 			tabSizeVariable:true
+		idtrace_gouttereaux	type:#intTab	 		tabSize:0 			tabSizeVariable:true
 		
 		
 		------- AXE PRINCIPAL	------------------
@@ -944,12 +936,13 @@ extends:Editable_poly replaceUI:true version:1
 	parameters params_rdc rollout:roll_rdc			(
 		
 		rdc_hauteur	type: #float 		default:250.	ui:spn_hauteur
-		
+		rdc_murs		type:#integer		default:1		ui:ddl_appliquerA
 	)
 	parameters params_etages rollout:roll_etages			(
 		
 		etages_hauteur	type: #float 		default:250.	ui:spn_hauteur
 		etages_nbre		type: #integer		default:1		ui:spn_nbres
+		etages_murs		type:#integer		default:1		ui:ddl_appliquerA
 		
 	)
 	parameters params_toiture rollout:roll_toiture			(
@@ -957,7 +950,7 @@ extends:Editable_poly replaceUI:true version:1
 		toit_nbrePentes	type: #radiobtnIndex 	default:2		ui:rdo_pentes
 		toit_pente			type: #float 				default:20		ui:spn_pente
 		toit_type			type: #integer 			default:3		ui:ddl_toiture
-		acrotere_hauteur	type: #float 				default:50.		ui:spn_acrotere_hauteur
+		toit_hauteur	type: #float 				default:50.		ui:spn_toit_hauteur
 		
 	)
 	parameters params_affichage rollout:roll_affichage			(
@@ -981,15 +974,15 @@ extends:Editable_poly replaceUI:true version:1
 		fn shape_filt 		obj = superclassof obj == shape
 		
 		button 'btn_vider' "Vider" pos:[110,17] width:60 height:16 align:#left
-		pickbutton 'btn_pick_tracee' "Pick shape" pos:[5,2] width:165 height:16 filter:shape_filt align:#left
+		pickbutton 'btn_pick_trace' "Pick shape" pos:[5,2] width:165 height:16 filter:shape_filt align:#left
 		
 		button 'btn_construire' "Construire" pos:[5,17] width:106 height:16 align:#left
 		
 		
 		button 'btn_rotation' "+90" pos:[120,32] width:25 height:16 align:#left
 		button 'btn_rotation_inv' "-90" pos:[144,32] width:25 height:16 align:#left		
-		spinner 'spn_rotation_axeP' "" pos:[50,33] width:72 height:16 range:[-360,360,0] type:#float scale:1 align:#left
-		label 	'lbl_axeP' "Axe Z:" pos:[5,33] width:45 height:15 align:#left
+		spinner 'spn_rotation_axeP' "" pos:[50,32] width:70 height:16 range:[-360,360,0] type:#float scale:1 align:#left
+		label 	'lbl_axeP' "Axe Z:" pos:[5,32] width:45 height:15 align:#left
 		
 		fn actualiser =(
 			
@@ -1006,10 +999,10 @@ extends:Editable_poly replaceUI:true version:1
 			geo.vider()
 			redrawviews ()
 		)
-		on btn_pick_tracee picked _nvTracee 	do
+		on btn_pick_trace picked _nvtrace 	do
 		(
 			$.pos = [0,0,0]
-			set_tracee	_nvTracee
+			set_trace	_nvtrace
 			creerBatiment ()
 			redrawviews ()
 		)
@@ -1053,7 +1046,7 @@ extends:Editable_poly replaceUI:true version:1
 		label 'lbl_facade' "Façade:" pos:[5,5] width:38 height:15 align:#left
 		spinner 'spn_hauteur' "" pos:[50,41] width:118 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 		label 'lbl_hateur' "Hauteur:" pos:[5,41] width:45 height:15 align:#left
-		dropdownList 'ddl_appliquerA' "" pos:[51,21] width:118 height:21 items:#("Pignons", "Gouttereau", "Pignons + Gouttereau") selection:3 align:#left
+		dropdownList 'ddl_appliquerA' "" pos:[51,21] width:118 height:21 items:murs_types	selection:3 align:#left
 		label 'lbl_appliquerA' "Appl. à:" pos:[5,25] width:38 height:15 align:#left
 		on ddl_facade selected sel do
 		(
@@ -1070,7 +1063,7 @@ extends:Editable_poly replaceUI:true version:1
 		label 'lbl_facade' "Façade:" pos:[5,5] width:38 height:15 align:#left
 		label 'lbl_nbre' "Nbre.:" pos:[5,40] width:38 height:15 align:#left
 		
-		dropdownList 'ddl_appliquerA' "" pos:[51,21] width:118 height:21 items:#("Pignons", "Gouttereau", "Pignons + Gouttereau") selection:3 align:#left
+		dropdownList 'ddl_appliquerA' "" pos:[51,21] width:118 height:21 items:murs_types  selection:3 align:#left
 		label 'lbl_appliquerA' "Appl. à:" pos:[5,25] width:38 height:15 align:#left
 		spinner 'spn_nbres' "" pos:[50,41] width:118 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
 		
@@ -1083,20 +1076,23 @@ extends:Editable_poly replaceUI:true version:1
 		on spn_hauteur changed val do
 			creerBatiment ()
 	)
-	rollout roll_toiture "Toiture" 
+	rollout roll_toiture "Toiture" width:162 height:168
 	(
 		dropdownList 'ddl_toiture' "" pos:[51,1] width:118 height:21 items:#("Plate", "Acrotère", "Pentes") align:#left
 		label 'lbl_facade' "Toiture:" pos:[5,5] width:38 height:15 align:#left
-		radiobuttons 'rdo_pentes' "Pentes" pos:[5,24] width:29 height:46 labels:#("1", "2") align:#left
-		spinner 'spn_acrotere_hauteur' "" pos:[50,55] width:118 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		label 'lbl_hauteur' "Hauteur:" pos:[5,55] width:45 height:15 align:#left
-		spinner 'spn_pente' "" pos:[50,71] width:118 height:16 range:[5,80,20] type:#float scale:1 align:#left
-		label 'lbl_pente' "Pente:" pos:[5,71] width:45 height:15 align:#left
+		radiobuttons 'rdo_pentes' "" pos:[50,55] width:29 height:32 labels:#("1", "2") align:#left
+		spinner 'spn_toit_hauteur' "" pos:[50,21] width:118 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+		label 'lbl_hauteur' "Hauteur:" pos:[5,21] width:45 height:15 align:#left
+		spinner 'spn_pente' "" pos:[50,37] width:118 height:16 range:[5,80,20] type:#float scale:1 align:#left
+		label 'lbl_pente' "Pente:" pos:[5,37] width:45 height:15 align:#left
+		label 'lbl5' "Pentes:" pos:[5,55] width:45 height:15 align:#left
 		
 		fn actualiser =(
 			rdo_pentes.enabled 					= ddl_toiture.selection == 3
-			spn_acrotere_hauteur.enabled 	= ddl_toiture.selection == 2
-			lbl_hauteur.enabled 					= ddl_toiture.selection == 2
+			spn_pente.enabled 					= ddl_toiture.selection == 3
+			lbl_pente.enabled 					= ddl_toiture.selection == 3
+-- 			spn_toit_hauteur.enabled 			= ddl_toiture.selection == 2
+-- 			lbl_hauteur.enabled 					= ddl_toiture.selection == 2
 		)
 		
 		
@@ -1110,7 +1106,7 @@ extends:Editable_poly replaceUI:true version:1
 				)
 		on rdo_pentes changed stat 	do
 			creerBatiment ()
-		on spn_acrotere_hauteur changed val 	do
+		on spn_toit_hauteur changed val 	do
 			creerBatiment ()
 		on spn_pente changed val 	do
 			creerBatiment ()
@@ -1132,8 +1128,8 @@ extends:Editable_poly replaceUI:true version:1
 	(
 		checkbutton 'ckb_axe' "Axe" pos:[5,2] width:80 height:16 align:#left	
 		checkbutton 'ckb_trace' "Points du tracé" pos:[83,2] width:80 height:16 align:#left
-		checkbutton 'ckb_pignons' "Pignons" pos:[5,17] width:80 height:16 align:#left
-		checkbutton 'ckb_gouttereaux' "Gouttereaux" pos:[84,17] width:80 height:16 align:#left
+		checkbutton 'ckb_pignons' "Pignons" pos:[84,17] width:80 height:16 align:#left
+		checkbutton 'ckb_gouttereaux' "Gouttereaux" pos:[5,17] width:80 height:16 align:#left
 		
 		on ckb_axe 			changed state 		do 	VP_toggle ()
 		on ckb_trace 			changed state 		do	VP_toggle ()
@@ -1156,9 +1152,9 @@ extends:Editable_poly replaceUI:true version:1
 		format "creation du plug\n"
 		
 		--- le dessin du logo --------
-		tracee = traceeLogo
+		trace = traceLogo
 		
-		init_surfaceDeBase ()
+		init_geometrie ()
 	)
 	
-) --- fin du plug --------
+) --- fin du plug -------
