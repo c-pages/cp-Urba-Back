@@ -1,11 +1,11 @@
 ﻿
 
-		unregisterRedrawViewsCallback 	VPafficher_axePrincipal
+		unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
 
 plugin geometry urba_batiment
-name:"Urba | Batiment"
+name:"Batiment"
 classID:#(685325,452281)
-category:"CP"
+category:"CP | Urba"
 extends:Editable_poly replaceUI:true version:1
 (
 	
@@ -31,89 +31,87 @@ extends:Editable_poly replaceUI:true version:1
 	local ep_couvertine	 	= 5
 	
 	
+	
+	
+	
 	-------------------------------------------------------------------------------------------------------------------------------------------------
 	--------------- Structures  ----------------------------------------------------------------------------------------------------------------------	
 	-------------------------------------------------------------------------------------------------------------------------------------------------
-	
-	
-struct str_plan (
-		------------ DEBUG	----------------------------------------------------------------------------------
-		m_debug = true,
-		m_dbgPrefix ="str_plan",
-		fn debug 	_txt  var:	 param:    =(
-			try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
-			catch ()
-		),
-		
-		a,
-		b,
-		c,
-		d,
-		normal ,
-		
-		fn creerFrom_2vecs_et_1Point	_vec1 	_vec2  	_point	=(
+	struct str_plan (
+			------------ DEBUG	----------------------------------------------------------------------------------
+			m_debug = true,
+			m_dbgPrefix ="str_plan",
+			fn debug 	_txt  var:	 param:    =(
+				try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+				catch ()
+			),
 			
--- 			debug "creerFrom_2vecs_et_1Point"
-			---le vec normal du plan-----
-			local norm1 = normalize _vec1
-			local norm2 = normalize _vec2		
-			normal =  cross    norm2 	norm1
+			a,
+			b,
+			c,
+			d,
+			normal ,
 			
-			--- definition equation ---------
-			a = normal.x
-			b = normal.y
-			c = normal.z		
-			d = -( a*_point.x + b*_point.y + c*_point.z )
+			fn creerFrom_2vecs_et_1Point	_vec1 	_vec2  	_point	=(
+				
+	-- 			debug "creerFrom_2vecs_et_1Point"
+				---le vec normal du plan-----
+				local norm1 = normalize _vec1
+				local norm2 = normalize _vec2		
+				normal =  cross    norm2 	norm1
+				
+				--- definition equation ---------
+				a = normal.x
+				b = normal.y
+				c = normal.z		
+				d = -( a*_point.x + b*_point.y + c*_point.z )
+				
+	-- 			debug "a" var:a
+	-- 			debug "b" var:b
+	-- 			debug "c" var:c
+	-- 			debug "d" var:d
+			),
+			fn projeter_point_verticalement 		_pt 	=(
+	-- 			debug "projeter_point_verticalement"
+				local result = copy _pt
+				result.z =  -( a*_pt.x + b*_pt.y + d ) / c
+				result
+				
+			),
 			
--- 			debug "a" var:a
--- 			debug "b" var:b
--- 			debug "c" var:c
--- 			debug "d" var:d
-		),
-		fn projeter_point_verticalement 		_pt 	=(
--- 			debug "projeter_point_verticalement"
-			local result = copy _pt
-			result.z =  -( a*_pt.x + b*_pt.y + d ) / c
-			result
-			
-		),
-		
 
-		fn get_intersection_segment	_segPt1		_segPt2			=(
-			
-			local k	= -( a * _segPt1.x 		+	b * _segPt1.y 	+	c * _segPt1.z 	+ d ) 	/	( a * ( _segPt2.x -  _segPt1.x ) + b * ( _segPt2.y -  _segPt1.y )  + c * ( _segPt2.z -  _segPt1.z )  )
+			fn get_intersection_segment	_segPt1		_segPt2			=(
+				
+				local k	= -( a * _segPt1.x 		+	b * _segPt1.y 	+	c * _segPt1.z 	+ d ) 	/	( a * ( _segPt2.x -  _segPt1.x ) + b * ( _segPt2.y -  _segPt1.y )  + c * ( _segPt2.z -  _segPt1.z )  )
 
-			local ptResult 	= [0,0,0]
-			ptResult.x 			=  _segPt1.x + k * ( _segPt2.x 	-  _segPt1.x )
-			ptResult.y 			=  _segPt1.y + k * ( _segPt2.y 	-  _segPt1.y )
-			ptResult.z 			=  _segPt1.z + k * ( _segPt2.z 	-  _segPt1.z )
+				local ptResult 	= [0,0,0]
+				ptResult.x 			=  _segPt1.x + k * ( _segPt2.x 	-  _segPt1.x )
+				ptResult.y 			=  _segPt1.y + k * ( _segPt2.y 	-  _segPt1.y )
+				ptResult.z 			=  _segPt1.z + k * ( _segPt2.z 	-  _segPt1.z )
+				
+				ptResult
+				
+			),
+			fn coupe_segment	_segPt1		_segPt2			=(
+				
+				local pointIntersect = get_intersection_segment 	_segPt1		_segPt2 		
+				-- debug-------
+	-- 			point pos:pointIntersect isSelected:true
+				
+				local vecSeg 	= _segPt2 - _segPt1
+				local vecInter = pointIntersect - _segPt1
+				
+				if dot vecSeg vecInter >0 and length vecSeg > length vecInter then
+					true
+				else
+					false
+				
+			)
 			
-			ptResult
 			
-		),
-		fn coupe_segment	_segPt1		_segPt2			=(
 			
-			local pointIntersect = get_intersection_segment 	_segPt1		_segPt2 		
-			-- debug-------
--- 			point pos:pointIntersect isSelected:true
 			
-			local vecSeg 	= _segPt2 - _segPt1
-			local vecInter = pointIntersect - _segPt1
-			
-			if dot vecSeg vecInter >0 and length vecSeg > length vecInter then
-				true
-			else
-				false
-			
-		)
-		
-		
-		
-		
-)
-	
-	
-	
+	)
 	----------- Creation des geometries----------------------------------------------------------------------
 	struct geo (
 		
@@ -189,7 +187,6 @@ struct str_plan (
 			facesDuContour
 		)
 	) --- fin struct geo
-	
 	struct get (
 		
 		----- Poly -------------------
@@ -199,7 +196,23 @@ struct str_plan (
 		
 		
 		----- Shape -------------------
-		fn edge_lePlusGrand		_spline 	_idSpline 	=(
+		fn edge_lePlusGrand			_tracee 	=(
+			local longueurEdgeMax = 0
+			local	resultPts = #()
+			for i = 1 to _tracee.count do (
+				local j = i+1
+				if j > _tracee.count  do j = 1
+				local pt 			= _tracee[	i ]
+				local pt_suivant	= _tracee[	j ]
+				local longueurEdge = distance	pt	pt_suivant
+				if longueurEdge > longueurEdgeMax do (
+					longueurEdgeMax = longueurEdge
+					resultPts = #(pt, pt_suivant)
+				)
+			)
+			resultPts
+		),
+		/* fn edge_lePlusGrandBACK			_spline 	_idSpline 	=(
 			local 	longueurEdgeMax = 0
 			local	resultEdgeId
 			for i = 1 to ( numKnots _spline 	_idSpline) - 1 do (
@@ -212,14 +225,14 @@ struct str_plan (
 				)
 			)
 			resultEdgeId
-		),
-		fn mtrx_axePrincipal  			_spline 	_idSpline  	=(
+		), */
+		/* fn mtrx_axePrincipalBACK  			_spline 	_idSpline  	=(
 			
 			local edgeLePlusLong 	= get.edge_lePlusGrand	_spline 	_idSpline 
 			local pts 					= #(	getKnotPoint _spline 	_idSpline 	edgeLePlusLong, 
 													getKnotPoint _spline 	_idSpline 	( edgeLePlusLong + 1) )
 			local axeVecteur 		= 	normalize (pts[2] - pts[1])
-			local axeMtrx				=  /* inverse */  ( matrixFromNormal		axeVecteur )
+			local axeMtrx				=    ( matrixFromNormal		axeVecteur )
 
 			
 			if axeMtrx.row1	==	[0,0,-1]  then (
@@ -232,8 +245,22 @@ struct str_plan (
 			)
 			
 			axeMtrx		
+		), */
+		fn mtrx_axePrincipal  			_tracee  	=(
+			
+			local ptsEdgeLePlusLong 	= get.edge_lePlusGrand	_tracee
+			
+			local axeVecteur 		= 	normalize (ptsEdgeLePlusLong[2] - ptsEdgeLePlusLong[1])
+			local axeMtrx				=  ( matrixFromNormal		axeVecteur )
+			
+			if axeMtrx.row1	==	[0,0,-1]  then 				
+				axeMtrx =  (rotateYMatrix 180) *(rotateXMatrix 180) *  (rotateZMatrix -90) * axeMtrx
+			 else if axeMtrx.row1	==	[0,0,1] do
+				axeMtrx =  (rotateYMatrix 180)  *(rotateXMatrix 180)  * (rotateZMatrix 90) * axeMtrx
+			
+			axeMtrx		
 		),
-		fn BB_axePrincipal  		_spline 	_idSpline  	=(
+		/* fn BB_axePrincipalBACK  		_spline 	_idSpline  	=(
 			
 			local mtrxAxePrincipal	=	get.mtrx_axePrincipal 	_spline	_idSpline
 			
@@ -254,7 +281,30 @@ struct str_plan (
 			
 			#([xMin, yMin, zMin]*  mtrxAxePrincipal, [xMax, yMax, zMax]*  mtrxAxePrincipal)
 			
+		), */
+		fn BB_axePrincipal				_tracee  		_mtrxAxe  	=(
+			
+-- 			local mtrxAxePrincipal	=	get.mtrx_axePrincipal 	_spline	_idSpline
+			
+			local pt1 = _tracee[1] * inverse _mtrxAxe
+			local xMin = xMax = pt1.x
+			local yMin = yMax = pt1.y
+			local zMin = zMax = pt1.z
+			
+			for i = 2 to _tracee.count do (
+				local pt = _tracee[i] * inverse _mtrxAxe
+				if pt.x < xMin 		do xMin 		= pt.x
+				if pt.x > xMax 	do xMax 	= pt.x
+				if pt.y < yMin 		do yMin 	= pt.y
+				if pt.y > yMax 	do YMax 	= pt.y
+				if pt.z < zMin 		do zMin 		= pt.z
+				if pt.z > zMax 	do zMax 	= pt.z
+			)
+			
+			#([xMin, yMin, zMin]*  _mtrxAxe, [xMax, yMax, zMax]*  _mtrxAxe)
+			
 		),
+		
 		
 		
 		fn pointLePlusHautsurY 	shp 	spline	=(
@@ -295,13 +345,29 @@ struct str_plan (
 			
 			result
 			
+		),
+		
+		
+		
+		fn orientation_axeP  	_this		_vec 		=(
+			
+			local mtrx_Direction = _this.mtrx_axePrincipal.rotationpart as matrix3
+			local vec_direction = [0,0,1] * mtrx_Direction
+
+			local vec1_dir = normalize _vec
+
+			local valTest = abs (dot  vec_direction	vec1_dir ) 
+			
+			if valTest	 > .5 then 
+				#parallele
+			else 
+				#perpendiculaire
+			
 		)
+		
 		
 	) ---- fin struct GET ------------------
 	
-	
-	
-		
 	----------- selections niveau sous objet ----------------------
 	struct construire (
 		
@@ -383,10 +449,10 @@ struct str_plan (
 			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
 			local largeur 		=	diag_axeP.x
 			local longeur 		= 	diag_axeP.z
-			local hauteur 		= 	largeur /2 --* random .3 1.5
+			local hauteur 		= largeur * tan _this.toit_pente		--	largeur /2 --* random .3 1.5
 			
 			local nvlsFaces 	= #()
-			case _this.toit_pentes of (
+			case _this.toit_nbrePentes of (
 				1: ( ---------- 1 PENTE ----------------------------------------------------------------------------------------------------
 						--- gestion de l'angle de la pente .... ----
 -- 						hauteur = hauteur/4
@@ -567,7 +633,7 @@ struct str_plan (
 				)
 			)
 		),
-			
+		
 		fn acrotere		_this		_face		= (
 			
 			--- les murs -----
@@ -580,7 +646,6 @@ struct str_plan (
 			polyop.extrudeFaces delegate 	faceAExtruder		ep_couvertine
 			
 		),
-		
 		
 		fn toit 		_this		&z =(
 			case _this.toit_type of (
@@ -618,7 +683,7 @@ struct str_plan (
 	
 	
 	
-	
+		
 	
 	
 	
@@ -628,114 +693,124 @@ struct str_plan (
 	-------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	------ AFFICHAGE - ViewPort------------
-	fn		VPafficher_axePrincipal		 =(
-		
+	fn	fn_VP_afficher_axePrincipal		 =(
 		
 		gw.setTransform (matrix3 1)
 		
+		/* 
+		
+		affiche_axe				type:#boolean			default:false	ui:ckb_axe
+		affiche_trace			type:#boolean			default:false	ui:ckb_trace
+		affiche_pignons		type:#boolean			default:false	ui:ckb_pignons
+		affiche_gouttereaux
+		*/
+		
 		for o in objects where classof o ==urba_batiment  do (
-			if o.afficheAxe do (
-				local BB_axeP 	= o.BB_axePrincipal
-				local mtrx_axeP	= o.mtrx_axePrincipal 
-				translate mtrx_axeP BB_axeP[1]
+			
+			local largeurFleche = 100
+			local BB_axeP 	= o.BB_axePrincipal
+			local mtrx_axeP	= o.mtrx_axePrincipal 
+			
+			translate mtrx_axeP BB_axeP[1]
+			
+			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
+			local largeur 		=	diag_axeP.x
+			local longeur 		= 	diag_axeP.z
+			
+			---- dessin du tracee -----------------
+-- 				gw.setColor	#line	blue
+-- 				gw.Polyline 	(o.tracee as array )		true
+			
+			---- les points du tracee -----
+			for i = 1 to o.tracee.count do (
+				pt = o.tracee[i]
+				local j = i + 1
+				if j > o.tracee.count do j = 1
 				
-				local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
-				local largeur 		=	diag_axeP.x
-				local longeur 		= 	diag_axeP.z
+				if o.affiche_trace do
+					gw.text 		(pt + [10,0,0]) 	(i as string)  	color:yellow
 				
-				
+				local col = red
+				local estPignon = findItem o.idTracee_pignons i != 0 
+				if estPignon then (
+					if o.affiche_pignons do (
+						gw.setColor	#line	blue
+						gw.polyline #( pt, o.tracee[j] )	false
+					)
+				)else (
+					if o.affiche_gouttereaux do (
+						gw.setColor	#line	red
+						gw.polyline #( pt, o.tracee[j] )	false
+					)
+				)
+			)
+-- 				smallCircle
+			if o.affiche_axe do (
 				---- dessin de l'Axe-----------------
 				local ptAxe_1 = (  [largeur/2,0,0]  *  mtrx_axeP )
-				local ptAxe_2 = (  [largeur/2,0,longeur + 0 ]  *  mtrx_axeP )
-				
-				gw.setColor	#line	blue
-				gw.Polyline #( ptAxe_1, ptAxe_2 )	false
-				
-				
-				---- dessin du BB-----------------
-				local ptBB_1 = (  [0,0,0]  *  mtrx_axeP )
-				local ptBB_2 = (  [0,0,longeur]  *  mtrx_axeP )
-				local ptBB_3 = (  [largeur ,0,longeur]  *  mtrx_axeP )
-				local ptBB_4 = (  [largeur ,0,0]  *  mtrx_axeP )
+				local ptAxe_2 = (  [largeur/2,0,longeur - largeurFleche ]  *  mtrx_axeP )
 				
 				gw.setColor	#line	yellow
-				gw.Polyline #( ptBB_1, ptBB_2, ptBB_3, ptBB_4 )	true
+				gw.Polyline #( ptAxe_1, ptAxe_2 )	false
 				
+				---- dessin de la fleche de l'axe -----------------
+				local ptFleche_1 = (  [largeur/2,0,longeur + 0 ]  ) *  mtrx_axeP 
+				local ptFleche_2 = (  [largeur/2,0,longeur + 0 ]   + [largeurFleche/ 3,0,-largeurFleche ]) *  mtrx_axeP
+				local ptFleche_3 = (  [largeur/2,0,longeur + 0 ]   + [-largeurFleche/ 3,0,-largeurFleche ]) *  mtrx_axeP
+				
+				gw.Polyline #( ptFleche_1, ptFleche_2, ptFleche_3 )	true
 			)
+			
+			/* ---- dessin du BB -----------------
+			local ptBB_1 = (  [0,0,0]  *  mtrx_axeP )
+			local ptBB_2 = (  [0,0,longeur]  *  mtrx_axeP )
+			local ptBB_3 = (  [largeur ,0,longeur]  *  mtrx_axeP )
+			local ptBB_4 = (  [largeur ,0,0]  *  mtrx_axeP )
+			
+			gw.setColor	#line	yellow
+			gw.Polyline #( ptBB_1, ptBB_2, ptBB_3, ptBB_4 )	true
+			 */
+		
 		)
 		gw.enlargeUpdateRect #whole  
-	
+
 
 	)
-	
-	
-	
-	fn VPactiver_axeP =(
-		
-		unregisterRedrawViewsCallback 	VPafficher_axePrincipal
-		registerRedrawViewsCallback 	VPafficher_axePrincipal 	
+
+	fn VP_toggle	=(
+		if 	not this.affiche_axe and not  this.affiche_trace and not  this.affiche_pignons and not  this.affiche_gouttereaux then
+			unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
+		else
+			registerRedrawViewsCallback 		fn_VP_afficher_axePrincipal 	
 	)
-	fn VPvider	=(
-		unregisterRedrawViewsCallback 	VPafficher_axePrincipal
-	)
+
 		
 	
 	
 	
 	
-	
-	
-	fn set_tracee	 	_nvTracee 	=(
-		
-		local subSplineOuvertes 		=#()
-		local nvTraceeTMP 				= copy _nvTracee
-		local id_premierTraceeFerme 	= 0
+
+	fn maj_pignonsEtGouttereaux =(
+		this.idTracee_pignons 			=#()
+		this.idTracee_gouttereaux 	=#()
 		
 		
-		
-		
-		--- on ne prend que la premiere spline fermée-----
-		convertToSplineShape nvTraceeTMP
-		local b_trouve = false
-		for idSpline = 1 to (numSplines nvTraceeTMP) while not b_trouve	do
-			if isClosed  nvTraceeTMP	idSpline	then	(
-				id_premierTraceeFerme = idSpline
-				b_trouve = true
+		for i =1 to this.tracee.count do (
+			local j = i+1
+			if j > this.tracee.count do j = 1
+			
+			local orientation = get.orientation_axeP	this	(this.tracee[j]-this.tracee[i])
+			case orientation of (
+				#perpendiculaire: append 	this.idTracee_pignons			i
+				#parallele: 			append 	this.idTracee_gouttereaux		i
 			)
-		
-		---- si on a trouvé la spline --------------------
-		if id_premierTraceeFerme != 0 do (
-			
-			--- on fait tourner les spline dans le meme sens ----
-			if not get.est_sensPositif 	nvTraceeTMP 	id_premierTraceeFerme do
-				reverse		nvTraceeTMP	id_premierTraceeFerme
-			
-			---- mise a jour de tracee -----------
-			this.tracee = #()	
-			for id_pt = 1 to ( numKnots 	nvTraceeTMP 	id_premierTraceeFerme ) do	 (
-				ptSpline = ( getKnotPoint 	nvTraceeTMP 	id_premierTraceeFerme 	id_pt )
-				append this.tracee 	ptSpline
-			)
-			
-		
-			--- Axe principal-------------------
-			this.mtrx_axePrincipal	=		get.mtrx_axePrincipal	nvTraceeTMP 	id_premierTraceeFerme
-			this.BB_axePrincipal		=		get.BB_axePrincipal		nvTraceeTMP 	id_premierTraceeFerme
-			
-			
-			
 			
 		)
-		
-		
-		
-		
-		
-		
-		--- suppression de tracée temp -------------
-		delete nvTraceeTMP
-		
 	)
+	
+	
+	
+	
 	
 	fn init_surfaceDeBase 	= (
 		
@@ -749,8 +824,6 @@ struct str_plan (
 		
 		
 	)
-	
-	
 	fn creerBatiment =(
 		
 		---- creation de la surface de base -------
@@ -767,19 +840,63 @@ struct str_plan (
 	)
 	
 	
+	fn tourner_axeP	  =(
+		
+		local mtrxTmp = get.mtrx_axePrincipal	this.tracee 	
+		rotateZ	mtrxTmp			this.rotation_axeP
+		this.mtrx_axePrincipal = mtrxTmp		
+		this.BB_axePrincipal		=		get.BB_axePrincipal		this.tracee 		this.mtrx_axePrincipal
+		maj_pignonsEtGouttereaux ()
+		
+		--- recreation du batiment -----
+		creerBatiment ()
+	)	
+	fn set_tracee	 	_nvTracee 	=(
+		
+		local subSplineOuvertes 		=#()
+		local nvTraceeTMP 				= copy _nvTracee
+		local id_premierTraceeFerme 	= 0
+		
+		--- on ne prend que la premiere spline fermée-----
+		convertToSplineShape nvTraceeTMP
+		local b_trouve = false
+		for idSpline = 1 to (numSplines nvTraceeTMP) while not b_trouve	do
+			if isClosed  nvTraceeTMP	idSpline	then	(
+				id_premierTraceeFerme = idSpline
+				b_trouve = true
+			)
+			
+		---- si on a trouvé la spline --------------------
+		if id_premierTraceeFerme != 0 do (
+			
+			--- on fait tourner les spline dans le meme sens ----
+			if not get.est_sensPositif 	nvTraceeTMP 	id_premierTraceeFerme do
+				reverse		nvTraceeTMP	id_premierTraceeFerme
+			
+			---- mise a jour de tracee -----------
+			this.tracee = #()	
+			for id_pt = 1 to ( numKnots 	nvTraceeTMP 	id_premierTraceeFerme ) do	 (
+				ptSpline = ( getKnotPoint 	nvTraceeTMP 	id_premierTraceeFerme 	id_pt )
+				append this.tracee 	ptSpline
+			)
+			
+			--- Axe principal-------------------
+			this.mtrx_axePrincipal	=		get.mtrx_axePrincipal	this.tracee 	
+			this.BB_axePrincipal		=		get.BB_axePrincipal		this.tracee 		this.mtrx_axePrincipal
+			
+			maj_pignonsEtGouttereaux ()
+			
+		)
+		
+		--- suppression de tracée temp -------------
+		delete nvTraceeTMP
+		
+	)	
 	
 	
-	fn tourner_axeP	 =(
-		
-		this.axeP_estTourne = not this.axeP_estTourne 
-		
-		local angle_rotation = if this.axeP_estTourne then -90 else 90
-		
-		local mtrxTmp = this.mtrx_axePrincipal 
-		rotateZ	mtrxTmp			angle_rotation
-		this.mtrx_axePrincipal = mtrxTmp
-		
-	)
+	
+	
+
 	
 	
 	
@@ -807,56 +924,51 @@ struct str_plan (
 	-------------------------------------------------------------------------------------------------------------------------------------------------
 	parameters params_main rollout:roll_params			(
 		
-		tracee					type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+		------- TRACEES 			------------------
+		tracee						type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+		idTracee_pignons			type:#intTab 			tabSize:0 			tabSizeVariable:true
+		idTracee_gouttereaux	type:#intTab	 		tabSize:0 			tabSizeVariable:true
 		
 		
+		------- AXE PRINCIPAL	------------------
 		mtrx_axePrincipal		type:#matrix3	
 		BB_axePrincipal		type:#point3Tab		tabSize:2			tabSizeVariable:false
+		rotation_axeP			type:#float				default:0.			ui:spn_rotation_axeP
 		
-		axeP_estTourne		type:#boolean			default:false
-		/* 
-		idSpline	type: #integer 			--ui:ui_largeur 				default:60.
-		
-		--- param pour preset batiment -----					
-		style						type: #string		--- l'idUnique du preset du batiment -----
-		
-		etages					type: #integer 	ui:spn_etages
-		etages_hauteur 		type: #float 		ui:spn_etages_hauteur					
-		rdc_hauteur 			type: #float		ui:spn_rdc_hauteur			
-		 */
 		
 	)	
 	parameters params_infos rollout:roll_infos			(
 		
 		surface			type: #float 		default:0.	
-		afficheAxe		type:#boolean		default:false	ui:ckb_afficheAxe
 	)
-	
-	
-	
 	parameters params_rdc rollout:roll_rdc			(
 		
 		rdc_hauteur	type: #float 		default:250.	ui:spn_hauteur
 		
 	)
-	
 	parameters params_etages rollout:roll_etages			(
 		
 		etages_hauteur	type: #float 		default:250.	ui:spn_hauteur
 		etages_nbre		type: #integer		default:1		ui:spn_nbres
 		
 	)
-	
-	
-	
 	parameters params_toiture rollout:roll_toiture			(
 		
-		toit_pentes			type: #radiobtnIndex 	default:1		ui:rdo_pentes
-		toit_type			type: #integer 			default:1		ui:ddl_toiture
+		toit_nbrePentes	type: #radiobtnIndex 	default:2		ui:rdo_pentes
+		toit_pente			type: #float 				default:20		ui:spn_pente
+		toit_type			type: #integer 			default:3		ui:ddl_toiture
 		acrotere_hauteur	type: #float 				default:50.		ui:spn_acrotere_hauteur
+		
 	)
-	
-	
+	parameters params_affichage rollout:roll_affichage			(
+		
+		------- AFFICHAGE 		 ------------------
+		affiche_axe				type:#boolean			default:false	ui:ckb_axe
+		affiche_trace			type:#boolean			default:false	ui:ckb_trace
+		affiche_pignons		type:#boolean			default:false	ui:ckb_pignons
+		affiche_gouttereaux	type:#boolean			default:false	ui:ckb_gouttereaux
+		
+	)
 	
 	
 	
@@ -868,38 +980,56 @@ struct str_plan (
 		
 		fn shape_filt 		obj = superclassof obj == shape
 		
-		button 'btn_vider' "Vider" pos:[140,17] width:30 height:16 align:#left
+		button 'btn_vider' "Vider" pos:[110,17] width:60 height:16 align:#left
 		pickbutton 'btn_pick_tracee' "Pick shape" pos:[5,2] width:165 height:16 filter:shape_filt align:#left
 		
-		button 'btn_construire' "Construire" pos:[5,17] width:55 height:16 align:#left
+		button 'btn_construire' "Construire" pos:[5,17] width:106 height:16 align:#left
+		
+		
+		button 'btn_rotation' "+90" pos:[120,32] width:25 height:16 align:#left
+		button 'btn_rotation_inv' "-90" pos:[144,32] width:25 height:16 align:#left		
+		spinner 'spn_rotation_axeP' "" pos:[50,33] width:72 height:16 range:[-360,360,0] type:#float scale:1 align:#left
+		label 	'lbl_axeP' "Axe Z:" pos:[5,33] width:45 height:15 align:#left
 		
 		fn actualiser =(
 			
 		)
 		
 		
-		on roll_params open do
-			actualiser ()
+		
+			
+		
+				
+		on roll_params open do	actualiser ()
 		on btn_vider pressed do
 		(
-					geo.vider()
-					redrawviews ()
-				)
+			geo.vider()
+			redrawviews ()
+		)
 		on btn_pick_tracee picked _nvTracee 	do
 		(
-					$.pos = [0,0,0]
-					set_tracee	_nvTracee
-					init_surfaceDeBase ()
-					redrawviews ()
-				)
+			$.pos = [0,0,0]
+			set_tracee	_nvTracee
+			creerBatiment ()
+			redrawviews ()
+		)
 		on btn_construire pressed do	creerBatiment ()
-				
+	
+		on btn_rotation pressed do (
+			rotation_axeP += 90
+			if rotation_axeP>360 do rotation_axeP = 360
+			tourner_axeP 	()
+		)
+		on btn_rotation_inv pressed do(
+			rotation_axeP += -90
+			if rotation_axeP<-360 do rotation_axeP = -360
+			tourner_axeP 	()
+		)
+		on spn_rotation_axeP changed val 	do tourner_axeP 	()
 	)
-	
-	
 	rollout roll_presets "Presets"
 	(
-		dropdownList 'ddl_style' "" pos:[51,1] width:111 height:21 align:#left
+		dropdownList 'ddl_style' "" pos:[51,1] width:118 height:21 align:#left
 		label 'lbl_style' "Preset" pos:[5,5] width:38 height:15 align:#left
 		
 		fn actualiser =(
@@ -917,49 +1047,51 @@ struct str_plan (
 		on roll_presets open do
 			actualiser ()
 	)
-	
-	
-	rollout roll_rdc "RdC" width:162 height:42
+	rollout roll_rdc "RdC"
 	(
-		dropdownList 'ddl_facade' "" pos:[51,1] width:111 height:21 align:#left
+		dropdownList 'ddl_facade' "" pos:[51,1] width:118 height:21 align:#left
 		label 'lbl_facade' "Façade:" pos:[5,5] width:38 height:15 align:#left
-		spinner 'spn_hauteur' "" pos:[50,22] width:111 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		label 'lbl_hateur' "Hauteur:" pos:[5,22] width:45 height:15 align:#left
+		spinner 'spn_hauteur' "" pos:[50,41] width:118 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+		label 'lbl_hateur' "Hauteur:" pos:[5,41] width:45 height:15 align:#left
+		dropdownList 'ddl_appliquerA' "" pos:[51,21] width:118 height:21 items:#("Pignons", "Gouttereau", "Pignons + Gouttereau") selection:3 align:#left
+		label 'lbl_appliquerA' "Appl. à:" pos:[5,25] width:38 height:15 align:#left
 		on ddl_facade selected sel do
-	(
-	
-		)
+		(
+		
+			)
 		on spn_hauteur changed val do
-	(
-	creerBatiment ()
-		)
+		(
+		creerBatiment ()
+			)
 	)
-	
-	
 	rollout roll_etages "Etages" 
 	(
-		dropdownList 'ddl_facade' "" pos:[51,1] width:111 height:21 align:#left
+		dropdownList 'ddl_facade' "" pos:[51,1] width:118 height:21 align:#left
 		label 'lbl_facade' "Façade:" pos:[5,5] width:38 height:15 align:#left
-		label 'lbl_nbre' "Nbre.:" pos:[5,21] width:38 height:15 align:#left
+		label 'lbl_nbre' "Nbre.:" pos:[5,40] width:38 height:15 align:#left
 		
-		spinner 'spn_nbres' "" pos:[50,22] width:111 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+		dropdownList 'ddl_appliquerA' "" pos:[51,21] width:118 height:21 items:#("Pignons", "Gouttereau", "Pignons + Gouttereau") selection:3 align:#left
+		label 'lbl_appliquerA' "Appl. à:" pos:[5,25] width:38 height:15 align:#left
+		spinner 'spn_nbres' "" pos:[50,41] width:118 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
 		
-		spinner 'spn_hauteur' "" pos:[50,38] width:111 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		label 'lbl_hauteur' "Hauteur:" pos:[5,38] width:45 height:15 align:#left
+		spinner 'spn_hauteur' "" pos:[50,56] width:118 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+		label 'lbl_hauteur' "Hauteur:" pos:[5,56] width:45 height:15 align:#left
 		
 		
-		on spn_nbres 		changed val do	creerBatiment ()
-		on spn_hauteur 	changed val do	creerBatiment ()
+		on spn_nbres changed val do
+			creerBatiment ()
+		on spn_hauteur changed val do
+			creerBatiment ()
 	)
-	
-	
-	rollout roll_Toiture "Toiture" 
+	rollout roll_toiture "Toiture" 
 	(
-		dropdownList 'ddl_toiture' "" pos:[51,1] width:111 height:21 items:#("Plate", "Acrotère", "Pentes") align:#left
+		dropdownList 'ddl_toiture' "" pos:[51,1] width:118 height:21 items:#("Plate", "Acrotère", "Pentes") align:#left
 		label 'lbl_facade' "Toiture:" pos:[5,5] width:38 height:15 align:#left
 		radiobuttons 'rdo_pentes' "Pentes" pos:[5,24] width:29 height:46 labels:#("1", "2") align:#left
-		spinner 'spn_acrotere_hauteur' "" pos:[50,55] width:111 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+		spinner 'spn_acrotere_hauteur' "" pos:[50,55] width:118 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 		label 'lbl_hauteur' "Hauteur:" pos:[5,55] width:45 height:15 align:#left
+		spinner 'spn_pente' "" pos:[50,71] width:118 height:16 range:[5,80,20] type:#float scale:1 align:#left
+		label 'lbl_pente' "Pente:" pos:[5,71] width:45 height:15 align:#left
 		
 		fn actualiser =(
 			rdo_pentes.enabled 					= ddl_toiture.selection == 3
@@ -969,7 +1101,7 @@ struct str_plan (
 		
 		
 		
-		on roll_Toiture open do
+		on roll_toiture open do
 			actualiser()
 		on ddl_toiture selected sel 	do
 		(
@@ -980,50 +1112,46 @@ struct str_plan (
 			creerBatiment ()
 		on spn_acrotere_hauteur changed val 	do
 			creerBatiment ()
+		on spn_pente changed val 	do
+			creerBatiment ()
 	)
-	
-	
-	rollout roll_infos "Infos"
+	rollout roll_infos "Infos" 
 	(
 		label 'lbl16' "Surface:" pos:[4,2] width:43 height:14 align:#left
-		label 'lbl_surface' "" pos:[52,2] width:103 height:16 align:#left --enabled:false
- --enabled:false
-		checkbutton 'ckb_afficheAxe' "Axe principale" pos:[7,22] width:75 height:16 align:#left
-		button 'btn_rotation' "+90" pos:[17,53] width:25 height:16 align:#left
- --enabled:false
+		label 'lbl_surface' "" pos:[52,2] width:103 height:16 align:#left 
+		
+		
 		fn actualiser =(
 			lbl_surface.text = ( surface / 10000 ) as string + " m²"
 		)
-
+		
 		on roll_infos open do
 			actualiser()
-		on ckb_afficheAxe changed state do
-		(
-					case state of (
-						true: 	VPactiver_axeP 	()
-						false:		VPvider ()
-					)
-					
-				)
-		on btn_rotation pressed  do
-	(
-		tourner_axeP ()
-		creerBatiment ()
-		)
 	)
+	rollout roll_affichage "Affichage" width:162 height:82
+	(
+		checkbutton 'ckb_axe' "Axe" pos:[5,2] width:80 height:16 align:#left	
+		checkbutton 'ckb_trace' "Points du tracé" pos:[83,2] width:80 height:16 align:#left
+		checkbutton 'ckb_pignons' "Pignons" pos:[5,17] width:80 height:16 align:#left
+		checkbutton 'ckb_gouttereaux' "Gouttereaux" pos:[84,17] width:80 height:16 align:#left
+		
+		on ckb_axe 			changed state 		do 	VP_toggle ()
+		on ckb_trace 			changed state 		do	VP_toggle ()
+		on ckb_pignons 		changed state 		do	VP_toggle ()
+		on ckb_gouttereaux changed state 		do	VP_toggle ()
+		
+	)
+	
+	
+	
+	
 	
 	
 	-------------------------------------------------------------------------------------------------------------------------------------------------
 	--------------- evenements  ----------------------------------------------------------------------------------------------------------------------	
 	-------------------------------------------------------------------------------------------------------------------------------------------------
-	on load do (
-		format "load du plug: % \n" this
-	)
-	on clone _original do 
-		format "clone du plug :%\n" _original
-		
-	
-	
+	on load 						do 	format "load du plug: % \n" this
+	on clone 	_original 	do 	format "clone du plug :%\n" _original
 	on create do (
 		format "creation du plug\n"
 		
@@ -1033,24 +1161,4 @@ struct str_plan (
 		init_surfaceDeBase ()
 	)
 	
-) --- fin du plug ----------
-
-
-/*
--- delete objects
-
-
-test = urba_batiment_poly ()
-select test
-
-clearlistener ()
-
-
-
-*/
-
-
-
-
-
-
+) --- fin du plug --------
