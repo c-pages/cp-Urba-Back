@@ -49,6 +49,8 @@ include "$userScripts\cp-Urba\Urba - Batiments.ms"
 include "$userScripts\cp-Urba\Urba - Facades.ms"
 include "$userScripts\cp-Urba\Urba - Toitures.ms"
 	
+include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment.ms"
+	
 -- include "$userScripts\cp-Urba\Urba - Construction.ms"
 -- include "$userScripts\cp-Urba\Urba - Edit.ms"
 
