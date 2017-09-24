@@ -113,8 +113,6 @@ struct str_presets_batiment (
 				
 				local nomProp = param[1] as name
 				local valProp 	= execute ( param[2] )
-				debug "nomProp" var:nomProp
-				debug "valProp" var:valProp
 				
 				setproperty 	_this 	nomProp		valProp
 			)
@@ -122,17 +120,3 @@ struct str_presets_batiment (
 		)
 		
 )	--- fin struct ------
-
-
-/* 
-
-global popo
-popo = str_presets_batiment ()
-
-
-
-)
-
-popo.enregistrer ()
- */
-

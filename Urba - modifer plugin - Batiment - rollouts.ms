@@ -102,7 +102,7 @@ parameters params_affichage rollout:roll_affichage			(
 -------------------------------------------------------------------------------------------------------------------------------------------------
 rollout roll_aPropos "A propos" width:162 height:64
 (
-	label 'lbl_axeP' "Urba V0.0   |" pos:[5,2]  align:#left
+	label 'lbl_axeP' "Urba V0.1   |" pos:[5,2]  align:#left
 	HyperLink 'hpl1' "Christophe Pagès" pos:[76,2] address:"http://c-pages.fr" color:(color 200 200 127.5) hovercolor:(color 250 250 150) visitedcolor:(color 200 200 127.5) align:#left
 	HyperLink 'hpl2' "GitHub" pos:[127,17] address:"https://github.com/c-pages/cp-Urba" color:(color 200 200 127.5) hovercolor:(color 250 250 150) visitedcolor:(color 200 200 127.5) align:#left
 	label 'lbl6' "09 | 2017" pos:[5,17] align:#left

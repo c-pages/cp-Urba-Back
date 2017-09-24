@@ -380,12 +380,15 @@ extends:Editable_poly replaceUI:true version:0
 	)
 	on clone 	_original 	do 	format "clone du plug :%\n" _original
 	on create do (
-		format "creation du plug\n"
-		
-		
+		format "creation du plug: Urba | Batiment\n"		
 		--- le dessin du logo --------
 		trace = traceLogo
 		init_geometrie ()
+	)
+	
+	on update do	(
+		format "update du plug: Urba | Batiment\n"	
+		if version == 0 then 		format "maj de le version 0->1\n"	
 	)
 	
 ) --- fin du plug ---
