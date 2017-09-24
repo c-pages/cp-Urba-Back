@@ -309,14 +309,7 @@ struct str_urba (
 											lockHeight:			true	 \	
 											lockWidth:			true
 			
-			--- chargement des presets ------
-			villes.presets.charger ()
-			batiments.presets.charger ()
-			facades.elementsDeFacade.charger ()			
-			facades.presets.charger ()
-			toitures.presets.charger ()
-			facades.modeles.charger ()		
-			
+		
 			---- fenetre ----
 			m_dialog.initialiser 	this
 			m_dialog.actualiser ()
@@ -641,6 +634,15 @@ struct str_urba (
 		
 		------------  Evenements	--------------------------------------------------------------------------------
 		on create do (
+				--- chargement des presets ------
+			villes.presets.charger ()
+			batiments.presets.charger ()
+			facades.elementsDeFacade.charger ()			
+			facades.presets.charger ()
+			toitures.presets.charger ()
+			facades.modeles.charger ()		
+			
+			
 			debug "Structure créée."
 		)
 	
