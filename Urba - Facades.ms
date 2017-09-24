@@ -542,8 +542,6 @@ struct str_urba_facades (
 			)
 			result
 		),
-		
-		
 		fn a_uneFinDeGroupe_audessous _id =(
 			
 			local result = false
@@ -569,11 +567,6 @@ struct str_urba_facades (
 			)
 			result
 		),
-		
-		
-		
-		
-		
 		fn  descendre	_id =(
 			
 			local idU_elemTmp 	= facadeCourante.elements[ _id ]
@@ -591,9 +584,6 @@ struct str_urba_facades (
 			m_dialog.lbx_sequence.selection += 1
 			actualiser ()
 		),
-		
-		
-		
 		fn monter _id =(
 			
 			local idU_elemTmp 	= facadeCourante.elements[ _id ]
@@ -617,13 +607,13 @@ struct str_urba_facades (
 		),
 		
 		
+		
 		fn set_ElementRepetition 	_val =(
 			elementCourant.repetition = _val
 			elementsDeFacade.sauvegarder		elementCourant
 			actualiser ()
 			m_urba.batiments.actualiser ()
 		),
-		
 		fn ajouter_facade =(
 			local nvPreset = presets.creer_preset ()
 			facadeCourante = nvPreset
@@ -786,22 +776,26 @@ struct str_urba_facades (
 			m_dialog.actualiser ()
 			
 		),
-		
 		fn fermer  =(	
 			m_estOuvert 		= false
 			--- Actiualiser position pour reouverture prochaine ----
 			m_dialogPos = getDialogPos m_dialog
 			
 			m_urba.actualiser ()
-			
+			if selection.count == 1 do
+				if classof $ == urba_batiment do
+					$.actualiser_rollouts ()
 			---- fermer la fenêtre ----
 			try destroydialog m_dialog catch ()
 			
 		),
+		fn toggle_ouvrir =(
+			if m_estOuvert 	then fermer ()
+									else 	ouvrir ()
+		),
 		fn initialiser =(
 			debug "initialiser"
 		),
-		
 		
 		
 		fn changerNom 	_nvNom =(
@@ -810,13 +804,6 @@ struct str_urba_facades (
 			actualiser ()
 			m_urba.batiments.actualiser ()
 		),
-	/* 	fn set_elemType _type =(
-			elementCourant.type = _type
-			elementsDeFacade.sauvegarder		elementCourant
-			actualiser ()
--- 			m_urba.batiments.actualiser ()
-			
-		), */
 		fn set_elemLargeur 	_nvlLargeur =(
 			elementCourant.largeur = _nvlLargeur
 			elementsDeFacade.sauvegarder		elementCourant

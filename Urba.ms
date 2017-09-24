@@ -651,7 +651,7 @@ struct str_urba (
 
 ---------------		DEBUG	-----------------------------------------
 ------ on vire les objets en trop
-
+/* 
 -- debugCleaner=false
 debugCleaner=false
 
@@ -672,12 +672,16 @@ if debugCleaner do
 debug_mode = false
 	
 
-urba.ouvrir ()	
-urba
+urba.ouvrir ()	 */
+
+
+
 		
 	
 ---------------		DEBUG	-----------------------------------------
 
 
+global urba  	=	str_urba () --	m_labib:Labib
+urba
 )
 
