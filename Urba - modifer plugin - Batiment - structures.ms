@@ -107,6 +107,7 @@ struct str_plan (
 
 ----------- Creation des geometries----------------------------------------------------------------------
 struct geo (
+
 	
 	fn vider =(
 		if (polyop.getNumFaces delegate) >0 do (

@@ -43,6 +43,7 @@ extends:Editable_poly replaceUI:true version:0
 	
 	
 	--------------- imports  ----------------------------------------------------------------------------------------------------------------------
+	include "$userScripts\cp - GLOBAL\Enregistreur De Node.ms"
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
 	
 	
@@ -79,7 +80,7 @@ extends:Editable_poly replaceUI:true version:0
 														fichier_extension:			"btm"	\
 														params_aEnregistrer:	params_aEnregistrer
 
-	
+	local nodeScanner = str_enregistreurDeNode ()
 	
 	--------------- Structures  ----------------------------------------------------------------------------------------------------------------------
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
@@ -100,46 +101,52 @@ extends:Editable_poly replaceUI:true version:0
 			local largeurFleche = 100
 			local BB_axeP 	= o.BB_axePrincipal
 			local mtrx_axeP	= o.mtrx_axePrincipal 
-			
+			local mtrx_axeP2	= o.mtrx_axePrincipal 
+				
+-- format "BB_axeP:%\n"  BB_axeP
 			translate mtrx_axeP 	BB_axeP[1]
 -- 			translate mtrx_axeP 	o.pos
-			mtrx_axeP 	= mtrx_axeP * o.transform
+-- 			mtrx_axeP 	= mtrx_axeP * o.transform
 			
-			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
+			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP ) - (BB_axeP[1]  * inverse mtrx_axeP  )
 			local largeur 		=	diag_axeP.x
 			local longeur 		= 	diag_axeP.z
+-- 				
+-- format "largeur:%		longeur:%		mtrx_axeP:%\n" largeur longeur  mtrx_axeP
+
+				
+-- 			gw.Marker 	( BB_axeP[1] * o.transform )	#Circle  	color:yellow
+-- 			gw.Marker 	 ( (  [largeur,0,0]    *  mtrx_axeP  * o.transform) 	)	#Circle  	color:blue
+-- 			gw.Marker 	 ( BB_axeP[2] * o.transform )	#Circle  	color:yellow
+-- 			gw.Marker 	 ( [BB_axeP[2].x, BB_axeP[1].y, BB_axeP[1].z] * o.transform )	#Circle  	color:blue
+				
 			------ l'AXE----------------
 			if o.affiche_axe do (
 				---- dessin de l'Axe-----------------
-				local ptAxe_1 = (  [largeur/2,0,0]  *  mtrx_axeP )
-				local ptAxe_2 = (  [largeur/2,0,longeur - largeurFleche ]  *  mtrx_axeP )
+				local ptAxe_1 =  [largeur/2,0,0]  *   mtrx_axeP   * o.transform
+				local ptAxe_2 =  [largeur/2,0,longeur - largeurFleche ]  *     mtrx_axeP    * o.transform
+-- 				local ptAxe_1 =  [0,0,0]  *   mtrx_axeP   * o.transform
+-- 				local ptAxe_2 =  [0,0,0 ]  *     mtrx_axeP    * o.transform
 				
+-- format "ptAxe_1:%		ptAxe_2:%\n" ptAxe_1 ptAxe_2  
+
 				gw.setColor	#line	yellow
 				gw.Polyline #( ptAxe_1, ptAxe_2 )	false
 				
 				---- dessin de la fleche de l'axe -----------------
-				local ptFleche_1 = (  [largeur/2,0,longeur + 0 ]  ) *  mtrx_axeP 
-				local ptFleche_2 = (  [largeur/2,0,longeur + 0 ]   + [largeurFleche/ 3,0,-largeurFleche ]) *  mtrx_axeP
-				local ptFleche_3 = (  [largeur/2,0,longeur + 0 ]   + [-largeurFleche/ 3,0,-largeurFleche ]) *  mtrx_axeP
+				local ptFleche_1 = (  [largeur/2,0,longeur + 0 ]  ) *  mtrx_axeP    * o.transform
+				local ptFleche_2 = (  [largeur/2,0,longeur + 0 ]   + [largeurFleche/ 3,0,-largeurFleche ]) *  mtrx_axeP    * o.transform
+				local ptFleche_3 = (  [largeur/2,0,longeur + 0 ]   + [-largeurFleche/ 3,0,-largeurFleche ]) *  mtrx_axeP    * o.transform
 				
 				gw.Polyline #( ptFleche_1, ptFleche_2, ptFleche_3 )	true
 			)
 			
-			/* ---- dessin du BB -----------------
-			local ptBB_1 = (  [0,0,0]  *  mtrx_axeP )
-			local ptBB_2 = (  [0,0,longeur]  *  mtrx_axeP )
-			local ptBB_3 = (  [largeur ,0,longeur]  *  mtrx_axeP )
-			local ptBB_4 = (  [largeur ,0,0]  *  mtrx_axeP )
-			
-			gw.setColor	#line	yellow
-			gw.Polyline #( ptBB_1, ptBB_2, ptBB_3, ptBB_4 )	true
-			 */
 		
 			for i = 1 to o.trace.count do (
 				local j = i + 1
 				if j > o.trace.count do j = 1
-				local pt = o.trace[i]
-				local pt_suivant = o.trace[j]
+				local pt = o.trace[i] *  o.transform 
+				local pt_suivant = o.trace[j] *  o.transform 
 				
 			---- les pignons et gouttereaux -----
 				local col = red
@@ -199,7 +206,7 @@ extends:Editable_poly replaceUI:true version:0
 		roll_infos.actualiser ()
 		roll_affichage.actualiser ()
 	)
-	fn toggle_cacherGeo =(
+	fn actualiser_cacherGeo =(
 		if this.cache_geometrie then (
 			local faces = #{1..(polyop.getNumFaces delegate)} as array
 			polyop.setHiddenFaces 	delegate 	faces

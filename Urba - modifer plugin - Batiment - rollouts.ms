@@ -102,10 +102,10 @@ parameters params_affichage rollout:roll_affichage			(
 -------------------------------------------------------------------------------------------------------------------------------------------------
 rollout roll_aPropos "A propos" width:162 height:64
 (
-	label 'lbl_axeP' "Urba V0.1   |" pos:[5,2]  align:#left
+	label 'lbl_axeP' "Urba | V0.1  |" pos:[5,2]  align:#left
 	HyperLink 'hpl1' "Christophe Pagès" pos:[76,2] address:"http://c-pages.fr" color:(color 200 200 127.5) hovercolor:(color 250 250 150) visitedcolor:(color 200 200 127.5) align:#left
 	HyperLink 'hpl2' "GitHub" pos:[127,17] address:"https://github.com/c-pages/cp-Urba" color:(color 200 200 127.5) hovercolor:(color 250 250 150) visitedcolor:(color 200 200 127.5) align:#left
-	label 'lbl6' "09 | 2017" pos:[5,17] align:#left
+	label 'lbl6' "2017" pos:[5,17] align:#left
 )
 rollout roll_trace "Tracé"   rolledUp:false
 (
@@ -411,7 +411,7 @@ rollout roll_affichage "Affichage"  rolledUp:true
 	
 	
 	
-	on ckb_geometrie 		changed state 		do 		toggle_cacherGeo ()
+	on ckb_geometrie 		changed state 		do 		actualiser_cacherGeo ()
 	on ckb_axe 				changed state 		do 		VP_toggle ()
 	on ckb_trace 				changed state 		do	VP_toggle ()
 	on ckb_pignons 			changed state 		do	(
@@ -424,6 +424,10 @@ rollout roll_affichage "Affichage"  rolledUp:true
 	)
 -- 		on ckb_longueurSegts 	changed state 		do	VP_toggle ()
 	on roll_affichage open do actualiser ()
+	on roll_affichage close do (
+		cache_geometrie = false 
+		actualiser_cacherGeo ()
+	)
 	
 	
 )
@@ -461,7 +465,27 @@ rollout roll_infos "Infos" 	rolledUp:true
 
 
 
-
+parameters params_TEST rollout:roll_TEST			(
+	
+	------- AFFICHAGE 		 ------------------
+	modelesEnregistres		type:#string			default:""	
+	
+)
+rollout roll_TEST "TEST" width:162 height:58
+(
+	pickbutton 'btn1' "piquer" 
+ 
+	button 'btn2' "recreer" 
+ 
+	on btn1 picked obj do
+(
+	modelesEnregistres = nodeScanner.get_datas 	obj
+	)
+	on btn2 pressed  do
+(
+	nodeScanner.creer_objet 	modelesEnregistres
+	)
+)
 
 
 
