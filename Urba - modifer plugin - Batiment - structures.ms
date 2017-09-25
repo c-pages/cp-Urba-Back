@@ -330,21 +330,21 @@ struct construire (
 		
 		--- un etage ---
 -- 			local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.rdc_facade
--- 			creer_etage	_nodeBat	z 	_presetBat.rdc_hauteur	styleFacade
--- 			z += _presetBat.rdc_hauteur
+-- 			creer_etage	_nodeBat	z 	_presetBat.niveaux_hauteur	styleFacade
+-- 			z += _presetBat.niveaux_hauteur
 		
-		geo.creerFacesContour	 _this.trace		z 	_this.rdc_hauteur			
-		z += _this.rdc_hauteur	
+		geo.creerFacesContour	 _this.trace		z 	_this.niveaux_hauteur			
+		z += _this.niveaux_hauteur	
 		
 	),
 	fn etages 			_this		&z			=(
 		
-		local etages_hauteur	= _this.etages_hauteur
-		local etages_nbre		= _this.etages_nbre
+		local niveaux_hauteur	= _this.niveaux_hauteur
+		local niveaux_nbre		= _this.niveaux_nbre
 		
 		local facesDunEtage =#()
 		
-		if etages_nbre != 0 do (
+		if niveaux_nbre != 0 do (
 			
 			--- creation de l'etage modele ---------------------
 			--- plancher ---
@@ -354,19 +354,19 @@ struct construire (
 				z += ep_dalle
 			) 
 			
-			local nvlsFaces = geo.creerFacesContour	_this.trace	z 	etages_hauteur
+			local nvlsFaces = geo.creerFacesContour	_this.trace	z 	niveaux_hauteur
 			facesDunEtage  += nvlsFaces		
-			z += etages_hauteur
+			z += niveaux_hauteur
 			
 			
 			--- on copie l'etage x fois ----
-			for i = 2 to etages_nbre do (
+			for i = 2 to niveaux_nbre do (
 				local vertsfin = polyop.getNumEdges delegate
 				polyop.detachFaces delegate	 facesDunEtage delete:false	
 				local vertsABouger = #{(vertsfin+1)..(polyop.getNumEdges delegate)}
-				polyop.moveVert 	delegate 	vertsABouger [0,0, ( etages_hauteur + ep_dalle ) *  (i-1) ]
+				polyop.moveVert 	delegate 	vertsABouger [0,0, ( niveaux_hauteur + ep_dalle ) *  (i-1) ]
 				z += ep_dalle
-				z += etages_hauteur
+				z += niveaux_hauteur
 			)
 			
 		)
@@ -380,7 +380,7 @@ struct construire (
 	
 	------------ TOITURES-------------------------
 	
-	fn toitPentes 		_this		&z		=(
+	fn toitPentes 		_this		&z	_nbrePentes	=(
 		
 		
 		local	 mtrx_axeP	=	_this.mtrx_axePrincipal
@@ -394,7 +394,7 @@ struct construire (
 		local hauteur 		= largeur * tan _this.toit_pente		--	largeur /2 --* random .3 1.5
 		
 		local nvlsFaces 	= #()
-		case _this.toit_nbrePentes of (
+		case _nbrePentes of (
 			1: ( ---------- 1 PENTE ----------------------------------------------------------------------------------------------------
 					--- gestion de l'angle de la pente .... ----
 -- 						hauteur = hauteur/4
@@ -429,7 +429,7 @@ struct construire (
 						
 						
 						local pt_result = plan_pente.projeter_point_verticalement 	pt
-						pt_result.z += _this.toit_hauteur
+-- 						pt_result.z += _this.toit_hauteur
 						append pointsPente  pt_result
 						
 					)
@@ -612,8 +612,11 @@ struct construire (
 				construire.acrotere	_this	faceDuToit
 				
 			)
-			3: (	---- PENTES	----
-				construire.toitPentes			_this		&z 
+			3: (	---- 1 PAN	----
+				construire.toitPentes			_this		&z  1
+			)
+			4: (	---- 2 PANS	----
+				construire.toitPentes			_this		&z  2
 			)
 		)
 	)			

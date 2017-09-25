@@ -60,6 +60,29 @@ rollout roll_urba_editeurFacades "urba_editeurFacades" width:200 height:200
 	ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
 -- 	ImgTag 'ui_log' "" pos:[8,43] width:66 height:18 align:#left
 
+	GroupBox 'grp_prop' "Propriétés" pos:[5,145] width:165 height:146 align:#left
+	label 'lbl_repetable' "Répétable" pos:[26,233] width:55 height:15 align:#left
+	checkbox 'chk_repetable' "" pos:[11,234] width:14 height:14 align:#left
+	label 'lbl_etirable' "Etirable" pos:[103,233] width:42 height:15 align:#left
+	checkbox 'chk_etirable' "" pos:[88,234] width:14 height:14 align:#left
+	spinner 'spn_proba' "" pos:[87,218] width:80 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
+	label 'lbl_proba' "Probabilité:" pos:[11,218] width:67 height:15 align:#left
+	
+	label 'lbl_nbre' "Nbre.:" pos:[5,1] width:38 height:15 align:#left
+	spinner 'spn_nbres' "" pos:[87,2] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	
+	spinner 'spn_largeur' "" pos:[87,158] width:80 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl_largeur' "Largeur (min):" pos:[11,158] width:73 height:15 align:#left
+	spinner 'spn_largeurMax' "" pos:[87,173] width:80 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	spinner 'spn_etages' "" pos:[87,188] width:80 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	label 'lbl_etages' "Etages (min):" pos:[11,188] width:71 height:15 align:#left
+	spinner 'spn_etagesMax' "" pos:[87,203] width:80 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	
+	
+	
+	dropdownList 'ddl_appliquerA' "" pos:[11,264] width:153 height:21 selection:3 align:#left  items:murs_types
+		label 'lbl_appliquerA' "Appliquer à:" pos:[11,249] width:111 height:15 align:#left
+	
 	
 	------------  Fonctions	----------------------------------------------------------------------------------
 	---- Gere l'état du bouton  -----

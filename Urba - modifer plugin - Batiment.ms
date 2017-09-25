@@ -33,7 +33,7 @@ unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
 ---------------presse papier ---------
 global urba_clipboard_batiment = ""
 	
-plugin geometry urba_batiment
+plugin geometry 	urba_batiment
 name:"Batiment"
 classID:#(685325,452281)
 category:"CP | Urba"
@@ -57,13 +57,13 @@ extends:Editable_poly replaceUI:true version:0
 	)
 
 	---- les rollouts ------------------
-	local roll_params, /* roll_presets,  */roll_rdc, roll_etages, roll_toiture, roll_infos , roll_affichage , roll_trace
+	local roll_global, roll_niveaux,  roll_presets,   roll_toiture, roll_infos , roll_facades 
 	
 	---- le model dessiné d'un batiment vide ------------------
 	local traceLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
 
-	local params_aEnregistrer = #(	#facades_murs, #trace_optimiser, #trace_souder, #rdc_hauteur, #etages_hauteur, #etages_nbre, 
-												#toit_nbrePentes, #toit_pente, #toit_type, #toit_hauteur ,
+	local params_aEnregistrer = #(	#niveaux_hauteur, #niveaux_hauteur, #niveaux_nbre, 
+												#toit_pente, #toit_type, #toit_hauteur ,
 												#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho )
 	
 	---- constantes------------------
@@ -95,15 +95,14 @@ extends:Editable_poly replaceUI:true version:0
 		gw.setTransform (matrix3 1)
 		
 		
-		for o in objects where classof o ==urba_batiment  do	
-			if o.isSelected do (
+		for o in selection where classof o == urba_batiment  do (
 			
 			local largeurFleche = 100
 			local BB_axeP 	= o.BB_axePrincipal
 			local mtrx_axeP	= o.mtrx_axePrincipal 
 			local mtrx_axeP2	= o.mtrx_axePrincipal 
 				
--- format "BB_axeP:%\n"  BB_axeP
+-- format "fn_VP_afficher_axePrincipal:%\n"  BB_axeP
 			translate mtrx_axeP 	BB_axeP[1]
 -- 			translate mtrx_axeP 	o.pos
 -- 			mtrx_axeP 	= mtrx_axeP * o.transform
@@ -197,14 +196,14 @@ extends:Editable_poly replaceUI:true version:0
 
 	
 	fn actualiser_rollouts =(
-		roll_trace.actualiser ()
-		roll_params.actualiser ()
+-- 		roll_trace.actualiser ()
+		roll_global.actualiser ()
 -- 		roll_presets.actualiser ()
-		roll_rdc.actualiser ()
-		roll_etages.actualiser ()
+-- 		roll_rdc.actualiser ()
+-- 		roll_etages.actualiser ()
+		roll_facades.actualiser ()
 		roll_toiture.actualiser ()
 		roll_infos.actualiser ()
-		roll_affichage.actualiser ()
 	)
 	fn actualiser_cacherGeo =(
 		if this.cache_geometrie then (

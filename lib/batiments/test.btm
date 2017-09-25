@@ -1,1 +1,1 @@
-﻿#facades_murs=1;#trace_optimiser=true;#trace_souder=true;#rdc_hauteur=81.0;#etages_hauteur=392.0;#etages_nbre=2;#toit_nbrePentes=2;#toit_pente=74.0;#toit_type=2;#toit_hauteur=102.0;
+#trace_optimiser=true;#trace_souder=true;#trace_ortho=true;#seuil_optimiser=40.0;#seuil_souder=50.0;#seuil_ortho=50.0;#niveaux_hauteur=497.0;#niveaux_nbre=3;#toit_pente=22.0;#toit_type=2;#toit_hauteur=82.0;
