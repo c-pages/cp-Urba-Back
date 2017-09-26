@@ -30,6 +30,10 @@
 
 unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
 
+(
+------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
+include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
+)	
 ---------------presse papier ---------
 global urba_clipboard_batiment = ""
 	
@@ -41,24 +45,31 @@ extends:Editable_poly replaceUI:true version:0
 (
 	
 	
-	
-	--------------- imports  ----------------------------------------------------------------------------------------------------------------------
-	include "$userScripts\cp - GLOBAL\Enregistreur De Node.ms"
-	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
-	
-	
-	
-	------------ DEBUG	----------------------------------------------------------------------------------
+	------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
 	local m_debug = true
 	local m_dbgPrefix ="urba | Batiment Plg"
 	fn debug 	_txt  var:	 param:    =(
 		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
 		catch ()
 	)
+	
+	
+	--------------- IMPORTS  ----------------------------------------------------------------------------------------------------------------------
+	include "$userScripts\cp - GLOBAL\Enregistreur De Node.ms"
+	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
+	
 
-	---- les rollouts ------------------
+	--------------- PRé-DéCLARATIONS  ----------------------------------------------------------------------------------------------------------------------
+	----  rollouts ------------------
 	local roll_global, roll_niveaux,  roll_presets,   roll_toiture, roll_infos , roll_facades 
 	
+	----  structures ------------------
+	local geo,  trace,  construire
+	
+	
+	
+	
+	--------------- MEMBRES  ----------------------------------------------------------------------------------------------------------------------
 	---- le model dessiné d'un batiment vide ------------------
 	local traceLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
 
@@ -68,28 +79,25 @@ extends:Editable_poly replaceUI:true version:0
 	
 	---- constantes------------------
 	local ep_ssBassement 	= 	100
-	local ep_dalle 			= 20
+	local ep_dalle 				= 20
 	local ep_mur	 			= 20
 	local ep_couvertine	 	= 5
 	
 	
 	local murs_types = #("Gouttereaux", "Pignons", "Gouttereaux + Pignons")
 	
+	--------------- import des STRUCTURES  ----------------------------------------------------------------------------------------------------------------------
+	
+	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
 	local presets = str_presets_batiment 	fichier_dossier:			( getDir #userScripts	 + "\\cp-Urba\\lib\\batiments\\"		)	\
-														fichier_categorie:			"Urba - Bâtiment"	\
-														fichier_extension:			"btm"	\
-														params_aEnregistrer:	params_aEnregistrer
+															fichier_categorie:		"Urba - Bâtiment"	\
+															fichier_extension:		"btm"	\
+															params_aEnregistrer:	params_aEnregistrer
 
 	local nodeScanner = str_enregistreurDeNode ()
 	
-	--------------- Structures  ----------------------------------------------------------------------------------------------------------------------
-	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
-	
-	-------------------------------------------------------------------------------------------------------------------------------------------------
-	--------------- Fonctions  ----------------------------------------------------------------------------------------------------------------------	
-	-------------------------------------------------------------------------------------------------------------------------------------------------
-	
-	------ AFFICHAGE - ViewPort------------
+	--------------- FONCTIONS  ----------------------------------------------------------------------------------------------------------------------	
+	------ Affichage - ViewPort------------
 	fn	fn_VP_afficher_axePrincipal		 =(
 		
 		gw.setTransform (matrix3 1)
@@ -98,9 +106,9 @@ extends:Editable_poly replaceUI:true version:0
 		for o in selection where classof o == urba_batiment  do (
 			
 			local largeurFleche = 100
-			local BB_axeP 	= o.BB_axePrincipal
-			local mtrx_axeP	= o.mtrx_axePrincipal 
-			local mtrx_axeP2	= o.mtrx_axePrincipal 
+			local BB_axeP 	= o.axeP_BB
+			local mtrx_axeP	= o.axeP_mtrx 
+			local mtrx_axeP2	= o.axeP_mtrx 
 				
 -- format "fn_VP_afficher_axePrincipal:%\n"  BB_axeP
 			translate mtrx_axeP 	BB_axeP[1]
@@ -141,11 +149,11 @@ extends:Editable_poly replaceUI:true version:0
 			)
 			
 		
-			for i = 1 to o.trace.count do (
+			for i = 1 to o.trace_courant.count do (
 				local j = i + 1
-				if j > o.trace.count do j = 1
-				local pt = o.trace[i] *  o.transform 
-				local pt_suivant = o.trace[j] *  o.transform 
+				if j > o.trace_courant.count do j = 1
+				local pt = o.trace_courant[i] *  o.transform 
+				local pt_suivant = o.trace_courant[j] *  o.transform 
 				
 			---- les pignons et gouttereaux -----
 				local col = red
@@ -169,7 +177,7 @@ extends:Editable_poly replaceUI:true version:0
 						
 					)
 				)
-			---- les points du trace -----
+			---- les points du trace_courant -----
 				if o.affiche_trace do (
 					gw.text 		(pt + [0,0,10]) 	(i as string)  	color:yellow
 -- 					gw.Marker 	pt 	#hollowBox 	color:yellow
@@ -193,18 +201,6 @@ extends:Editable_poly replaceUI:true version:0
 		if 	 this.affiche_axe or  this.affiche_trace or  this.affiche_pignons or  this.affiche_gouttereaux   do
 			registerRedrawViewsCallback 		fn_VP_afficher_axePrincipal 	
 	)
-
-	
-	fn actualiser_rollouts =(
--- 		roll_trace.actualiser ()
-		roll_global.actualiser ()
--- 		roll_presets.actualiser ()
--- 		roll_rdc.actualiser ()
--- 		roll_etages.actualiser ()
-		roll_facades.actualiser ()
-		roll_toiture.actualiser ()
-		roll_infos.actualiser ()
-	)
 	fn actualiser_cacherGeo =(
 		if this.cache_geometrie then (
 			local faces = #{1..(polyop.getNumFaces delegate)} as array
@@ -212,189 +208,44 @@ extends:Editable_poly replaceUI:true version:0
 		) else
 			polyop.unHideAllFaces 	delegate
 	)
-	
-	
-	
-	
-	
-
-	fn maj_pignonsEtGouttereaux =(
-		
-		this.idtrace_pignons 		=#()
-		this.idtrace_gouttereaux 	=#()
-		
-		for i =1 to this.trace.count do (
-			local j = i+1
-			if j > this.trace.count do j = 1
-			
-			local orientation = get.orientation_axeP	this	(this.trace[j]-this.trace[i])
-			case orientation of (
-				#perpendiculaire: append 	this.idtrace_pignons			i
-				#parallele: 			append 	this.idtrace_gouttereaux	i
-			)
-			
-		)
-	)
-	fn init_geometrie 	= (
-		
-		---- creation de la surface de base -------
-		geo.vider ()
-		geo.creerFace  this.trace
-		
-		----- calcul de la surface du trace ------
-		this.surface = get.surface ()
-		this.roll_infos.actualiser ()
-		
-		
-	)
-	fn creerBatiment =(
-		
-		---- creation de la surface de base -------
-		init_geometrie ()
-		
-		local zCourant = -( ep_ssBassement + ep_dalle )
-		
-		construire.ssBassement 	this	&zCourant
-		construire.RdC 				this	&zCourant
-		construire.etages				this	&zCourant
-		construire.toit					this	&zCourant
-		
-		redrawviews ()
+	------ Rollouts------------
+	fn actualiser_rollouts =(
+		roll_global.actualiser 	()
+		roll_facades.actualiser ()
+		roll_toiture.actualiser	()
+		roll_infos.actualiser 	()
 	)
 	
-	
-		
-	fn optimiser_trace =(
--- 		local traceTmp =  this.trace_original as array
-		
-		this.trace = this.trace_original as array
-		maj_pignonsEtGouttereaux  ()
-		
-		---- orthonormer -----------
-		if this.trace_ortho do
-			optimiser.ortho		this
-		
-		---- souder -----------
-		if this.trace_souder do
-			optimiser.souder		this
-		
-		---- optimiser -----------
-		if this.trace_optimiser do
-			 optimiser.optimiser		this
-		
-		maj_pignonsEtGouttereaux ()
-		
-		creerBatiment ()
-	)
-	
-	fn tourner_axeP	  =(
-		
-		local mtrxTmp 			= get.mtrx_axePrincipal	this.trace_original 	
-		rotateZ	mtrxTmp			this.rotation_axeP
-		this.mtrx_axePrincipal 	= mtrxTmp		
-		this.BB_axePrincipal		=		get.BB_axePrincipal		this.trace 		this.mtrx_axePrincipal
-		maj_pignonsEtGouttereaux ()
-		
-		--- recreation du batiment -----
-		creerBatiment ()
-	)
-	fn set_trace	 	_nvtrace  _thisNode	=(
-		
-		_thisNode.transform = (matrix3 1)
-		ResetPivot 			_thisNode
-		
-		this.trace_original 				=#()
-		this.trace							=#()
-		local trace_absolu				=#()
-		local subSplineOuvertes 		=#()
-		local nvtraceTMP 				= copy _nvtrace
-		local id_premiertraceFerme 	= 0
-		
-		--- on ne prend que la premiere spline fermée-----
-		convertToSplineShape nvtraceTMP
-		local b_trouve = false
-		for idSpline = 1 to (numSplines nvtraceTMP) while not b_trouve	do
-			if isClosed  nvtraceTMP	idSpline	then	(
-				id_premiertraceFerme = idSpline
-				b_trouve = true
-			)
-			
-		---- si on a trouvé la spline --------------------
-		if id_premiertraceFerme != 0 do (
-			
-			--- on fait tourner les spline dans le meme sens ----
-			if not get.est_sensPositif 	nvtraceTMP 	id_premiertraceFerme do
-				reverse		nvtraceTMP	id_premiertraceFerme
-			
-			---- mise a jour de trace -----------
-			for id_pt = 1 to ( numKnots 	nvtraceTMP 	id_premiertraceFerme ) do	 (
-				ptSpline = ( getKnotPoint 	nvtraceTMP 	id_premiertraceFerme 	id_pt ) 
--- 				ptSpline.z = 0
-				debug "ptSpline" var:ptSpline
-				append trace_absolu 	ptSpline
-			)
-			
-			---- centrer le pivot ----
-			local pt_sommeDesPts = 0
-			for pt in trace_absolu do
-				pt_sommeDesPts += pt
-			local pt_centre = pt_sommeDesPts / trace_absolu.count
-			_thisNode.pos = pt_centre
-			
-			---- actualiser les tracés ----
-			for pt in trace_absolu do (
-				append this.trace_original	( pt * inverse _thisNode.transform )
-				append this.trace 			( pt * inverse _thisNode.transform )
-			)
-			
-			--- Axe principal-------------------coordsys
-			this.a_un_trace 			= true
-			this.mtrx_axePrincipal	=		get.mtrx_axePrincipal	this.trace 	
-			this.BB_axePrincipal		=		get.BB_axePrincipal		this.trace 		this.mtrx_axePrincipal
-			
-			maj_pignonsEtGouttereaux ()
-			
-		)
-		
-		--- suppression de tracée temp -------------
-		delete nvtraceTMP
-		
-		optimiser_trace ()
-		actualiser_rollouts ()
-	)
-	
-	
-	
-	
-	-------------------------------------------------------------------------------------------------------------------------------------------------
 	--------------- CREATION  ----------------------------------------------------------------------------------------------------------------------	
-	-------------------------------------------------------------------------------------------------------------------------------------------------
-	tool create	(
-		on mousePoint click do	(
+	tool create (	
+		on mousePoint click do	(	
 			nodeTM.translation = worldPoint
-			#stop
+			#stop	
 		)
 	)
 	
-	--------------- Parametres  et rollouts ----------------------------------------------------------------------------------------------------------------------	
+	--------------- import des PARAMETRES  et rollouts ----------------------------------------------------------------------------------------------------------------------	
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - rollouts.ms"
 	
-	--------------- evenements  ----------------------------------------------------------------------------------------------------------------------	
+	--------------- EVENEMENTS  ----------------------------------------------------------------------------------------------------------------------	
 	on load 						do 	(
-		format "load du plug: % \n" this
+		debug "load du plugin" 
 		VP_toggle ()
 	)
-	on clone 	_original 	do 	format "clone du plug :%\n" _original
+	on clone 	_original 	do (
+		debug "clone du plugin" 
+		initialiser ()
+	)
 	on create do (
-		format "creation du plug: Urba | Batiment\n"		
+		debug "creation du plugin"		
 		--- le dessin du logo --------
-		trace = traceLogo
-		init_geometrie ()
+		trace_courant = traceLogo
+		geo.creerFace trace_courant
 	)
 	
 	on update do	(
-		format "update du plug: Urba | Batiment\n"	
-		if version == 0 then 		format "maj de le version 0->1\n"	
+		debug "update du plugin"	
+-- 		if version == 0 then 		format "maj de le version 0->1\n"	
 	)
 	
 ) --- fin du plug ---

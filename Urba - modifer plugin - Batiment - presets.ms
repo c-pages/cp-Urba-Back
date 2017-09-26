@@ -63,8 +63,8 @@ struct str_presets_batiment (
 				(
 					local nomProp = execute ( readDelimitedString  stream "=" )
 					local valProp 	= execute ( readDelimitedString  stream ";" )
-					debug "nomProp" var:nomProp
-					debug "valProp" var:valProp
+-- 					debug "nomProp" var:nomProp
+-- 					debug "valProp" var:valProp
 					
 					setproperty 	_this 	nomProp		valProp
 				)

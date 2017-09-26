@@ -33,28 +33,27 @@
 parameters params_global rollout:roll_global			(
 	
 	------- AXE PRINCIPAL	------------------
-	mtrx_axePrincipal		type:#matrix3	
-	BB_axePrincipal		type:#point3Tab		tabSize:2			tabSizeVariable:false
-	rotation_axeP			type:#float				default:0.			ui:spn_rotation_axeP
+	axeP_mtrx		type:#matrix3	
+	axeP_BB		type:#point3Tab		tabSize:2			tabSizeVariable:false
+	axeP_orientation			type:#float				default:0.			ui:spn_rotation_axeP
 	
 	------- tracés			------------------
 	a_un_trace			type:#boolean			default:false
 	
 	trace_original		type:#point3Tab 		tabSize:0 			tabSizeVariable:true
-	trace					type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+	trace_courant						type:#point3Tab 		tabSize:0 			tabSizeVariable:true
 	
-	trace_optimiser	type:#boolean			default:false		ui:chk_optimiser
-	trace_souder		type:#boolean			default:false		ui:chk_souder
-	trace_ortho		type:#boolean			default:false		ui:chk_ortho
+	trace_optimiser		type:#boolean			default:false		ui:chk_optimiser
+	trace_souder			type:#boolean			default:false		ui:chk_souder
+	trace_ortho			type:#boolean			default:false		ui:chk_ortho
 	
 	seuil_optimiser		type:#float				default:20.			ui:spn_optimiser
-	seuil_souder		type:#float				default:30.			ui:spn_souder
+	seuil_souder			type:#float				default:30.			ui:spn_souder
 	seuil_ortho			type:#float				default:100.		ui:spn_ortho
 	
 	-------  	murs		------------------
 	idtrace_pignons			type:#intTab 			tabSize:0 			tabSizeVariable:true
 	idtrace_gouttereaux		type:#intTab	 		tabSize:0 			tabSizeVariable:true
-	
 	
 	niveaux_hauteur	type: #float 		default:250.	ui:spn_hauteur
 	niveaux_nbre		type: #integer		default:1		ui:spn_nbres
@@ -73,10 +72,8 @@ parameters params_infos rollout:roll_infos			(
 	
 	cache_geometrie			type:#boolean			default:false	ui:ckb_geometrie
 )
-
 parameters params_facades 	rollout:roll_facades			(
 )
-
 parameters params_toiture rollout:roll_toiture			(
 	
 -- 	toit_nbrePentes	type: #radiobtnIndex 	default:2		ui:rdo_pentes
@@ -85,10 +82,7 @@ parameters params_toiture rollout:roll_toiture			(
 	toit_hauteur		type: #float 				default:20.		ui:spn_toit_hauteur
 	
 )
-/* parameters params_affichage rollout:roll_affichage			(
-	
-)
- */
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
 --------------- ROLLOUT  ----------------------------------------------------------------------------------------------------------------------	
@@ -100,32 +94,19 @@ rollout roll_global "Global" width:247 height:172
 	fn shape_filt 		obj = superclassof obj == shape
 	
 	pickbutton 'btn_pick_trace' "Pick shape" pos:[10,13] width:156 height:21 filter:shape_filt align:#left
-	
 	checkbox 'chk_optimiser' "Optimiser" pos:[10,64] width:62 height:13 align:#left
-	
 	checkbox 'chk_ortho' "Orthonorm." pos:[10,34] width:76 height:13 align:#left
 	spinner 'spn_optimiser' "" pos:[87,63] width:80 height:16 range:[0,40,0] align:#left
 	checkbox 'chk_souder' "Souder" pos:[10,49] width:55 height:13 align:#left
 	spinner 'spn_souder' "" pos:[87,48] width:80 height:16 range:[0,100,0] type:#worldunits align:#left
 	spinner 'spn_ortho' "" pos:[87,33] width:80 height:16 range:[0,100,0] type:#float align:#left
-	
 	spinner 'spn_rotation_axeP' "" pos:[87,119] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
 	label 'lbl_axeP' "Orientation:" pos:[5,120] width:59 height:15 align:#left
 	button 'btn_rotation' "+90°" pos:[89,134] width:42 height:16 align:#left
 	button 'btn_rotation_inv' "-90°" pos:[130,134] width:42 height:16 align:#left	
-	
-	
-	
-	
-	
-	
 	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:85 align:#left
-	
-		
 	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,90] width:79 height:15 align:#left
 	spinner 'spn_nbres' "" pos:[87,89] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	
-
 	spinner 'spn_hauteur' "" pos:[87,104] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 	label 'lbl_hauteur' "Htr. des étages:" pos:[5,105] width:76 height:15 align:#left
 	
@@ -135,66 +116,79 @@ rollout roll_global "Global" width:247 height:172
 	
 	fn actualiser =(
 		
-		
-		spn_hauteur.enabled 			= a_un_trace
-		lbl_hauteur.enabled 				= a_un_trace
-		
-		
-		chk_optimiser.enabled 		= a_un_trace
-		chk_ortho.enabled 			= a_un_trace
-		chk_souder.enabled 			= a_un_trace
-		
-		spn_optimiser.enabled = trace_optimiser
-		spn_souder.enabled = trace_souder
-		spn_ortho.enabled = trace_ortho
-		btn_rotation.enabled 			= a_un_trace
+		spn_hauteur.enabled 				= a_un_trace
+		lbl_hauteur.enabled 				= a_un_trace		
+		chk_optimiser.enabled 			= a_un_trace
+		chk_ortho.enabled 				= a_un_trace
+		chk_souder.enabled 				= a_un_trace		
+		btn_rotation.enabled 				= a_un_trace
 		btn_rotation_inv.enabled 		= a_un_trace
 		spn_rotation_axeP.enabled 	= a_un_trace
 		lbl_axeP.enabled 					= a_un_trace
+		
+		spn_optimiser.enabled 			= trace_optimiser
+		spn_souder.enabled 				= trace_souder
+		spn_ortho.enabled 				= trace_ortho
 	)
 	
-	on spn_hauteur changed  arg do 
-		creerBatiment ()
-	on spn_nbres changed  arg do 
-		creerBatiment ()
+	on spn_hauteur changed  arg do undo "Urba | Bâtiment : Changer hauteur des étages" on (
+		construire.batiment this
+	)
+
+	on spn_nbres changed  arg do (
+		construire.batiment this
+	)
 			
 	on btn_rotation_inv  	pressed  do (
-		rotation_axeP -= 90
-		tourner_axeP ()
+		axeP_orientation -= 90
+		trace.actualiser this
+		
+		construire.batiment this
 	)
 	on btn_rotation 			pressed  do  (
-		rotation_axeP += 90
-		tourner_axeP ()
+		axeP_orientation += 90
+		trace.actualiser 			this
+		construire.batiment 	this
 	)
-	on spn_rotation_axeP changed  arg do (
-		tourner_axeP ()
+	on spn_rotation_axeP 	changed  arg do (
+		trace.actualiser this
+		construire.batiment 	this
 	)
 	on btn_pick_trace picked _nvtrace 	do	(
-		set_trace	_nvtrace	$
-		creerBatiment ()
-		redrawviews ()
+		trace.definir		_nvtrace	$
+		trace.actualiser	this
+		construire.batiment this
 	)
 	on chk_optimiser changed state do
 	(
-			optimiser_trace ()
+		trace.actualiser 	this
+		construire.batiment this
 		actualiser ()
-			)
+	)
 	on chk_ortho changed state do
 	(		
-			optimiser_trace ()
+		trace.actualiser this
+		construire.batiment this
 		actualiser ()
-			)
-	on spn_optimiser changed val 	do
-		optimiser_trace ()
+	)
+	on spn_optimiser changed val 	do (
+		trace.actualiser this
+		construire.batiment this
+	)
 	on chk_souder changed state do
 	(		
-			optimiser_trace ()
-			actualiser ()
-		)
-	on spn_souder changed val 	do
-		optimiser_trace ()
-	on spn_ortho changed val 	do
-		optimiser_trace ()
+		trace.actualiser this
+		construire.batiment this
+		actualiser ()
+	)
+	on spn_souder changed val 	do(
+		trace.actualiser this
+		construire.batiment this
+	)
+	on spn_ortho changed val 	do (
+		trace.actualiser this
+		construire.batiment this
+	)
 	
 	
 )
@@ -333,17 +327,17 @@ rollout roll_toiture "Toiture" width:236 height:418
 	
 	
 	
-	on roll_toiture open do
+	on roll_toiture open do 
 		actualiser()
 	on ddl_toiture selected sel 	do
 	(
 				actualiser	()
-				creerBatiment ()
+				construire.batiment this
 			)
 	on spn_toit_hauteur changed val 	do
-		creerBatiment ()
+		construire.batiment this
 	on spn_pente changed val 	do
-		creerBatiment ()
+		construire.batiment this
 )
 rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 (
@@ -376,21 +370,22 @@ rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 	on btn_charger pressed do
 	(
 			presets.charger 		this
-			creerBatiment ()
+			trace.actualiser this
+			construire.batiment this
 			actualiser_rollouts()
 		)
 	on btn_coller pressed do
 	(
-				presets.coller 	this 
-				creerBatiment ()
-				actualiser_rollouts()
+			presets.coller 	this 
+			trace.actualiser this
+			construire.batiment this
+			actualiser_rollouts()
 			
 		)
 	on btn_copier pressed do
 	(
 			presets.copier 	this 
 			actualiser()
-	-- 			presets.charger 		this
 		)
 )
 rollout roll_infos "Infos" width:191 height:142	rolledUp:true
@@ -446,7 +441,7 @@ rollout roll_infos "Infos" width:191 height:142	rolledUp:true
 		if a_un_trace do (
 			lbl_surface.text = ( surface / 10000 ) as string + " m²"
 			lbl_tracePts_val.text = trace_original.count as string + " pts."
-			lbl_tracePts_opt_val.text = trace.count as string + " pts."
+			lbl_tracePts_opt_val.text = trace_courant.count as string + " pts."
 		)
 	)
 	

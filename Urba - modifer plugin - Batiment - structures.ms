@@ -107,43 +107,42 @@ struct str_plan (
 
 ----------- Creation des geometries----------------------------------------------------------------------
 struct geo (
-
 	
-	fn vider =(
+	fn vider 																			=(
 		if (polyop.getNumFaces delegate) >0 do (
 			local listeDesFaces = #{1..(polyop.getNumFaces delegate)} as array
 			polyop.deleteFaces delegate	listeDesFaces		delIsoVerts:true
 			polyop.deleteIsoVerts delegate
 		)
 	),
-	fn creerFace  		_listeDesPoints  =(
+	fn creerFace  		_listeDesPoints   nd: 						=(
 		
-		local verts = polyop.getNumEdges delegate
-		
+		local  ndCible = if nd != unsupplied then nd else delegate
+		local verts = polyop.getNumEdges ndCible
 		-- les vertex --
 		for pt in  _listeDesPoints do (
-			polyop.createVert delegate	pt
+			polyop.createVert ndCible	pt
 		)
 		
 		-- les edges --
 		for i = 1 to _listeDesPoints.count do (
 			local j= i+1
 			if j > _listeDesPoints.count do j = 1
-			polyop.createEdge delegate (verts+i) (verts+j)
+			polyop.createEdge ndCible (verts+i) (verts+j)
 		)
 -- 				polyop.createEdge delegate (verts+i) (verts+i+1)
 -- 			polyop.createEdge delegate (verts+_listeDesPoints.count) (verts+1)
-		
+-- 		newscript ()
 		-- la face --
 		local listeVertexPrFace = #()
 		for i = 1 to _listeDesPoints.count  do 
 			append listeVertexPrFace ( verts+i )
 		
 		
-		polyop.createPolygon delegate  listeVertexPrFace
+		polyop.createPolygon ndCible  listeVertexPrFace
 		
 	),
-	fn creerFaceVerticale 	pt1 	pt2 	z 	hauteur	=(
+	fn creerFaceVerticale 	pt1 	pt2 	z 	hauteur							=(
 		
 		local verts = polyop.getNumEdges delegate
 		
@@ -160,7 +159,7 @@ struct geo (
 		polyop.createPolygon delegate  #((verts+4),(verts+3),(verts+2),(verts+1))
 		
 	),
-	fn creerFacesContour	ptsContours	 altitude 		hauteur =(
+	fn creerFacesContour	ptsContours	 altitude 		hauteur 	=(
 		
 		local facesDuContour =#()
 		local listePts = #()
@@ -184,541 +183,765 @@ struct geo (
 		
 		facesDuContour
 	)
+	
 ) --- fin struct geo
 
-struct get (
-	
-	----- Poly -------------------
-	fn surface 	=(
-		polyop.getFaceArea  delegate 1
-	),
-	
-	
-	----- Shape -------------------
-	fn edge_lePlusGrand			_trace 	=(
-		local longueurEdgeMax = 0
-		local	resultPts = #()
-		for i = 1 to _trace.count do (
-			local j = i+1
-			if j > _trace.count  do j = 1
-			local pt 			= _trace[	i ]
-			local pt_suivant	= _trace[	j ]
-			local longueurEdge = distance	pt	pt_suivant
-			if longueurEdge > longueurEdgeMax do (
-				longueurEdgeMax = longueurEdge
-				resultPts = #(pt, pt_suivant)
-			)
-		)
-		resultPts
-	),
-	fn mtrx_axePrincipal  			_trace  	=(
-		
-		local ptsEdgeLePlusLong 	= get.edge_lePlusGrand	_trace
-		
-		local axeVecteur 		= 	normalize (ptsEdgeLePlusLong[2] - ptsEdgeLePlusLong[1])
-		local axeMtrx				=  ( matrixFromNormal		axeVecteur )
-		
-		if axeMtrx.row1	==	[0,0,-1]  then 				
-			axeMtrx =  (rotateYMatrix 180) *(rotateXMatrix 180) *  (rotateZMatrix -90) * axeMtrx
-		 else if axeMtrx.row1	==	[0,0,1] do
-			axeMtrx =  (rotateYMatrix 180)  *(rotateXMatrix 180)  * (rotateZMatrix 90) * axeMtrx
-		
-		axeMtrx		
-	),
-	fn BB_axePrincipal				_trace  		_mtrxAxe  	=(
-		
--- 			local mtrxAxePrincipal	=	get.mtrx_axePrincipal 	_spline	_idSpline
-		
-		local pt1 = _trace[1] * inverse _mtrxAxe
-		local xMin = xMax = pt1.x
-		local yMin = yMax = pt1.y
-		local zMin = zMax = pt1.z
-		
-		for i = 2 to _trace.count do (
-			local pt = _trace[i] * inverse _mtrxAxe
-			if pt.x < xMin 		do xMin 		= pt.x
-			if pt.x > xMax 	do xMax 	= pt.x
-			if pt.y < yMin 		do yMin 	= pt.y
-			if pt.y > yMax 	do YMax 	= pt.y
-			if pt.z < zMin 		do zMin 		= pt.z
-			if pt.z > zMax 	do zMax 	= pt.z
-		)
-		
-		#([xMin, yMin, zMin]*  _mtrxAxe, [xMax, yMax, zMax]*  _mtrxAxe)
-		
-	),
-	
-	
-	
-	fn pointLePlusHautsurY 	shp 	spline	=(
-		local maxi = -10000000000000000 
-		local result_id = 0
-		for i = 1 to numKnots shp 	spline do (
-			local pt = getKnotPoint shp 	spline 	i
-			if  pt.y > maxi do ( 
-				maxi = pt.y
-				result_id = i
-			)
-		)
-		
--- 			debug "pointLePlusHautsurY"	var:result_id
-		result_id
-	),
-	fn est_sensPositif 			shp	idSpline =(
-		
-		local result 			= true
-		local id_pointHaut 	= get.pointLePlusHautsurY  	shp	idSpline 
-		
-		local	id_pt_1 		= id_pointHaut - 1 	---- le point d'avant
-		local	id_pt_ori 	= id_pointHaut 		---- le point origine
-		local	id_pt_2 		= id_pointHaut + 1	---- le point d'apres
-		
-		-- Boucler limite nombre des points
-		if id_pt_1 < 1 do id_pt_1 = numKnots shp	idSpline 
-		if id_pt_2 > numKnots shp	idSpline  do id_pt_2 = 1
-		
-		local	pt_1 		= getKnotPoint shp 	idSpline 	id_pt_1
-		local	pt_ori 	= getKnotPoint shp 	idSpline 	id_pt_ori
-		local	pt_2 		= getKnotPoint shp 	idSpline 	id_pt_2
 
-		local	vec1 =  normalize ( pt_1 - pt_ori )
-		local	vec2 =  normalize ( pt_2 - pt_ori )
-		
-		if vec2.x > vec1.X do result = not result
-		
-		result
-		
-	),
+struct trace (
 	
-	
-	
-	fn orientation_axeP  	_this		_vec 		=(
+		-----------------  Opérations diverses ----------------------
+		fn surface 							_trace 	=(
+			--- on crée un poly avec le tracee  ------
+			local 	nvNode = convertToPoly (mesh ())
+			nvNode.EditablePoly.SetSelection #Face #{1..25}
+			nvNode.EditablePoly.delete #Face
+			geo.creerFace 	_trace 	nd:nvNode
+			--- pour utiliser cette fonction : ------
+			local result = polyop.getFaceArea  nvNode 1
+			delete nvNode
+			result
+		),
+		fn edge_lePlusGrand			_trace 	=(
+			local longueurEdgeMax = 0
+			local	resultPts = #()
+			for i = 1 to _trace.count do (
+				local j = i+1
+				if j > _trace.count  do j = 1
+				local pt 			= _trace[	i ]
+				local pt_suivant	= _trace[	j ]
+				local longueurEdge = distance	pt	pt_suivant
+				if longueurEdge > longueurEdgeMax do (
+					longueurEdgeMax = longueurEdge
+					resultPts = #(pt, pt_suivant)
+				)
+			)
+			resultPts
+		),
+		fn pointLePlusHautsurY 		_trace	=(
+			local maxi = _trace[1].y
+			local result_id = 0
+			for i = 1 to _trace.count do (
+				local pt = _trace[	i ]
+				if  pt.y > maxi do ( 
+					maxi = pt.y
+					result_id = i
+				)
+			)
+			
+	-- 			debug "pointLePlusHautsurY"	var:result_id
+			result_id
+		),
+		fn est_sensPositif 				_trace =(
+			
+			local result 				= true
+			local id_pointHaut 	=  trace.pointLePlusHautsurY  	_trace
+			
+			local	id_pt_1 		= id_pointHaut - 1 	---- le point d'avant
+			local	id_pt_ori 		= id_pointHaut 		---- le point origine
+			local	id_pt_2 		= id_pointHaut + 1	---- le point d'apres
+			
+			-- Boucler limite nombre des points
+			if id_pt_1 < 1 do id_pt_1 = _trace.count
+			if id_pt_2 > _trace.count  do id_pt_2 = 1
+			
+			local	pt_1 		= _trace [	id_pt_1		]
+			local	pt_ori 		= _trace [	id_pt_ori	]
+			local	pt_2 		= _trace [	id_pt_2		]
+
+			local	vec1 =  normalize ( pt_1 - pt_ori )
+			local	vec2 =  normalize ( pt_2 - pt_ori )
+			
+			if vec2.x > vec1.X do result = not result
+			
+			result
+			
+		),
+		fn reverse _trace =(
+			local result =#()
+			for i= _trace.count to 1 by -1 do 
+				append result pt[i]
+			result
+		),
 		
-		local mtrx_Direction = _this.mtrx_axePrincipal.rotationpart as matrix3
-		local vec_direction = [0,0,1] * mtrx_Direction
 		
-		local vec1_dir = normalize _vec	
+		-----------------  Optimisation ----------------------
+		fn orthonormer 	_this		=(
+			
+			local mtrx_AP = _this.axeP_mtrx
+			
+			--- les pignons --
+			for i = 1 to _this.trace_courant.count do (
+				local j = i + 1
+				if j > _this.trace_courant.count do j = 1
+				local pt = _this.trace_courant[i]	* inverse  mtrx_AP 
+				local pt_suivant = _this.trace_courant[j] *  inverse mtrx_AP 
+				
+				local estPignon = findItem _this.idtrace_pignons i != 0 
+				if not estPignon then (
+					
+					local moyenneX = ( pt_suivant.x - pt.x ) /2					
+					local vec_moyenne = [moyenneX,0,0] * _this.seuil_ortho / 100
+					pt 			= _this.trace_courant[i]	* inverse  mtrx_AP  + vec_moyenne 
+					pt_suivant 	= _this.trace_courant[j]	* inverse  mtrx_AP  - vec_moyenne 
+					
+					_this.trace_courant[i] = pt *   mtrx_AP 
+					_this.trace_courant[j] = pt_suivant  *   mtrx_AP 
+				) 
+			)
+			--- les Gouttereaux  --
+			for i = 1 to _this.trace_courant.count do (
+				local j = i + 1
+				if j > _this.trace_courant.count do j = 1
+				local pt = _this.trace_courant[i]	* inverse  mtrx_AP 
+				local pt_suivant = _this.trace_courant[j] *  inverse mtrx_AP 
+				
+				local estPignon = findItem _this.idtrace_pignons i != 0 
+				if  estPignon then (
+					
+					local moyenneZ = ( pt_suivant.z - pt.z ) /2					
+					local vec_moyenne = [0,0,moyenneZ] * _this.seuil_ortho / 100
+					pt 			= _this.trace_courant[i]	* inverse  mtrx_AP  + vec_moyenne 
+					pt_suivant 	= _this.trace_courant[j]	* inverse  mtrx_AP  - vec_moyenne 
+					
+					_this.trace_courant[i] = pt *   mtrx_AP 
+					_this.trace_courant[j] = pt_suivant  *   mtrx_AP 
+				) 
+			)
+			
+	-- 			result
+		),
+		fn souder 			_this		=(
+	-- 			local _this.trace_courant =  	_trace
+	-- 			debug "souder"
+	-- 			debug "nbre de point avant :" var:_this.trace_courant.count
+			local i = 1
+			while i <=_this.trace_courant.count do (
+				local j= i+1
+				if j > _this.trace_courant.count  do j =1
+				local pt 			= _this.trace_courant[i]
+				local ptSuivant 	= _this.trace_courant[j]
+				if distance pt ptSuivant <= _this.seuil_souder do (
+					deleteitem _this.trace_courant j
+					_this.trace_courant[i] = ( pt + ptSuivant ) / 2
+					i = 1
+				)
+				i+=i
+			)
+	-- 			debug "nbre de point apres :" var:_this.trace_courant.count
+	-- 			result
+		),
+		fn optimiser 		_this		=(
+	-- 			local result =  	_trace
+			local i = 1
+			while i <= _this.trace_courant.count do (
+				
+				local h = i - 1
+				if h < 1  do h = _this.trace_courant.count
+				local j= i+1
+				if j > _this.trace_courant.count  do j =1
+				local ptDAvant 	= _this.trace_courant[h]
+				local pt 			= _this.trace_courant[i]
+				local ptSuivant 	= _this.trace_courant[j]
+				
+				local vec1 = normalize (ptDAvant - pt)
+				local vec2 = normalize (ptSuivant - pt)
+				
+				local anglePt = acos(dot vec1 vec2)			
+				if 	anglePt >= 180 - _this.seuil_optimiser  then (
+					deleteitem _this.trace_courant i
+					i = 0
+				)
+				
+				i +=1
+			)
+
+			result
+		),
 		
-		local valTest =  abs  (dot  vec_direction	vec1_dir ) 
 		
-		if valTest	 > cos 45 then 
-			#parallele
-		else 
-			#perpendiculaire
-		 
-	)
+		-----------------  Axe P ----------------------
+		fn mtrx_axeP			_trace  							=(
+			
+			local ptsEdgeLePlusLong 	= trace.edge_lePlusGrand	_trace
+			
+			local axeVecteur 		= 	normalize (ptsEdgeLePlusLong[2] - ptsEdgeLePlusLong[1])
+			local axeMtrx				=  ( matrixFromNormal		axeVecteur )
+			
+			if axeMtrx.row1	==	[0,0,-1]  then 				
+				axeMtrx =  (rotateYMatrix 180) *(rotateXMatrix 180) *  (rotateZMatrix -90) * axeMtrx
+			 else if axeMtrx.row1	==	[0,0,1] do
+				axeMtrx =  (rotateYMatrix 180)  *(rotateXMatrix 180)  * (rotateZMatrix 90) * axeMtrx
+			
+			axeMtrx		
+		),
+		fn BB_axeP			_trace  		_mtrxAxe  	=(
+			
+	-- 			local mtrxAxePrincipal	=	get.axeP_mtrx 	_spline	_idSpline
+			
+			local pt1 = _trace[1] * inverse _mtrxAxe
+			local xMin = xMax = pt1.x
+			local yMin = yMax = pt1.y
+			local zMin = zMax = pt1.z
+			
+			for i = 2 to _trace.count do (
+				local pt = _trace[i] * inverse _mtrxAxe
+				if pt.x < xMin 		do xMin 		= pt.x
+				if pt.x > xMax 	do xMax 	= pt.x
+				if pt.y < yMin 		do yMin 	= pt.y
+				if pt.y > yMax 	do YMax 	= pt.y
+				if pt.z < zMin 		do zMin 		= pt.z
+				if pt.z > zMax 	do zMax 	= pt.z
+			)
+			
+			#([xMin, yMin, zMin]*  _mtrxAxe, [xMax, yMax, zMax]*  _mtrxAxe)
+			
+		),
+		fn vec_axeP			_this		_vec 				=(
+			
+			local mtrx_Direction = _this.axeP_mtrx.rotationpart as matrix3
+			local vec_direction = [0,0,1] * mtrx_Direction
+			
+			local vec1_dir = normalize _vec	
+			
+			local valTest =  abs  (dot  vec_direction	vec1_dir ) 
+			
+			if valTest	 > cos 45 then 
+				#parallele
+			else 
+				#perpendiculaire
+			 
+		),
 	
+		fn actualiser_axeP	  _this	=(
+			
+			local mtrxTmp 			= trace.mtrx_axeP  _this.trace_original 	
+			rotateZ	mtrxTmp		_this.axeP_orientation
+			_this.axeP_mtrx 			= mtrxTmp		
+			_this.axeP_BB				=	trace.BB_axeP		_this.trace_courant 		_this.axeP_mtrx
+			
+			trace.actualiser_pignonsEtGouttereaux _this
+			
+		),
+		
+		
+		
+		fn actualiser_pignonsEtGouttereaux  _this =(
+			
+			_this.idtrace_pignons 		=#()
+			_this.idtrace_gouttereaux 	=#()
+			
+			for i =1 to _this.trace_courant.count do (
+				local j = i+1
+				if j > _this.trace_courant.count do j = 1
+				
+				local orientation = trace.vec_axeP	_this		(_this.trace_courant[j]-_this.trace_courant[i])
+				case orientation of (
+					#perpendiculaire: 	append 	_this.idtrace_pignons			i
+					#parallele: 			append 	_this.idtrace_gouttereaux	i
+				)
+				
+			)
+		),
+		
+		------------tracé du batiment ---------------
+		fn fromSpline 		_shapeNvtrace 	= (
+			
+			local trace_absolu					=#()
+			local subSplineOuvertes 		=#()
+			local nvtraceTMP 					= copy _shapeNvtrace
+			local id_premiertraceFerme 	= 0
+			
+			--- on ne prend que la premiere spline fermée-----
+			convertToSplineShape nvtraceTMP
+			local b_trouve = false
+			for idSpline = 1 to (numSplines nvtraceTMP) while not b_trouve	do
+				if isClosed  nvtraceTMP	idSpline	then	(
+					id_premiertraceFerme = idSpline
+					b_trouve = true
+				)
+			
+			---- si on a trouvé la spline --------------------
+			if id_premiertraceFerme != 0 do (
+				
+				---- mise a jour de trace_courant -----------
+				for id_pt = 1 to ( numKnots 	nvtraceTMP 	id_premiertraceFerme ) do	 (
+					ptSpline = ( getKnotPoint 	nvtraceTMP 	id_premiertraceFerme 	id_pt ) 
+	-- 				ptSpline.z = 0
+-- 					debug "ptSpline" var:ptSpline
+					append trace_absolu 	 ptSpline
+				)
+				
+				--- on fait tourner les spline dans le meme sens ----
+				if not trace.est_sensPositif 	trace_absolu 	 do
+					trace_absolu = reverse		trace_absolu
+			)
+			
+			--- suppression de tracée temp -------------
+			delete nvtraceTMP
+			
+			trace_absolu
+		),
+		fn definir	 	_shapeNvtrace  		_thisNode		=(
+			
+			local trace_absolu					= trace.fromSpline 	_shapeNvtrace
+			if trace_absolu.count > 0 do (
+			
+				_thisNode.trace_original 		=#()
+				_thisNode.trace_courant			=#()
+				
+				_thisNode.transform = (matrix3 1)
+				ResetPivot 			_thisNode
+				
+				---- centrer le pivot ----
+				local pt_sommeDesPts = 0
+				for pt in trace_absolu do
+					pt_sommeDesPts += pt
+				local pt_centre = pt_sommeDesPts / trace_absolu.count
+				_thisNode.pos = pt_centre
+				
+				---- actualiser les tracés ----
+				for pt in trace_absolu do (
+					append _thisNode.trace_original			( pt * inverse _thisNode.transform )
+					append _thisNode.trace_courant 		( pt * inverse _thisNode.transform )
+				)
+				
+				--- Axe principal-------------------coordsys
+				_thisNode.a_un_trace 			= true
+				
+				
+			)
+			 trace.actualiser  _thisNode
+		),
 	
-) ---- fin struct GET ------------------
+		
+		fn actualiser 	_this 	=(
+			
+			_this.trace_courant = _this.trace_original as array
+			trace.actualiser_axeP 	_this
+			
+			---- orthonormer -----------
+			if _this.trace_ortho do
+				trace.orthonormer		_this
+			
+			---- souder -----------
+			if _this.trace_souder do
+				trace.souder		_this
+			
+			---- optimiser -----------
+			if _this.trace_optimiser do
+				trace.optimiser		_this
+			
+			----- calcul de la surface du trace_courant ------
+			_this.surface = trace.surface 		_this.trace_courant
+			
+			trace.actualiser_axeP 	_this
+		)
+		
+) -- fin struct TRACE ---------
+
+/* 
+struct trace  (
+	
+		fn mtrx  			_trace  							=(
+			
+			local ptsEdgeLePlusLong 	= trace.edge_lePlusGrand	_trace
+			
+			local axeVecteur 		= 	normalize (ptsEdgeLePlusLong[2] - ptsEdgeLePlusLong[1])
+			local axeMtrx				=  ( matrixFromNormal		axeVecteur )
+			
+			if axeMtrx.row1	==	[0,0,-1]  then 				
+				axeMtrx =  (rotateYMatrix 180) *(rotateXMatrix 180) *  (rotateZMatrix -90) * axeMtrx
+			 else if axeMtrx.row1	==	[0,0,1] do
+				axeMtrx =  (rotateYMatrix 180)  *(rotateXMatrix 180)  * (rotateZMatrix 90) * axeMtrx
+			
+			axeMtrx		
+		),
+		fn BB				_trace  		_mtrxAxe  	=(
+			
+	-- 			local mtrxAxePrincipal	=	get.axeP_mtrx 	_spline	_idSpline
+			
+			local pt1 = _trace[1] * inverse _mtrxAxe
+			local xMin = xMax = pt1.x
+			local yMin = yMax = pt1.y
+			local zMin = zMax = pt1.z
+			
+			for i = 2 to _trace.count do (
+				local pt = _trace[i] * inverse _mtrxAxe
+				if pt.x < xMin 		do xMin 		= pt.x
+				if pt.x > xMax 	do xMax 	= pt.x
+				if pt.y < yMin 		do yMin 	= pt.y
+				if pt.y > yMax 	do YMax 	= pt.y
+				if pt.z < zMin 		do zMin 		= pt.z
+				if pt.z > zMax 	do zMax 	= pt.z
+			)
+			
+			#([xMin, yMin, zMin]*  _mtrxAxe, [xMax, yMax, zMax]*  _mtrxAxe)
+			
+		),
+		fn vec  				_this		_vec 				=(
+			
+			local mtrx_Direction = _this.axeP_mtrx.rotationpart as matrix3
+			local vec_direction = [0,0,1] * mtrx_Direction
+			
+			local vec1_dir = normalize _vec	
+			
+			local valTest =  abs  (dot  vec_direction	vec1_dir ) 
+			
+			if valTest	 > cos 45 then 
+				#parallele
+			else 
+				#perpendiculaire
+			 
+		),
+
+		fn actualiser_pignonsEtGouttereaux  _this =(
+			
+			_this.idtrace_pignons 		=#()
+			_this.idtrace_gouttereaux 	=#()
+			
+			for i =1 to _this.trace_courant.count do (
+				local j = i+1
+				if j > _this.trace_courant.count do j = 1
+				
+				local orientation = trace.vec	_this		(_this.trace_courant[j]-_this.trace_courant[i])
+				case orientation of (
+					#perpendiculaire: 	append 	_this.idtrace_pignons			i
+					#parallele: 			append 	_this.idtrace_gouttereaux	i
+				)
+				
+			)
+		),
+	
+		fn actualiser	  _this	=(
+			
+			local mtrxTmp 			= trace.mtrx  _this.trace_original 	
+			rotateZ	mtrxTmp		_this.axeP_orientation
+			_this.axeP_mtrx 			= mtrxTmp		
+			_this.axeP_BB				=	trace.BB		_this.trace_courant 		_this.axeP_mtrx
+			
+			trace.actualiser_pignonsEtGouttereaux ()
+			
+		)
+	
+)
+ */
+
 
 ----------- Creation des batiments----------------------------------------------------------------------
 struct construire (
 	
-	
-	------------ FACADES-------------------------
-	fn ssBassement  	_this		&z	=(
-		
-		geo.creerFacesContour	 	_this.trace		z 	ep_ssBassement
-		z += ep_ssBassement
-		
-		geo.creerFacesContour	 	_this.trace		z 	ep_dalle
-		z += ep_dalle
-		
-		
-	),
-	fn RdC 				_this		&z	=(
-		
-		--- un etage ---
--- 			local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.rdc_facade
--- 			creer_etage	_nodeBat	z 	_presetBat.niveaux_hauteur	styleFacade
--- 			z += _presetBat.niveaux_hauteur
-		
-		geo.creerFacesContour	 _this.trace		z 	_this.niveaux_hauteur			
-		z += _this.niveaux_hauteur	
-		
-	),
-	fn etages 			_this		&z			=(
-		
-		local niveaux_hauteur	= _this.niveaux_hauteur
-		local niveaux_nbre		= _this.niveaux_nbre
-		
-		local facesDunEtage =#()
-		
-		if niveaux_nbre != 0 do (
+		------------ FACADES-------------------------
+		fn ssBassement  	_this		&z	=(
 			
-			--- creation de l'etage modele ---------------------
-			--- plancher ---
-			if ep_dalle  != 0 do (
-				local nvlsFaces = geo.creerFacesContour	_this.trace	z 	ep_dalle
-				facesDunEtage  += nvlsFaces
-				z += ep_dalle
-			) 
+			geo.creerFacesContour	 	_this.trace_courant		z 	ep_ssBassement
+			z += ep_ssBassement
 			
-			local nvlsFaces = geo.creerFacesContour	_this.trace	z 	niveaux_hauteur
-			facesDunEtage  += nvlsFaces		
-			z += niveaux_hauteur
+			geo.creerFacesContour	 	_this.trace_courant		z 	ep_dalle
+			z += ep_dalle
 			
 			
-			--- on copie l'etage x fois ----
-			for i = 2 to niveaux_nbre do (
-				local vertsfin = polyop.getNumEdges delegate
-				polyop.detachFaces delegate	 facesDunEtage delete:false	
-				local vertsABouger = #{(vertsfin+1)..(polyop.getNumEdges delegate)}
-				polyop.moveVert 	delegate 	vertsABouger [0,0, ( niveaux_hauteur + ep_dalle ) *  (i-1) ]
-				z += ep_dalle
-				z += niveaux_hauteur
-			)
+		),
+		fn RdC 					_this		&z	=(
 			
-		)
-		
-		
-	),
-	
-	
-	
-	
-	
-	------------ TOITURES-------------------------
-	
-	fn toitPentes 		_this		&z	_nbrePentes	=(
-		
-		
-		local	 mtrx_axeP	=	_this.mtrx_axePrincipal
-		local	 BB_axeP	=	_this.BB_axePrincipal
-		translate mtrx_axeP	BB_axeP[1]
-		
-		
-		local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
-		local largeur 		=	diag_axeP.x
-		local longeur 		= 	diag_axeP.z
-		local hauteur 		= largeur * tan _this.toit_pente		--	largeur /2 --* random .3 1.5
-		
-		local nvlsFaces 	= #()
-		case _nbrePentes of (
-			1: ( ---------- 1 PENTE ----------------------------------------------------------------------------------------------------
-					--- gestion de l'angle de la pente .... ----
--- 						hauteur = hauteur/4
-					
-					local pt_0 = (  [0,0,0]  *  mtrx_axeP )
-					local pt_1 = (  [0,0,longeur]  *  mtrx_axeP )
-					local pt_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )
-					
+			--- un etage ---
+	-- 			local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.rdc_facade
+	-- 			creer_etage	_nodeBat	z 	_presetBat.niveaux_hauteur	styleFacade
+	-- 			z += _presetBat.niveaux_hauteur
+			
+			geo.creerFacesContour	 _this.trace_courant		z 	_this.niveaux_hauteur			
+			z += _this.niveaux_hauteur	
+			
+		),
+		fn etages 				_this		&z	=(
+			
+			local niveaux_hauteur	= _this.niveaux_hauteur
+			local niveaux_nbre		= _this.niveaux_nbre
+			
+			local facesDunEtage =#()
+			
+			if niveaux_nbre != 0 do (
 				
-					local vec1 = pt_1 - pt_0
-					local vec2 = pt_2 - pt_0
-					
-					local pt_Origine = pt_0
-					pt_Origine.z =  z + _this.toit_hauteur
--- 						point pos:pt_Origine	 isSelected:true
-				
-					local plan_pente = str_plan ()
-					plan_pente.creerFrom_2vecs_et_1Point	vec1	vec2		pt_Origine
-					
-					local pointsPente = #()
-					local pointsMurs   =#()
-					for i = 1 to  _this.trace.count do (
-						
-						local j = i+1
-						if j >  _this.trace.count  do j = 1
-						
-						
-						--- point Mur ----
-						local pt 			= 	_this.trace[i]	
-						append pointsMurs  pt		
-						
-						
-						
-						local pt_result = plan_pente.projeter_point_verticalement 	pt
--- 						pt_result.z += _this.toit_hauteur
-						append pointsPente  pt_result
-						
-					)
-					
-					--- creation de la face du dessus ----
-					append nvlsFaces ( geo.creerFace  	pointsPente )
-					
-					---- creation des raccord mur ----------
-					for i = 1 to pointsMurs.count  do (
-						
-						local j = i+1
-						if j >  pointsMurs.count  do j = 1
-						
-						local ptMur1 		= pointsMurs[i]
-						local ptMur2 		= pointsMurs[j]
-						local ptPente3 	= pointsPente[j]
-						local ptPente4	= pointsPente[i]
-						
-						local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
-						append nvlsFaces ( geo.creerFace  	pointsRaccord )
-					)
-				
-			)
-			2: (---------- 2 PENTES ----------------------------------------------------------------------------------------------------
-				
-				
-					--- Plan de la Pente 1  ----
-					local pt_P1_0 = (  [0,0,0]  *  mtrx_axeP )
-					local pt_P1_1 = (  [0,0,longeur]  *  mtrx_axeP )
-					local pt_P1_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )	
-				
-					local vecP1_1 = pt_P1_1 - pt_P1_0
-					local vecP1_2 = pt_P1_2 - pt_P1_0
-					
-					local pt_Origine = pt_P1_0
-					pt_Origine.z =  z + _this.toit_hauteur
-					local plan_pente1 = str_plan ()
-					plan_pente1.creerFrom_2vecs_et_1Point	vecP1_1		vecP1_2		pt_Origine
-				
-				
-				
-					--- Plan de la Pente 1  ----
-					local pt_P2_0 = (  [largeur,0,longeur]  *  mtrx_axeP )
-					local pt_P2_1 = (  [largeur,0,0]  *  mtrx_axeP )
-					local pt_P2_2 = (  [0 ,hauteur,longeur]  *  mtrx_axeP )			
-				
-					local vecP2_1 = pt_P2_1 - pt_P2_0
-					local vecP2_2 = pt_P2_2 - pt_P2_0
-					
-					local pt_Origine = pt_P2_0
-					pt_Origine.z =  z + _this.toit_hauteur
-					local plan_pente2 = str_plan ()
-					plan_pente2.creerFrom_2vecs_et_1Point	vecP2_1		vecP2_2		pt_Origine
-				
-					--- Plan verticale faitage ------
-					local pt_F_0 = (  [largeur /2 ,0,0]  *  mtrx_axeP )
-					local pt_F_1 = (  [largeur /2 ,0,longeur]  *  mtrx_axeP )
-					local pt_F_2	=	pt_F_0 + [0,0,100]				
-					
-					local vec_F_1 = pt_F_1 - pt_F_0
-					local vec_F_2 = pt_F_2 - pt_F_0				
-					
-					local pt_Origine = pt_F_0
-					pt_Origine.z =  z 
-					
-					local plan_verticaleFaitage = str_plan ()
-					plan_verticaleFaitage.creerFrom_2vecs_et_1Point	vec_F_1		vec_F_2		pt_Origine
-					
-					
-					
-					---- creation des liste des points-----------
-					local pointsPente = #()
-					local pointsPente1 = #()
-					local pointsPente2 = #()
-					local pointsMurs   =#()
-					for i = 1 to  _this.trace.count do (
-						
-						local j = i+1
-						if j >  _this.trace.count  do j = 1
-						
-						
-						--- point Mur ----
-						local pt 			= 	_this.trace[i]	
-						pt.z = z
-						append pointsMurs  pt		
-						
-						--- point pente ----
-						local pt_pente1 = plan_pente1.projeter_point_verticalement 	pt
-						local pt_pente2 = plan_pente2.projeter_point_verticalement 	pt
-						if pt_pente1.z < pt_pente2.z then (
-							append pointsPente  	pt_pente1
-							append pointsPente1 	pt_pente1
-							
-						) else  (
-							append pointsPente  	pt_pente2
-							append pointsPente2  	pt_pente2
-						)
-						
-						--- point mur - faitage ----
-						local pt_suivant 	= 	_this.trace[j]	
-						pt_suivant.z = z
-						local intersect = plan_verticaleFaitage.coupe_segment	pt 	pt_suivant							
-						if intersect do (
-							local pt_faitage_mur = plan_verticaleFaitage.get_intersection_segment 	pt 	pt_suivant
-							append pointsMurs  	pt_faitage_mur
-							local pt_faitage_pente = plan_pente1.projeter_point_verticalement 	pt_faitage_mur
-							append pointsPente  pt_faitage_pente
-							
-							
-							append pointsPente1 	pt_faitage_pente
-							append pointsPente2 	pt_faitage_pente
-						)
-						
-						
-						
-					)
-					
-					
-					
-					
-					--------- creation des geometries ---------------------
-					--- les murs ----
-					for i = 1 to pointsMurs.count  do (
-						
-						local j = i+1
-						if j > pointsMurs.count do j = 1
-						
-						local ptMur1 		= pointsMurs[ i ]
-						local ptMur2 		= pointsMurs[ j ]
-						local ptPente3 	= pointsPente[ j ]
-						local ptPente4	= pointsPente[ i ]
-						
-						local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
-						append nvlsFaces ( geo.creerFace  	pointsRaccord )
-					) 
-					
-					
-					--- les pentes -----
-					append nvlsFaces ( geo.creerFace  		pointsPente1 )
-					append nvlsFaces ( geo.creerFace  		pointsPente2 )
-					
-					
-			)
-		)
-	),
-	
-	fn acrotere		_this		_face		= (
-		
-		--- les murs -----
-		polyop.bevelFaces delegate 	#(_face) 	0 	-ep_mur
-		local faceAExtruder = #{_face+1..(polyop.getNumFaces delegate)} as array
-		polyop.extrudeFaces  delegate 	faceAExtruder 	_this.toit_hauteur
-		
-		--- la couvertine  -----
-		polyop.bevelFaces delegate 	faceAExtruder		0 	ep_couvertine
-		polyop.extrudeFaces delegate 	faceAExtruder		ep_couvertine
-		
-	),
-	
-	fn toit 		_this		&z =(
-		case _this.toit_type of (
-			1: (	---- PLAT	----
-				local trace = for pt in _this.trace collect [pt.x,pt.y,z]
-				geo.creerFace		trace
-			)
-			2: (	---- ACROTERE	----
-				
-				local trace 		= _this.trace
-				
-				--- dalle ---
+				--- creation de l'etage modele ---------------------
+				--- plancher ---
 				if ep_dalle  != 0 do (
-					geo.creerFacesContour	_this.trace 	z 	ep_dalle
+					local nvlsFaces = geo.creerFacesContour	_this.trace_courant	z 	ep_dalle
+					facesDunEtage  += nvlsFaces
 					z += ep_dalle
 				) 
 				
-				--- creation de la facette globale-----
-				local trace 		= for pt in _this.trace collect [pt.x,pt.y,z]
-				local faceDuToit 	= geo.creerFace		trace
+				local nvlsFaces = geo.creerFacesContour	_this.trace_courant	z 	niveaux_hauteur
+				facesDunEtage  += nvlsFaces		
+				z += niveaux_hauteur
 				
-				construire.acrotere	_this	faceDuToit
+				
+				--- on copie l'etage x fois ----
+				for i = 2 to niveaux_nbre do (
+					local vertsfin = polyop.getNumEdges delegate
+					polyop.detachFaces delegate	 facesDunEtage delete:false	
+					local vertsABouger = #{(vertsfin+1)..(polyop.getNumEdges delegate)}
+					polyop.moveVert 	delegate 	vertsABouger [0,0, ( niveaux_hauteur + ep_dalle ) *  (i-1) ]
+					z += ep_dalle
+					z += niveaux_hauteur
+				)
 				
 			)
-			3: (	---- 1 PAN	----
-				construire.toitPentes			_this		&z  1
+			
+			
+		),
+		
+		------------ TOITURES-------------------------		
+		fn toitPentes 		_this		&z	_nbrePentes	=(
+			
+			
+			local	 mtrx_axeP	=	_this.axeP_mtrx
+			local	 BB_axeP	=	_this.axeP_BB
+			translate mtrx_axeP	BB_axeP[1]
+			
+			
+			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
+			local largeur 		=	diag_axeP.x
+			local longeur 		= 	diag_axeP.z
+			local hauteur 		= largeur * tan _this.toit_pente		--	largeur /2 --* random .3 1.5
+			
+			local nvlsFaces 	= #()
+			case _nbrePentes of (
+				1: ( ---------- 1 PENTE ----------------------------------------------------------------------------------------------------
+						--- gestion de l'angle de la pente .... ----
+	-- 						hauteur = hauteur/4
+						
+						local pt_0 = (  [0,0,0]  *  mtrx_axeP )
+						local pt_1 = (  [0,0,longeur]  *  mtrx_axeP )
+						local pt_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )
+						
+						local vec1 = pt_1 - pt_0
+						local vec2 = pt_2 - pt_0
+						
+						local pt_Origine = pt_0
+						pt_Origine.z =  z + _this.toit_hauteur
+	-- 						point pos:pt_Origine	 isSelected:true
+					
+						local plan_pente = str_plan ()
+						plan_pente.creerFrom_2vecs_et_1Point	vec1	vec2		pt_Origine
+						
+						local pointsPente = #()
+						local pointsMurs   =#()
+						for i = 1 to  _this.trace_courant.count do (
+							
+							local j = i+1
+							if j >  _this.trace_courant.count  do j = 1
+							
+							--- point Mur ----
+							local pt 			= 	_this.trace_courant[i]	
+							append pointsMurs  pt		
+							
+							local pt_result = plan_pente.projeter_point_verticalement 	pt
+	-- 						pt_result.z += _this.toit_hauteur
+							append pointsPente  pt_result
+							
+						)
+						
+						--- creation de la face du dessus ----
+						append nvlsFaces ( geo.creerFace  	pointsPente )
+						
+						---- creation des raccord mur ----------
+						for i = 1 to pointsMurs.count  do (
+							
+							local j = i+1
+							if j >  pointsMurs.count  do j = 1
+							
+							local ptMur1 		= pointsMurs[i]
+							local ptMur2 		= pointsMurs[j]
+							local ptPente3 	= pointsPente[j]
+							local ptPente4	= pointsPente[i]
+							
+							local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
+							append nvlsFaces ( geo.creerFace  	pointsRaccord )
+						)
+					
+				)
+				2: (---------- 2 PENTES ----------------------------------------------------------------------------------------------------
+					
+					
+						--- Plan de la Pente 1  ----
+						local pt_P1_0 = (  [0,0,0]  *  mtrx_axeP )
+						local pt_P1_1 = (  [0,0,longeur]  *  mtrx_axeP )
+						local pt_P1_2 = (  [largeur ,hauteur,0]  *  mtrx_axeP )	
+					
+						local vecP1_1 = pt_P1_1 - pt_P1_0
+						local vecP1_2 = pt_P1_2 - pt_P1_0
+						
+						local pt_Origine = pt_P1_0
+						pt_Origine.z =  z + _this.toit_hauteur
+						local plan_pente1 = str_plan ()
+						plan_pente1.creerFrom_2vecs_et_1Point	vecP1_1		vecP1_2		pt_Origine
+					
+					
+					
+						--- Plan de la Pente 1  ----
+						local pt_P2_0 = (  [largeur,0,longeur]  *  mtrx_axeP )
+						local pt_P2_1 = (  [largeur,0,0]  *  mtrx_axeP )
+						local pt_P2_2 = (  [0 ,hauteur,longeur]  *  mtrx_axeP )			
+					
+						local vecP2_1 = pt_P2_1 - pt_P2_0
+						local vecP2_2 = pt_P2_2 - pt_P2_0
+						
+						local pt_Origine = pt_P2_0
+						pt_Origine.z =  z + _this.toit_hauteur
+						local plan_pente2 = str_plan ()
+						plan_pente2.creerFrom_2vecs_et_1Point	vecP2_1		vecP2_2		pt_Origine
+					
+						--- Plan verticale faitage ------
+						local pt_F_0 = (  [largeur /2 ,0,0]  *  mtrx_axeP )
+						local pt_F_1 = (  [largeur /2 ,0,longeur]  *  mtrx_axeP )
+						local pt_F_2	=	pt_F_0 + [0,0,100]				
+						
+						local vec_F_1 = pt_F_1 - pt_F_0
+						local vec_F_2 = pt_F_2 - pt_F_0				
+						
+						local pt_Origine = pt_F_0
+						pt_Origine.z =  z 
+						
+						local plan_verticaleFaitage = str_plan ()
+						plan_verticaleFaitage.creerFrom_2vecs_et_1Point	vec_F_1		vec_F_2		pt_Origine
+						
+						
+						
+						---- creation des liste des points-----------
+						local pointsPente = #()
+						local pointsPente1 = #()
+						local pointsPente2 = #()
+						local pointsMurs   =#()
+						for i = 1 to  _this.trace_courant.count do (
+							
+							local j = i+1
+							if j >  _this.trace_courant.count  do j = 1
+							
+							
+							--- point Mur ----
+							local pt 			= 	_this.trace_courant[i]	
+							pt.z = z
+							append pointsMurs  pt		
+							
+							--- point pente ----
+							local pt_pente1 = plan_pente1.projeter_point_verticalement 	pt
+							local pt_pente2 = plan_pente2.projeter_point_verticalement 	pt
+							if pt_pente1.z < pt_pente2.z then (
+								append pointsPente  	pt_pente1
+								append pointsPente1 	pt_pente1
+								
+							) else  (
+								append pointsPente  	pt_pente2
+								append pointsPente2  	pt_pente2
+							)
+							
+							--- point mur - faitage ----
+							local pt_suivant 	= 	_this.trace_courant[j]	
+							pt_suivant.z = z
+							local intersect = plan_verticaleFaitage.coupe_segment	pt 	pt_suivant							
+							if intersect do (
+								local pt_faitage_mur = plan_verticaleFaitage.get_intersection_segment 	pt 	pt_suivant
+								append pointsMurs  	pt_faitage_mur
+								local pt_faitage_pente = plan_pente1.projeter_point_verticalement 	pt_faitage_mur
+								append pointsPente  pt_faitage_pente
+								
+								
+								append pointsPente1 	pt_faitage_pente
+								append pointsPente2 	pt_faitage_pente
+							)
+							
+							
+							
+						)
+						
+						
+						
+						
+						--------- creation des geometries ---------------------
+						--- les murs ----
+						for i = 1 to pointsMurs.count  do (
+							
+							local j = i+1
+							if j > pointsMurs.count do j = 1
+							
+							local ptMur1 		= pointsMurs[ i ]
+							local ptMur2 		= pointsMurs[ j ]
+							local ptPente3 	= pointsPente[ j ]
+							local ptPente4	= pointsPente[ i ]
+							
+							local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
+							append nvlsFaces ( geo.creerFace  	pointsRaccord )
+						) 
+						
+						
+						--- les pentes -----
+						append nvlsFaces ( geo.creerFace  		pointsPente1 )
+						append nvlsFaces ( geo.creerFace  		pointsPente2 )
+						
+						
+				)
 			)
-			4: (	---- 2 PANS	----
-				construire.toitPentes			_this		&z  2
+		),		
+		fn acrotere		_this		_face		= (
+			
+			--- les murs -----
+			polyop.bevelFaces delegate 	#(_face) 	0 	-ep_mur
+			local faceAExtruder = #{_face+1..(polyop.getNumFaces delegate)} as array
+			polyop.extrudeFaces  delegate 	faceAExtruder 	_this.toit_hauteur
+			
+			--- la couvertine  -----
+			polyop.bevelFaces delegate 	faceAExtruder		0 	ep_couvertine
+			polyop.extrudeFaces delegate 	faceAExtruder		ep_couvertine
+			
+		),		
+		fn toit 				_this		&z =(
+			case _this.toit_type of (
+				1: (	---- PLAT	----
+					local trace_courant = for pt in _this.trace_courant collect [pt.x,pt.y,z]
+					geo.creerFace		trace_courant
+				)
+				2: (	---- ACROTERE	----
+					
+					local trace_courant 		= _this.trace_courant
+					
+					--- dalle ---
+					if ep_dalle  != 0 do (
+						geo.creerFacesContour	_this.trace_courant 	z 	ep_dalle
+						z += ep_dalle
+					) 
+					
+					--- creation de la facette globale-----
+					local trace_courant 		= for pt in _this.trace_courant collect [pt.x,pt.y,z]
+					local faceDuToit 	= geo.creerFace		trace_courant
+					
+					construire.acrotere	_this	faceDuToit
+					
+				)
+				3: (	---- 1 PAN	----
+					construire.toitPentes			_this		&z  1
+				)
+				4: (	---- 2 PANS	----
+					construire.toitPentes			_this		&z  2
+				)
 			)
+		),		
+		
+		fn batiment 	_this =(
+			
+			---- creation de la surface de base -------
+			geo.vider ()
+			
+			local zCourant = -( ep_ssBassement + ep_dalle )
+			
+			construire.ssBassement 	_this	&zCourant
+			construire.RdC 				_this	&zCourant
+			construire.etages			_this	&zCourant
+			construire.toit				_this	&zCourant
+			
+			redrawViews () 
 		)
-	)			
+	
 	
 ) ---- fin struct construire ------------------
-
-struct optimiser (
-	fn ortho 	_this		=(
-		
-		local mtrx_AP = _this.mtrx_axePrincipal
-		
-		--- les pignons --
-		for i = 1 to _this.trace.count do (
-			local j = i + 1
-			if j > _this.trace.count do j = 1
-			local pt = _this.trace[i]	* inverse  mtrx_AP 
-			local pt_suivant = _this.trace[j] *  inverse mtrx_AP 
-			
-			local estPignon = findItem _this.idtrace_pignons i != 0 
-			if not estPignon then (
-				
-				local moyenneX = ( pt_suivant.x - pt.x ) /2					
-				local vec_moyenne = [moyenneX,0,0] * _this.seuil_ortho / 100
-				pt 			= _this.trace[i]	* inverse  mtrx_AP  + vec_moyenne 
-				pt_suivant 	= _this.trace[j]	* inverse  mtrx_AP  - vec_moyenne 
-				
-				_this.trace[i] = pt *   mtrx_AP 
-				_this.trace[j] = pt_suivant  *   mtrx_AP 
-			) 
-		)
-		--- les Gouttereaux  --
-		for i = 1 to _this.trace.count do (
-			local j = i + 1
-			if j > _this.trace.count do j = 1
-			local pt = _this.trace[i]	* inverse  mtrx_AP 
-			local pt_suivant = _this.trace[j] *  inverse mtrx_AP 
-			
-			local estPignon = findItem _this.idtrace_pignons i != 0 
-			if  estPignon then (
-				
-				local moyenneZ = ( pt_suivant.z - pt.z ) /2					
-				local vec_moyenne = [0,0,moyenneZ] * _this.seuil_ortho / 100
-				pt 			= _this.trace[i]	* inverse  mtrx_AP  + vec_moyenne 
-				pt_suivant 	= _this.trace[j]	* inverse  mtrx_AP  - vec_moyenne 
-				
-				_this.trace[i] = pt *   mtrx_AP 
-				_this.trace[j] = pt_suivant  *   mtrx_AP 
-			) 
-		)
-		
--- 			result
-	),
-	fn souder 		_this	=(
--- 			local _this.trace =  	_trace
--- 			debug "souder"
--- 			debug "nbre de point avant :" var:_this.trace.count
-		local i = 1
-		while i <=_this.trace.count do (
-			local j= i+1
-			if j > _this.trace.count  do j =1
-			local pt 			= _this.trace[i]
-			local ptSuivant 	= _this.trace[j]
-			if distance pt ptSuivant <= _this.seuil_souder do (
-				deleteitem _this.trace j
-				_this.trace[i] = ( pt + ptSuivant ) / 2
-				i = 1
-			)
-			i+=i
-		)
--- 			debug "nbre de point apres :" var:_this.trace.count
--- 			result
-	),
-	fn optimiser 	_this	=(
--- 			local result =  	_trace
-		local i = 1
-		while i <= _this.trace.count do (
-			
-			local h = i - 1
-			if h < 1  do h = _this.trace.count
-			local j= i+1
-			if j > _this.trace.count  do j =1
-			local ptDAvant 	= _this.trace[h]
-			local pt 			= _this.trace[i]
-			local ptSuivant 	= _this.trace[j]
-			
-			local vec1 = normalize (ptDAvant - pt)
-			local vec2 = normalize (ptSuivant - pt)
-			
-			local anglePt = acos(dot vec1 vec2)			
-			if 	anglePt >= 180 - _this.seuil_optimiser  then (
-				deleteitem _this.trace i
-				i = 0
-			)
-			
-			i +=1
-		)
-
-		result
-	)
-)
-
-
 
 
 
