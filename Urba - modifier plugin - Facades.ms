@@ -80,7 +80,7 @@ rollout roll_urba_editeurFacades "urba_editeurFacades" width:200 height:200
 	
 	
 	
-	dropdownList 'ddl_appliquerA' "" pos:[11,264] width:153 height:21 selection:3 align:#left  items:murs_types
+	dropdownList 'ddl_appliquerA' "" pos:[11,264] width:153 height:21 selection:3 align:#left  --	items:murs_types
 		label 'lbl_appliquerA' "Appliquer à:" pos:[11,249] width:111 height:15 align:#left
 	
 	
@@ -105,12 +105,13 @@ rollout roll_urba_editeurFacades "urba_editeurFacades" width:200 height:200
 		m_drag 		= str_drag 	m_prt:roll_urba_editeurFacades		
 		
 		m_titre 		= str_label 	m_ui:ui_titre			m_texte:"Urba | Editeur de façades"
-		m_titre.setCouleur (color 255	255	255)
+		m_titre.setCouleur (color 0 0 0)
+		m_titre.setCouleurFond ( color 200 200 200 )
 		/* 
 		m_log 		= str_label 	m_ui:ui_log				m_texte:"..."
 		m_log.setPolice (str_policePetite())
 		m_log.setCouleur (color 200	200	200)
-		 */
+		*/
 		
 		-- le bouton fermer --
 		ui_btnFermer.bitmap = m_prt.m_icos_fermer[1]	
@@ -154,7 +155,8 @@ struct str_urba_editeurFacades (
 		m_dialog				= roll_urba_editeurFacades ,		---- le rollout ----
 		m_dialogPos 		= [100,100],
 		
-		col_fenetreFond	= color 68  68 68, 	----  ----
+-- 		col_fenetreFond		= color 68  68 68, 	----  ----
+		col_fenetreFond		= color 149 149 149, 	----  ----
 		col_fenetreTxt		= color 230  230 230, 	----  ----
 	
 		--- images bouton fermer ---
@@ -173,13 +175,13 @@ struct str_urba_editeurFacades (
 		---- fenetre -----
 		fn ouvrir =(			
 			---- creation de la fenetre ----
-			createDialog m_dialog 	bgcolor:				col_fenetreFond 	 \
-											fgcolor:				col_fenetreTxt 	\
+			createDialog m_dialog 	fgcolor:				col_fenetreTxt 	\
 											style:				#(#style_resizing) \
 											lockHeight:			true	\
 											lockWidth:			true	\
 											pos:					m_dialogPos
-			
+-- 			bgcolor:				col_fenetreFond 	 \
+											
 			---- initialisation de la fenetre ----
 			m_dialog.m_prt	 	= this
 			m_dialog.initialiser ()

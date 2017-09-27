@@ -28,6 +28,14 @@
 ########################################################################################################################*/
 
 
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+--------- STRUCTURES Datas --------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
 struct str_plan (
 		------------ DEBUG	----------------------------------------------------------------------------------
 		m_debug = true,
@@ -105,7 +113,138 @@ struct str_plan (
 )
 
 
------------ Creation des geometries----------------------------------------------------------------------
+
+struct str_facade (
+	private
+	
+		separateur_params ="§",
+		separateur_mutation = ":",
+		separateur_items = ";",
+	public
+		nom 						="Facade",
+		
+		etages_nbre_min	= 	1,
+		etages_nbre_max	=	0,
+		
+		longueur_min		=	0,
+		longueur_max		=	0,
+		
+		murs						=	1,			---- (pignons, gouttereaux, les deux)
+		
+		repeter					=	true,
+		etirer					=	false,
+		
+		sequence				=#(),
+	
+	public
+		fn get_datas_string 	=(
+			local txtResult = ""
+			local propNames = getPropNames this
+			for param in propNames do (
+				local prop = ( getProperty  this 	param )
+				local type = classof prop
+				case type of (
+					MAXScriptFunction:	()
+					string:						(
+						txtResult+=  param as string  + separateur_mutation	+	prop as string  + separateur_params
+					)
+					ArrayParameter: (
+						local tabString = ""
+						for item in prop do
+							tabString += item + separateur_items
+						txtResult+=  param as string  + separateur_mutation 	+	tabString  + separateur_params
+					)
+					default:						(
+						txtResult+=  param as string  + separateur_mutation	+	prop as string  + separateur_params
+					)
+				)
+			)
+			txtResult
+			
+			/* 
+			local txt_datas =""
+			local propNames = getPropNames this
+			for propNom in propNames do (
+				local type = classof ( getProperty this propNom  )
+				case type of (
+					MAXScriptFunction:	()
+	-- 				string:						txt_datas+= propNom as string + "=" + ( getProperty this propNom ) as string + ";"
+					default:						txt_datas+= propNom as string + "=" + ( getProperty this propNom ) as string + ";"
+				)
+			)
+			format "txt_datas:%\n" txt_datas
+			txt_datas */
+		),
+		fn set_datas_string 	_datas_string =(
+			local datasTab = filterString _datas_string separateur_params
+			local i =1
+			local propNames = getPropNames this
+			for datas in datasTab do (
+				local dataTab= filterString datas separateur_mutation
+				local propNom = dataTab[1]
+				local type = classof ( getProperty this propNom  )
+				case type of (
+					string:						(
+						local data  = dataTab[2]
+						setProperty this propNom data
+						i+= 1
+					)
+					MAXScriptFunction:	()
+					default:						(
+						if dataTab[2] != undefined do  (
+							local data  = execute dataTab[2]
+							setProperty this propNom data
+						)
+						i+= 1
+					)
+				)
+			)
+		)
+)
+
+struct str_facade_composant (
+	
+	longueur				=	0,
+	modeles_ids			=	"",
+	modeles_probas		=	"",
+	etirable					=	false
+	
+)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+--------- STRUCTURES Grandes fonctions -----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+---- manager des facades -----
+struct 	facades (
+	
+	
+	fn get_items 			_this	=(
+		local result =#()
+		for comp in _this.facades_composants 	do (
+			local nvlFacade =   str_facade ()
+			nvlFacade.set_datas_string		comp
+			append result nvlFacade
+			format "nvlFacade : %\n" nvlFacade 
+		)
+		result
+	),
+	fn creer 					_this	=(
+		local nvlFacade = str_facade ()
+		
+		format "nvlFacade : %\n" nvlFacade 
+		append _this.facades_composants (nvlFacade.get_datas_string ())
+		format "nvlFacade.get_datas_string (): %\n" (nvlFacade.get_datas_string ()) 
+		nvlFacade
+	),
+	fn supprimer		_id 	_this	=(
+		deleteItem _this.facades_composants 	_id
+	)
+	
+)
+
+
+
+----------- Creation des geometries poly ----------------
 struct geo (
 	
 	fn vider 																			=(
@@ -115,7 +254,7 @@ struct geo (
 			polyop.deleteIsoVerts delegate
 		)
 	),
-	fn creerFace  		_listeDesPoints   nd: 						=(
+	fn creerFace  		_listeDesPoints   nd: 								=(
 		
 		local  ndCible = if nd != unsupplied then nd else delegate
 		local verts = polyop.getNumEdges ndCible
@@ -186,7 +325,7 @@ struct geo (
 	
 ) --- fin struct geo
 
-
+----------- Tracé du batiment et autres manipulations----------------
 struct trace (
 	
 		-----------------  Opérations diverses ----------------------
@@ -219,7 +358,7 @@ struct trace (
 		),
 		fn pointLePlusHautsurY 		_trace	=(
 			local maxi = _trace[1].y
-			local result_id = 0
+			local result_id = 1
 			for i = 1 to _trace.count do (
 				local pt = _trace[	i ]
 				if  pt.y > maxi do ( 
@@ -231,7 +370,7 @@ struct trace (
 	-- 			debug "pointLePlusHautsurY"	var:result_id
 			result_id
 		),
-		fn est_sensPositif 				_trace =(
+		fn est_sensPositif 				_trace 	=(
 			
 			local result 				= true
 			local id_pointHaut 	=  trace.pointLePlusHautsurY  	_trace
@@ -256,7 +395,7 @@ struct trace (
 			result
 			
 		),
-		fn reverse _trace =(
+		fn reverse 						_trace 	=(
 			local result =#()
 			for i= _trace.count to 1 by -1 do 
 				append result pt[i]
@@ -539,95 +678,7 @@ struct trace (
 		
 ) -- fin struct TRACE ---------
 
-/* 
-struct trace  (
-	
-		fn mtrx  			_trace  							=(
-			
-			local ptsEdgeLePlusLong 	= trace.edge_lePlusGrand	_trace
-			
-			local axeVecteur 		= 	normalize (ptsEdgeLePlusLong[2] - ptsEdgeLePlusLong[1])
-			local axeMtrx				=  ( matrixFromNormal		axeVecteur )
-			
-			if axeMtrx.row1	==	[0,0,-1]  then 				
-				axeMtrx =  (rotateYMatrix 180) *(rotateXMatrix 180) *  (rotateZMatrix -90) * axeMtrx
-			 else if axeMtrx.row1	==	[0,0,1] do
-				axeMtrx =  (rotateYMatrix 180)  *(rotateXMatrix 180)  * (rotateZMatrix 90) * axeMtrx
-			
-			axeMtrx		
-		),
-		fn BB				_trace  		_mtrxAxe  	=(
-			
-	-- 			local mtrxAxePrincipal	=	get.axeP_mtrx 	_spline	_idSpline
-			
-			local pt1 = _trace[1] * inverse _mtrxAxe
-			local xMin = xMax = pt1.x
-			local yMin = yMax = pt1.y
-			local zMin = zMax = pt1.z
-			
-			for i = 2 to _trace.count do (
-				local pt = _trace[i] * inverse _mtrxAxe
-				if pt.x < xMin 		do xMin 		= pt.x
-				if pt.x > xMax 	do xMax 	= pt.x
-				if pt.y < yMin 		do yMin 	= pt.y
-				if pt.y > yMax 	do YMax 	= pt.y
-				if pt.z < zMin 		do zMin 		= pt.z
-				if pt.z > zMax 	do zMax 	= pt.z
-			)
-			
-			#([xMin, yMin, zMin]*  _mtrxAxe, [xMax, yMax, zMax]*  _mtrxAxe)
-			
-		),
-		fn vec  				_this		_vec 				=(
-			
-			local mtrx_Direction = _this.axeP_mtrx.rotationpart as matrix3
-			local vec_direction = [0,0,1] * mtrx_Direction
-			
-			local vec1_dir = normalize _vec	
-			
-			local valTest =  abs  (dot  vec_direction	vec1_dir ) 
-			
-			if valTest	 > cos 45 then 
-				#parallele
-			else 
-				#perpendiculaire
-			 
-		),
-
-		fn actualiser_pignonsEtGouttereaux  _this =(
-			
-			_this.idtrace_pignons 		=#()
-			_this.idtrace_gouttereaux 	=#()
-			
-			for i =1 to _this.trace_courant.count do (
-				local j = i+1
-				if j > _this.trace_courant.count do j = 1
-				
-				local orientation = trace.vec	_this		(_this.trace_courant[j]-_this.trace_courant[i])
-				case orientation of (
-					#perpendiculaire: 	append 	_this.idtrace_pignons			i
-					#parallele: 			append 	_this.idtrace_gouttereaux	i
-				)
-				
-			)
-		),
-	
-		fn actualiser	  _this	=(
-			
-			local mtrxTmp 			= trace.mtrx  _this.trace_original 	
-			rotateZ	mtrxTmp		_this.axeP_orientation
-			_this.axeP_mtrx 			= mtrxTmp		
-			_this.axeP_BB				=	trace.BB		_this.trace_courant 		_this.axeP_mtrx
-			
-			trace.actualiser_pignonsEtGouttereaux ()
-			
-		)
-	
-)
- */
-
-
------------ Creation des batiments----------------------------------------------------------------------
+----------- Construction des batiments----------------------------------------------------------------------
 struct construire (
 	
 		------------ FACADES-------------------------

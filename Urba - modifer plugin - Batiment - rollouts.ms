@@ -73,6 +73,9 @@ parameters params_infos rollout:roll_infos			(
 	cache_geometrie			type:#boolean			default:false	ui:ckb_geometrie
 )
 parameters params_facades 	rollout:roll_facades			(
+	
+	facades_composants		type:#stringTab 		tabSize:0 			tabSizeVariable:true
+	
 )
 parameters params_toiture rollout:roll_toiture			(
 	
@@ -88,6 +91,55 @@ parameters params_toiture rollout:roll_toiture			(
 --------------- ROLLOUT  ----------------------------------------------------------------------------------------------------------------------	
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
+rollout roll_presets "Presets" width:235 height:205	rolledUp:true
+(
+	
+	fn shape_filt 		obj = superclassof obj == shape
+	
+	button 'btn_enregistrer' "Enregistrer" pos:[88,2] width:85 height:16 align:#left		
+		
+		
+	button 'btn_charger' "Charger" pos:[5,2] width:85 height:16 align:#left
+	button 'btn_coller' "Coller" pos:[88,17] width:85 height:16 align:#left
+	button 'btn_copier' "Copier" pos:[5,17] width:85 height:16 align:#left
+	
+	
+	fn actualiser =(
+		btn_coller.enabled 		= a_un_trace and urba_clipboard_batiment != ""
+		btn_copier.enabled 			= a_un_trace
+		btn_enregistrer.enabled 		= a_un_trace
+		btn_charger.enabled 			= a_un_trace
+		
+	)
+	
+	
+	
+	
+	on roll_presets open do actualiser ()
+
+	on btn_enregistrer pressed do
+		presets.enregistrer 	this
+	on btn_charger pressed do
+	(
+			presets.charger 		this
+			trace.actualiser this
+			construire.batiment this
+			actualiser_rollouts()
+		)
+	on btn_coller pressed do
+	(
+			presets.coller 	this 
+			trace.actualiser this
+			construire.batiment this
+			actualiser_rollouts()
+			
+		)
+	on btn_copier pressed do
+	(
+			presets.copier 	this 
+			actualiser()
+		)
+)
 rollout roll_global "Global" width:247 height:172
 (
 	
@@ -129,10 +181,13 @@ rollout roll_global "Global" width:247 height:172
 		spn_optimiser.enabled 			= trace_optimiser
 		spn_souder.enabled 				= trace_souder
 		spn_ortho.enabled 				= trace_ortho
+		
 	)
 	
 	on spn_hauteur changed  arg do undo "Urba | Bâtiment : Changer hauteur des étages" on (
+		
 		construire.batiment this
+		
 	)
 
 	on spn_nbres changed  arg do (
@@ -194,7 +249,7 @@ rollout roll_global "Global" width:247 height:172
 )
 rollout roll_facades "Façades" width:266 height:297	rolledUp:false
 (
-	multiListBox 'lbx_facades' "" pos:[5,15] width:165 height:9 align:#left 
+	ListBox 'lbx_facades' "" pos:[5,15] width:165 height:9 align:#left 
  
 	button 'btn_ajouterFacade' "+" pos:[141,-1] width:16 height:16 align:#left
 	
@@ -236,7 +291,10 @@ rollout roll_facades "Façades" width:266 height:297	rolledUp:false
 		btn_supprimerFacade.enabled = enabled
 		lbl_composants.enabled 				= enabled
 		
-		enabled = lbx_facades.selection.count != 0
+		
+		lbx_facades.items = for comp in facades.get_items this collect comp.nom
+		
+		enabled = lbx_facades.selection != 0
 		
 		grp_prop.enabled 			= enabled
 		spn_proba.enabled 			= enabled
@@ -263,17 +321,20 @@ rollout roll_facades "Façades" width:266 height:297	rolledUp:false
 		ddl_appliquerA.enabled 				= enabled
 		lbl_appliquerA.enabled 		= enabled
 		
-		--- les presets facades ----------
-		local listTmp =#()
-		local presetsFacades = urba.facades.presets.get ()
-		for preset in presetsFacades do
-			append listTmp preset.nom
 		
 	)
 	
 	on roll_facades open do
 		actualiser()
 	
+	on btn_ajouterFacade pressed do (
+		facades.creer this
+		actualiser()
+	)
+	on btn_supprimerFacade pressed do (
+		facades.supprimer  lbx_facades.selection	 this
+		actualiser()
+	)
 )
 
 rollout roll_toiture "Toiture" width:236 height:418
@@ -338,55 +399,6 @@ rollout roll_toiture "Toiture" width:236 height:418
 		construire.batiment this
 	on spn_pente changed val 	do
 		construire.batiment this
-)
-rollout roll_presets "Presets" width:235 height:205	rolledUp:true
-(
-	
-	fn shape_filt 		obj = superclassof obj == shape
-	
-	button 'btn_enregistrer' "Enregistrer" pos:[88,2] width:85 height:16 align:#left		
-		
-		
-	button 'btn_charger' "Charger" pos:[5,2] width:85 height:16 align:#left
-	button 'btn_coller' "Coller" pos:[88,17] width:85 height:16 align:#left
-	button 'btn_copier' "Copier" pos:[5,17] width:85 height:16 align:#left
-	
-	
-	fn actualiser =(
-		btn_coller.enabled 		= a_un_trace and urba_clipboard_batiment != ""
-		btn_copier.enabled 			= a_un_trace
-		btn_enregistrer.enabled 		= a_un_trace
-		btn_charger.enabled 			= a_un_trace
-		
-	)
-	
-	
-	
-	
-	on roll_presets open do actualiser ()
-
-	on btn_enregistrer pressed do
-		presets.enregistrer 	this
-	on btn_charger pressed do
-	(
-			presets.charger 		this
-			trace.actualiser this
-			construire.batiment this
-			actualiser_rollouts()
-		)
-	on btn_coller pressed do
-	(
-			presets.coller 	this 
-			trace.actualiser this
-			construire.batiment this
-			actualiser_rollouts()
-			
-		)
-	on btn_copier pressed do
-	(
-			presets.copier 	this 
-			actualiser()
-		)
 )
 rollout roll_infos "Infos" width:191 height:142	rolledUp:true
 (

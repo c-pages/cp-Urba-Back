@@ -44,7 +44,6 @@ category:"CP | Urba"
 extends:Editable_poly replaceUI:true version:0
 (
 	
-	
 	------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
 	local m_debug = true
 	local m_dbgPrefix ="urba | Batiment Plg"
@@ -53,12 +52,10 @@ extends:Editable_poly replaceUI:true version:0
 		catch ()
 	)
 	
-	
 	--------------- IMPORTS  ----------------------------------------------------------------------------------------------------------------------
 	include "$userScripts\cp - GLOBAL\Enregistreur De Node.ms"
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
 	
-
 	--------------- PRé-DéCLARATIONS  ----------------------------------------------------------------------------------------------------------------------
 	----  rollouts ------------------
 	local roll_global, roll_niveaux,  roll_presets,   roll_toiture, roll_infos , roll_facades 
@@ -66,16 +63,14 @@ extends:Editable_poly replaceUI:true version:0
 	----  structures ------------------
 	local geo,  trace,  construire
 	
-	
-	
-	
 	--------------- MEMBRES  ----------------------------------------------------------------------------------------------------------------------
 	---- le model dessiné d'un batiment vide ------------------
 	local traceLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
 
 	local params_aEnregistrer = #(	#niveaux_hauteur, #niveaux_hauteur, #niveaux_nbre, 
 												#toit_pente, #toit_type, #toit_hauteur ,
-												#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho )
+												#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho ,
+												#facades_composants )
 	
 	---- constantes------------------
 	local ep_ssBassement 	= 	100
@@ -249,6 +244,29 @@ extends:Editable_poly replaceUI:true version:0
 	)
 	
 ) --- fin du plug ---
+
+
+for obj in objects do if superclassof obj == GeometryClass do delete obj
+bat1 = urba_batiment ()
+select bat1
+clearlistener ()
+-- bat1.trace.definir		$Shape013	bat1
+-- bat1.trace.actualiser	bat1
+/* 
+
+bat1.construire.batiment bat1
+
+
+
+ */
+
+
+
+
+
+
+
+
 
 
 
