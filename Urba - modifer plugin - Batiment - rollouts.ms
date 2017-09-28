@@ -292,9 +292,11 @@ rollout roll_facades "Façades" width:266 height:297	rolledUp:false
 		lbl_composants.enabled 				= enabled
 		
 		
-		lbx_facades.items = for comp in facades.get_items this collect comp.nom
-		
-		enabled = lbx_facades.selection != 0
+		if a_un_trace do (
+			lbx_facades.items = for comp in facades.get_items this collect comp.nom
+			
+			enabled = lbx_facades.selection != 0
+		)
 		
 		grp_prop.enabled 			= enabled
 		spn_proba.enabled 			= enabled

@@ -113,35 +113,17 @@ struct str_plan (
 )
 
 
-
-struct str_facade (
+struct str_datasMgr (
 	private
-	
 		separateur_params ="§",
 		separateur_mutation = ":",
 		separateur_items = ";",
 	public
-		nom 						="Facade",
-		
-		etages_nbre_min	= 	1,
-		etages_nbre_max	=	0,
-		
-		longueur_min		=	0,
-		longueur_max		=	0,
-		
-		murs						=	1,			---- (pignons, gouttereaux, les deux)
-		
-		repeter					=	true,
-		etirer					=	false,
-		
-		sequence				=#(),
-	
-	public
-		fn get_datas_string 	=(
+		fn get_datas_string 		_element	=(
 			local txtResult = ""
-			local propNames = getPropNames this
+			local propNames = getPropNames _element
 			for param in propNames do (
-				local prop = ( getProperty  this 	param )
+				local prop = ( getProperty  _element 	param )
 				local type = classof prop
 				case type of (
 					MAXScriptFunction:	()
@@ -161,45 +143,51 @@ struct str_facade (
 			)
 			txtResult
 			
-			/* 
-			local txt_datas =""
-			local propNames = getPropNames this
-			for propNom in propNames do (
-				local type = classof ( getProperty this propNom  )
-				case type of (
-					MAXScriptFunction:	()
-	-- 				string:						txt_datas+= propNom as string + "=" + ( getProperty this propNom ) as string + ";"
-					default:						txt_datas+= propNom as string + "=" + ( getProperty this propNom ) as string + ";"
-				)
-			)
-			format "txt_datas:%\n" txt_datas
-			txt_datas */
 		),
-		fn set_datas_string 	_datas_string =(
-			local datasTab = filterString _datas_string separateur_params
+		fn set_datas_string 		_datas_string 	_element =(
+			local datasTab = filterString _datas_string 		separateur_params
 			local i =1
-			local propNames = getPropNames this
+			local propNames = getPropNames _element
 			for datas in datasTab do (
-				local dataTab= filterString datas separateur_mutation
+				local dataTab= filterString datas 	separateur_mutation
 				local propNom = dataTab[1]
-				local type = classof ( getProperty this propNom  )
+				local type = classof ( getProperty _element propNom  )
 				case type of (
 					string:						(
 						local data  = dataTab[2]
-						setProperty this propNom data
+						setProperty _element propNom data
 						i+= 1
 					)
 					MAXScriptFunction:	()
 					default:						(
 						if dataTab[2] != undefined do  (
 							local data  = execute dataTab[2]
-							setProperty this propNom data
+							setProperty _element propNom data
 						)
 						i+= 1
 					)
 				)
 			)
 		)
+)
+	
+struct str_facade (
+
+		nom 						="Facade",
+		
+		etages_nbre_min	= 	1,
+		etages_nbre_max	=	0,
+		
+		longueur_min		=	0,
+		longueur_max		=	0,
+		
+		murs						=	1,			---- (pignons, gouttereaux, les deux)
+		
+		repeter					=	true,
+		etirer					=	false,
+		
+		sequence				=#()
+
 )
 
 struct str_facade_composant (
@@ -215,37 +203,36 @@ struct str_facade_composant (
 --------- STRUCTURES Grandes fonctions -----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 ---- manager des facades -----
-struct 	facades (
-	
-	
-	fn get_items 			_this	=(
-		local result =#()
-		for comp in _this.facades_composants 	do (
-			local nvlFacade =   str_facade ()
-			nvlFacade.set_datas_string		comp
-			append result nvlFacade
-			format "nvlFacade : %\n" nvlFacade 
+struct 	str_facades (
+	private
+		datasMgr = str_datasMgr (),
+	public
+		fn get_items 			_this	=(
+			local result =#()
+			for comp in _this.facades_composants 	do (
+				local nvlFacade =   str_facade ()
+				datasMgr.set_datas_string		comp	nvlFacade
+				append result nvlFacade
+			)
+			result
+		),
+		fn creer 					_this	=(
+			local nvlFacade = str_facade ()
+			append _this.facades_composants (datasMgr.get_datas_string  nvlFacade)
+			nvlFacade
+		),
+		fn supprimer		_id 	_this	=(
+			deleteItem _this.facades_composants 	_id
+		),
+		fn actualiser		_id	_this =(
+			_this.facades_composants[_id] = (datasMgr.get_datas_string  nvlFacade)
 		)
-		result
-	),
-	fn creer 					_this	=(
-		local nvlFacade = str_facade ()
-		
-		format "nvlFacade : %\n" nvlFacade 
-		append _this.facades_composants (nvlFacade.get_datas_string ())
-		format "nvlFacade.get_datas_string (): %\n" (nvlFacade.get_datas_string ()) 
-		nvlFacade
-	),
-	fn supprimer		_id 	_this	=(
-		deleteItem _this.facades_composants 	_id
-	)
-	
 )
 
 
 
 ----------- Creation des geometries poly ----------------
-struct geo (
+struct str_geo (
 	
 	fn vider 																			=(
 		if (polyop.getNumFaces delegate) >0 do (
@@ -258,6 +245,7 @@ struct geo (
 		
 		local  ndCible = if nd != unsupplied then nd else delegate
 		local verts = polyop.getNumEdges ndCible
+		
 		-- les vertex --
 		for pt in  _listeDesPoints do (
 			polyop.createVert ndCible	pt
@@ -269,9 +257,7 @@ struct geo (
 			if j > _listeDesPoints.count do j = 1
 			polyop.createEdge ndCible (verts+i) (verts+j)
 		)
--- 				polyop.createEdge delegate (verts+i) (verts+i+1)
--- 			polyop.createEdge delegate (verts+_listeDesPoints.count) (verts+1)
--- 		newscript ()
+		
 		-- la face --
 		local listeVertexPrFace = #()
 		for i = 1 to _listeDesPoints.count  do 
@@ -315,7 +301,7 @@ struct geo (
 				pt_2 = listePts[1]
 			else pt_2 =  listePts[i_pt + 1 ]
 			
-			local nvlFace = geo.creerFaceVerticale 		pt_1		pt_2 	altitude 	hauteur
+			local nvlFace = creerFaceVerticale 		pt_1		pt_2 	altitude 	hauteur
 			if nvlFace != undefined do
 				appendIfUnique facesDuContour	nvlFace
 		)
@@ -326,15 +312,17 @@ struct geo (
 ) --- fin struct geo
 
 ----------- Tracé du batiment et autres manipulations----------------
-struct trace (
-	
+struct str_trace (
+		geo_ptr,
 		-----------------  Opérations diverses ----------------------
 		fn surface 							_trace 	=(
 			--- on crée un poly avec le tracee  ------
 			local 	nvNode = convertToPoly (mesh ())
 			nvNode.EditablePoly.SetSelection #Face #{1..25}
 			nvNode.EditablePoly.delete #Face
-			geo.creerFace 	_trace 	nd:nvNode
+				
+			geo_ptr.creerFace 	_trace 	nd:nvNode
+				
 			--- pour utiliser cette fonction : ------
 			local result = polyop.getFaceArea  nvNode 1
 			delete nvNode
@@ -373,7 +361,7 @@ struct trace (
 		fn est_sensPositif 				_trace 	=(
 			
 			local result 				= true
-			local id_pointHaut 	=  trace.pointLePlusHautsurY  	_trace
+			local id_pointHaut 	=  pointLePlusHautsurY  	_trace
 			
 			local	id_pt_1 		= id_pointHaut - 1 	---- le point d'avant
 			local	id_pt_ori 		= id_pointHaut 		---- le point origine
@@ -501,7 +489,7 @@ struct trace (
 		-----------------  Axe P ----------------------
 		fn mtrx_axeP			_trace  							=(
 			
-			local ptsEdgeLePlusLong 	= trace.edge_lePlusGrand	_trace
+			local ptsEdgeLePlusLong 	= edge_lePlusGrand	_trace
 			
 			local axeVecteur 		= 	normalize (ptsEdgeLePlusLong[2] - ptsEdgeLePlusLong[1])
 			local axeMtrx				=  ( matrixFromNormal		axeVecteur )
@@ -551,18 +539,6 @@ struct trace (
 			 
 		),
 	
-		fn actualiser_axeP	  _this	=(
-			
-			local mtrxTmp 			= trace.mtrx_axeP  _this.trace_original 	
-			rotateZ	mtrxTmp		_this.axeP_orientation
-			_this.axeP_mtrx 			= mtrxTmp		
-			_this.axeP_BB				=	trace.BB_axeP		_this.trace_courant 		_this.axeP_mtrx
-			
-			trace.actualiser_pignonsEtGouttereaux _this
-			
-		),
-		
-		
 		
 		fn actualiser_pignonsEtGouttereaux  _this =(
 			
@@ -573,7 +549,7 @@ struct trace (
 				local j = i+1
 				if j > _this.trace_courant.count do j = 1
 				
-				local orientation = trace.vec_axeP	_this		(_this.trace_courant[j]-_this.trace_courant[i])
+				local orientation = vec_axeP	_this		(_this.trace_courant[j]-_this.trace_courant[i])
 				case orientation of (
 					#perpendiculaire: 	append 	_this.idtrace_pignons			i
 					#parallele: 			append 	_this.idtrace_gouttereaux	i
@@ -581,6 +557,18 @@ struct trace (
 				
 			)
 		),
+		
+		fn actualiser_axeP	  _this	=(
+			
+			local mtrxTmp 			= mtrx_axeP  _this.trace_original 	
+			rotateZ	mtrxTmp		_this.axeP_orientation
+			_this.axeP_mtrx 			= mtrxTmp		
+			_this.axeP_BB				=	BB_axeP		_this.trace_courant 		_this.axeP_mtrx
+			
+			actualiser_pignonsEtGouttereaux _this
+			
+		),
+		
 		
 		------------tracé du batiment ---------------
 		fn fromSpline 		_shapeNvtrace 	= (
@@ -611,7 +599,7 @@ struct trace (
 				)
 				
 				--- on fait tourner les spline dans le meme sens ----
-				if not trace.est_sensPositif 	trace_absolu 	 do
+				if not est_sensPositif 	trace_absolu 	 do
 					trace_absolu = reverse		trace_absolu
 			)
 			
@@ -620,9 +608,33 @@ struct trace (
 			
 			trace_absolu
 		),
+	
+		
+		fn actualiser 	_this 	=(
+			
+			_this.trace_courant = _this.trace_original as array
+			actualiser_axeP 	_this
+			
+			---- orthonormer -----------
+			if _this.trace_ortho do
+				orthonormer		_this
+			
+			---- souder -----------
+			if _this.trace_souder do
+				souder		_this
+			
+			---- optimiser -----------
+			if _this.trace_optimiser do
+				optimiser		_this
+			
+			----- calcul de la surface du trace_courant ------
+			_this.surface = surface 		_this.trace_courant
+			
+			actualiser_axeP 	_this
+		),
 		fn definir	 	_shapeNvtrace  		_thisNode		=(
 			
-			local trace_absolu					= trace.fromSpline 	_shapeNvtrace
+			local trace_absolu					= fromSpline 	_shapeNvtrace
 			if trace_absolu.count > 0 do (
 			
 				_thisNode.trace_original 		=#()
@@ -649,45 +661,21 @@ struct trace (
 				
 				
 			)
-			 trace.actualiser  _thisNode
-		),
-	
-		
-		fn actualiser 	_this 	=(
-			
-			_this.trace_courant = _this.trace_original as array
-			trace.actualiser_axeP 	_this
-			
-			---- orthonormer -----------
-			if _this.trace_ortho do
-				trace.orthonormer		_this
-			
-			---- souder -----------
-			if _this.trace_souder do
-				trace.souder		_this
-			
-			---- optimiser -----------
-			if _this.trace_optimiser do
-				trace.optimiser		_this
-			
-			----- calcul de la surface du trace_courant ------
-			_this.surface = trace.surface 		_this.trace_courant
-			
-			trace.actualiser_axeP 	_this
+			actualiser  _thisNode
 		)
 		
 ) -- fin struct TRACE ---------
 
 ----------- Construction des batiments----------------------------------------------------------------------
-struct construire (
-	
+struct str_construire (
+	geo_ptr,
 		------------ FACADES-------------------------
 		fn ssBassement  	_this		&z	=(
 			
-			geo.creerFacesContour	 	_this.trace_courant		z 	ep_ssBassement
+			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_ssBassement
 			z += ep_ssBassement
 			
-			geo.creerFacesContour	 	_this.trace_courant		z 	ep_dalle
+			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_dalle
 			z += ep_dalle
 			
 			
@@ -699,7 +687,7 @@ struct construire (
 	-- 			creer_etage	_nodeBat	z 	_presetBat.niveaux_hauteur	styleFacade
 	-- 			z += _presetBat.niveaux_hauteur
 			
-			geo.creerFacesContour	 _this.trace_courant		z 	_this.niveaux_hauteur			
+			geo_ptr.creerFacesContour	 _this.trace_courant		z 	_this.niveaux_hauteur			
 			z += _this.niveaux_hauteur	
 			
 		),
@@ -715,12 +703,12 @@ struct construire (
 				--- creation de l'etage modele ---------------------
 				--- plancher ---
 				if ep_dalle  != 0 do (
-					local nvlsFaces = geo.creerFacesContour	_this.trace_courant	z 	ep_dalle
+					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	ep_dalle
 					facesDunEtage  += nvlsFaces
 					z += ep_dalle
 				) 
 				
-				local nvlsFaces = geo.creerFacesContour	_this.trace_courant	z 	niveaux_hauteur
+				local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	niveaux_hauteur
 				facesDunEtage  += nvlsFaces		
 				z += niveaux_hauteur
 				
@@ -792,7 +780,7 @@ struct construire (
 						)
 						
 						--- creation de la face du dessus ----
-						append nvlsFaces ( geo.creerFace  	pointsPente )
+						append nvlsFaces ( geo_ptr.creerFace  	pointsPente )
 						
 						---- creation des raccord mur ----------
 						for i = 1 to pointsMurs.count  do (
@@ -806,7 +794,7 @@ struct construire (
 							local ptPente4	= pointsPente[i]
 							
 							local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
-							append nvlsFaces ( geo.creerFace  	pointsRaccord )
+							append nvlsFaces ( geo_ptr.creerFace  	pointsRaccord )
 						)
 					
 				)
@@ -920,13 +908,13 @@ struct construire (
 							local ptPente4	= pointsPente[ i ]
 							
 							local pointsRaccord = #(ptMur1, ptMur2, ptPente3, ptPente4)
-							append nvlsFaces ( geo.creerFace  	pointsRaccord )
+							append nvlsFaces ( geo_ptr.creerFace  	pointsRaccord )
 						) 
 						
 						
 						--- les pentes -----
-						append nvlsFaces ( geo.creerFace  		pointsPente1 )
-						append nvlsFaces ( geo.creerFace  		pointsPente2 )
+						append nvlsFaces ( geo_ptr.creerFace  		pointsPente1 )
+						append nvlsFaces ( geo_ptr.creerFace  		pointsPente2 )
 						
 						
 				)
@@ -948,7 +936,7 @@ struct construire (
 			case _this.toit_type of (
 				1: (	---- PLAT	----
 					local trace_courant = for pt in _this.trace_courant collect [pt.x,pt.y,z]
-					geo.creerFace		trace_courant
+					geo_ptr.creerFace		trace_courant
 				)
 				2: (	---- ACROTERE	----
 					
@@ -956,22 +944,22 @@ struct construire (
 					
 					--- dalle ---
 					if ep_dalle  != 0 do (
-						geo.creerFacesContour	_this.trace_courant 	z 	ep_dalle
+						geo_ptr.creerFacesContour	_this.trace_courant 	z 	ep_dalle
 						z += ep_dalle
 					) 
 					
 					--- creation de la facette globale-----
 					local trace_courant 		= for pt in _this.trace_courant collect [pt.x,pt.y,z]
-					local faceDuToit 	= geo.creerFace		trace_courant
+					local faceDuToit 	= geo_ptr.creerFace		trace_courant
 					
-					construire.acrotere	_this	faceDuToit
+					acrotere	_this	faceDuToit
 					
 				)
 				3: (	---- 1 PAN	----
-					construire.toitPentes			_this		&z  1
+					toitPentes			_this		&z  1
 				)
 				4: (	---- 2 PANS	----
-					construire.toitPentes			_this		&z  2
+					toitPentes			_this		&z  2
 				)
 			)
 		),		
@@ -979,14 +967,14 @@ struct construire (
 		fn batiment 	_this =(
 			
 			---- creation de la surface de base -------
-			geo.vider ()
+			geo_ptr.vider ()
 			
 			local zCourant = -( ep_ssBassement + ep_dalle )
 			
-			construire.ssBassement 	_this	&zCourant
-			construire.RdC 				_this	&zCourant
-			construire.etages			_this	&zCourant
-			construire.toit				_this	&zCourant
+			ssBassement 	_this	&zCourant
+			RdC 				_this	&zCourant
+			etages			_this	&zCourant
+			toit				_this	&zCourant
 			
 			redrawViews () 
 		)

@@ -28,7 +28,7 @@
 ########################################################################################################################*/
 
 
-unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
+-- unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
 
 (
 ------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
@@ -61,16 +61,16 @@ extends:Editable_poly replaceUI:true version:0
 	local roll_global, roll_niveaux,  roll_presets,   roll_toiture, roll_infos , roll_facades 
 	
 	----  structures ------------------
-	local geo,  trace,  construire
+-- 	local geo,  trace,  construire
 	
 	--------------- MEMBRES  ----------------------------------------------------------------------------------------------------------------------
 	---- le model dessiné d'un batiment vide ------------------
 	local traceLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
 
 	local params_aEnregistrer = #(	#niveaux_hauteur, #niveaux_hauteur, #niveaux_nbre, 
-												#toit_pente, #toit_type, #toit_hauteur ,
-												#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho ,
-												#facades_composants )
+													#toit_pente, #toit_type, #toit_hauteur ,
+													#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho ,
+													#facades_composants )
 	
 	---- constantes------------------
 	local ep_ssBassement 	= 	100
@@ -84,10 +84,16 @@ extends:Editable_poly replaceUI:true version:0
 	--------------- import des STRUCTURES  ----------------------------------------------------------------------------------------------------------------------
 	
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
-	local presets = str_presets_batiment 	fichier_dossier:			( getDir #userScripts	 + "\\cp-Urba\\lib\\batiments\\"		)	\
-															fichier_categorie:		"Urba - Bâtiment"	\
-															fichier_extension:		"btm"	\
-															params_aEnregistrer:	params_aEnregistrer
+	
+	local geo 			= 	str_geo 			()
+	local facades		=	str_facades		()
+	local trace		=	str_trace 			geo_ptr:geo
+	local construire	=	str_construire	geo_ptr:geo
+	
+	local presets 	= str_presets_batiment 	fichier_dossier:			( getDir #userScripts	 + "\\cp-Urba\\lib\\batiments\\"		)	\
+																fichier_categorie:		"Urba - Bâtiment"	\
+																fichier_extension:		"btm"	\
+																params_aEnregistrer:	params_aEnregistrer
 
 	local nodeScanner = str_enregistreurDeNode ()
 	
@@ -245,16 +251,15 @@ extends:Editable_poly replaceUI:true version:0
 	
 ) --- fin du plug ---
 
+/* 
+
 
 for obj in objects do if superclassof obj == GeometryClass do delete obj
 bat1 = urba_batiment ()
 select bat1
 clearlistener ()
--- bat1.trace.definir		$Shape013	bat1
--- bat1.trace.actualiser	bat1
-/* 
 
-bat1.construire.batiment bat1
+
 
 
 

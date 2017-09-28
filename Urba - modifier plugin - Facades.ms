@@ -41,7 +41,7 @@ include "$userScripts\cp - GLOBAL\DragDialog.ms"
 ------------------------------------------------------------------------------
 ----------	Fenetre								 -------------------------
 ------------------------------------------------------------------------------
-rollout roll_urba_editeurFacades "urba_editeurFacades" width:200 height:200
+rollout roll_urba_editeurFacades "urba_editeurFacades"  width:178 height:315
 (
 	------------  Membres	----------------------------------------------------------------------------------
 	---- Pointeurs ----
@@ -56,32 +56,37 @@ rollout roll_urba_editeurFacades "urba_editeurFacades" width:200 height:200
 	------------  UI	----------------------------------------------------------------------------------		
 	---- le bouton pour fermer la fenetre ----
 	ImgTag 'ui_btnFermer' "X" pos:[roll_urba_editeurFacades.width - 20,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
-	
+
 	ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
 -- 	ImgTag 'ui_log' "" pos:[8,43] width:66 height:18 align:#left
 
-	GroupBox 'grp_prop' "Propriétés" pos:[5,145] width:165 height:146 align:#left
-	label 'lbl_repetable' "Répétable" pos:[26,233] width:55 height:15 align:#left
-	checkbox 'chk_repetable' "" pos:[11,234] width:14 height:14 align:#left
-	label 'lbl_etirable' "Etirable" pos:[103,233] width:42 height:15 align:#left
-	checkbox 'chk_etirable' "" pos:[88,234] width:14 height:14 align:#left
-	spinner 'spn_proba' "" pos:[87,218] width:80 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
-	label 'lbl_proba' "Probabilité:" pos:[11,218] width:67 height:15 align:#left
-	
-	label 'lbl_nbre' "Nbre.:" pos:[5,1] width:38 height:15 align:#left
-	spinner 'spn_nbres' "" pos:[87,2] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	
-	spinner 'spn_largeur' "" pos:[87,158] width:80 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl_largeur' "Largeur (min):" pos:[11,158] width:73 height:15 align:#left
-	spinner 'spn_largeurMax' "" pos:[87,173] width:80 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	spinner 'spn_etages' "" pos:[87,188] width:80 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	label 'lbl_etages' "Etages (min):" pos:[11,188] width:71 height:15 align:#left
-	spinner 'spn_etagesMax' "" pos:[87,203] width:80 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	GroupBox 'grp_prop' "Propriétés" pos:[5,158] width:165 height:150 align:#left
+	checkbox 'chk_repetable' "Répétable" pos:[11,251] width:78 height:14 align:#left
+	checkbox 'chk_etirable' "Etirable" pos:[89,251] width:60 height:14 align:#left
+	spinner 'spn_proba' "" pos:[87,235] width:80 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
+	label 'lbl_proba' "Probabilité:" pos:[11,235] width:64 height:15 align:#left
 	
 	
+	spinner 'spn_largeur' "" pos:[87,175] width:80 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl_largeur' "Largeur (min):" pos:[11,175] width:73 height:15 align:#left
+	spinner 'spn_largeurMax' "" pos:[87,190] width:80 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	spinner 'spn_etages' "" pos:[87,205] width:80 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	label 'lbl_etages' "Etages (min):" pos:[11,205] width:71 height:15 align:#left
+	spinner 'spn_etagesMax' "" pos:[87,220] width:80 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
 	
-	dropdownList 'ddl_appliquerA' "" pos:[11,264] width:153 height:21 selection:3 align:#left  --	items:murs_types
-		label 'lbl_appliquerA' "Appliquer à:" pos:[11,249] width:111 height:15 align:#left
+	
+	checkbox 'chk_largeur' "max.:" pos:[11,190] width:51 height:14 align:#left
+	checkbox 'chk_etages' "max.:" pos:[11,220] width:52 height:14 align:#left
+	
+	dropdownList 'ddl_appliquerA' "" pos:[11,281] width:153 height:21 selection:3 align:#left  --	items:murs_types
+  --	items:murs_types
+  --	items:murs_types
+  --	items:murs_types
+  --	items:murs_types
+	label 'lbl_appliquerA' "Appliquer à:" pos:[11,266] width:72 height:15 align:#left
+	listbox 'lbx1' "Séquence" pos:[5,23] width:165 height:8 align:#left
+	
+	
 	
 	
 	------------  Fonctions	----------------------------------------------------------------------------------

@@ -46,7 +46,12 @@ struct str_presets_batiment (
 		fn ecrire	= (
 			debug "ecrire"
 		),
-		fn lire_datas 	_fichier = (
+		
+		
+		
+		
+		
+		fn lire_datas 			_fichier = (
 			debug "lire_datas"
 			local stream = openFile _fichier mode:"r"
 			local datas = readLine  stream
