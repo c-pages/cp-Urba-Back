@@ -204,9 +204,43 @@ struct str_facade_composant (
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 ---- manager des facades -----
 struct 	str_facades (
+	
+	
+	------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
+	m_debug = true,
+	m_dbgPrefix ="urba | str_facades",
+	fn debug 	_txt  var:	 param:    =(
+		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		catch ()
+	),
+	
 	private
+		dialog,
+		dialog_pos = [500,500],
+		dialog_estOuvert = false,
+		
 		datasMgr = str_datasMgr (),
+		
+		params_aEnregistrer = #(	#nom, #etages_nbre_min, #etages_nbre_max, #longueur_min, #longueur_max, #murs, #repeter, #etirer, #sequence	),
+	
+		presets 	= str_presets_batiment 	fichier_dossier:			( getDir #userScripts	 + "\\cp-Urba\\lib\\façades\\"		)	\
+														fichier_categorie:		"Urba - Façades"	\
+														fichier_extension:		"fcd"	\
+														params_aEnregistrer:	params_aEnregistrer,
+	
 	public
+		facade_courante = str_facade (),
+		id_courant = 0,
+	
+		
+		fn charger 		 =(
+			presets.charger  facade_courante
+		),
+		fn enregistrer 	 =(
+			presets.enregistrer  facade_courante
+		),
+		
+		
 		fn get_items 			_this	=(
 			local result =#()
 			for comp in _this.facades_composants 	do (
@@ -221,11 +255,46 @@ struct 	str_facades (
 			append _this.facades_composants (datasMgr.get_datas_string  nvlFacade)
 			nvlFacade
 		),
-		fn supprimer		_id 	_this	=(
+		fn supprimer	_this		_id 	=(
 			deleteItem _this.facades_composants 	_id
 		),
-		fn actualiser		_id	_this =(
-			_this.facades_composants[_id] = (datasMgr.get_datas_string  nvlFacade)
+		fn actualiser		_this =(
+			
+			
+			_this.facades_composants[id_courant] = (datasMgr.get_datas_string  facade_courante)
+			_this.actualiser_rollouts ()
+		),
+		fn fermer =(
+			--- Actiualiser position pour reouverture prochaine ----
+			if dialog_estOuvert do
+				dialog_pos = getDialogPos dialog	
+			dialog_estOuvert = false
+			---- fermer la fenêtre ----
+			try destroydialog dialog catch ()
+		),
+		fn ouvrir  	_id 	_this =(
+			
+			id_courant 			= _id
+			datasMgr.set_datas_string 		_this.facades_composants[id_courant]  	 facade_courante
+			
+			include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - rollout facade.ms"
+			dialog = roll_urba_editeurFacades
+			
+			---- creation de la fenetre ----
+			createDialog dialog 	style:				#(#style_resizing) \
+											lockHeight:			true	\
+											lockWidth:			true	\
+											pos:					dialog_pos
+			dialog_estOuvert = true
+			
+			---- initialisation de la fenetre ----
+			dialog.m_prt	 	= this
+			dialog.m_cible 	= _this
+			dialog.initialiser ()
+		),
+		fn set_nom 	_nom 	_this =(
+			facade_courante.nom = _nom
+			actualiser _this
 		)
 )
 

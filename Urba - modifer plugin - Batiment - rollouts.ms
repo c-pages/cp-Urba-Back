@@ -247,96 +247,42 @@ rollout roll_global "Global" width:247 height:172
 	
 	
 )
-rollout roll_facades "Façades" width:266 height:297	rolledUp:false
+rollout roll_facades "Façades" width:510 height:813
 (
-	ListBox 'lbx_facades' "" pos:[5,15] width:165 height:9 align:#left 
+	listbox 'lbx_facades' "" pos:[5,15] width:165 height:9 align:#left 
+ 
  
 	button 'btn_ajouterFacade' "+" pos:[141,-1] width:16 height:16 align:#left
 	
 	button 'btn_supprimerFacade' "-" pos:[156,-1] width:16 height:16 align:#left
-	label 'lbl_composants' "Composants:" pos:[5,0] width:70 height:15 align:#left
-	
-	GroupBox 'grp_prop' "Propriétés" pos:[5,143] width:165 height:146 align:#left
-	checkbox 'chk_repetable' "Répétable" pos:[11,232] width:71 height:14 align:#left
-	checkbox 'chk_etirable' "Etirable" pos:[88,232] width:75 height:14 align:#left
-	spinner 'spn_proba' "" pos:[87,216] width:80 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
-	label 'lbl_proba' "Probabilité:" pos:[11,216] width:67 height:15 align:#left
-	
-	spinner 'spn_largeur' "" pos:[87,156] width:80 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl_largeur' "Largeur (min):" pos:[11,156] width:73 height:15 align:#left
-	spinner 'spn_largeurMax' "" pos:[87,171] width:80 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	spinner 'spn_etages' "" pos:[87,186] width:80 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	label 'lbl_etages' "Etages (min):" pos:[11,186] width:71 height:15 align:#left
-	spinner 'spn_etagesMax' "" pos:[87,201] width:80 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	
-	
-	
-	dropdownList 'ddl_appliquerA' "" pos:[11,262] width:153 height:21 selection:3 align:#left  items:murs_types
-	label 'lbl_appliquerA' "Appliquer à:" pos:[11,247] width:111 height:15 align:#left
-	
-	checkbox 'chk_largeur' "max.:" pos:[11,171] width:69 height:14 align:#left
-	checkbox 'chk_etages' "max.:" pos:[11,201] width:71 height:14 align:#left
-	
-	
-	
+
 	fn actualiser =(
 		
 		enabled = a_un_trace
-		
-		
-		
-		
 		lbx_facades.enabled 			= enabled
 		btn_ajouterFacade.enabled 	= enabled
-		btn_supprimerFacade.enabled = enabled
-		lbl_composants.enabled 				= enabled
+		btn_supprimerFacade.enabled = enabled		
 		
-		
-		if a_un_trace do (
+		if a_un_trace do 
 			lbx_facades.items = for comp in facades.get_items this collect comp.nom
-			
-			enabled = lbx_facades.selection != 0
-		)
-		
-		grp_prop.enabled 			= enabled
-		spn_proba.enabled 			= enabled
-		lbl_proba.enabled 			= enabled
-		chk_repetable.enabled 			= enabled
-		chk_etirable.enabled 			= enabled
-		lbl_largeur.enabled 			= enabled
-		spn_etages.enabled 			= enabled
-		spn_etagesMax.enabled 			= enabled
-		chk_etages.enabled 			= enabled
-		spn_largeurMax.enabled 			= enabled
-		lbl_etages.enabled 			= enabled
-		chk_largeur.enabled 			= enabled
-		grp_prop.enabled 				= enabled
-		spn_largeur.enabled 				= enabled
-		lbl_largeur.enabled 				= enabled
-		spn_largeurMax.enabled 		= enabled
-		
-		chk_repetable.enabled 			= enabled
-		chk_etirable.enabled 			= enabled
-		spn_proba.enabled 				= enabled
-		
-		
-		ddl_appliquerA.enabled 				= enabled
-		lbl_appliquerA.enabled 		= enabled
 		
 		
 	)
+	
 	
 	on roll_facades open do
 		actualiser()
 	
-	on btn_ajouterFacade pressed do (
-		facades.creer this
-		actualiser()
-	)
-	on btn_supprimerFacade pressed do (
-		facades.supprimer  lbx_facades.selection	 this
-		actualiser()
-	)
+	on lbx_facades doubleClicked  arg do facades.ouvrir 	lbx_facades.selection 	this
+	on btn_ajouterFacade pressed do	(
+			facades.creer this
+			actualiser()
+		)
+	on btn_supprimerFacade pressed do	(
+			facades.supprimer  lbx_facades.selection	 this
+			actualiser()
+		)
+
 )
 
 rollout roll_toiture "Toiture" width:236 height:418
@@ -358,7 +304,7 @@ rollout roll_toiture "Toiture" width:236 height:418
 	button 'btn_supprimerFacade' "-" pos:[156,51] width:16 height:16 align:#left
 -- 	label 'lbl_facades' "Facades:" pos:[5,2] width:45 height:15 align:#left
 	
-	GroupBox 'grp_prop' "Propriétés" pos:[5,195] width:165 height:41 align:#left
+-- 	GroupBox 'grp_prop' "Propriétés" pos:[5,195] width:165 height:41 align:#left
 	label 'lbl_composants' "Composants:" pos:[5,52] width:64 height:15 align:#left
 	
 	
@@ -377,7 +323,7 @@ rollout roll_toiture "Toiture" width:236 height:418
 		
 		btn_ajouterFacade.enabled 	= a_un_trace
 		btn_supprimerFacade.enabled 	= a_un_trace
-		grp_prop.enabled 	= a_un_trace
+-- 		grp_prop.enabled 	= a_un_trace
 		lbx_facades.enabled 	= a_un_trace
 		
 		

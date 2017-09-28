@@ -33,6 +33,9 @@
 (
 ------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
 include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
+	
+include "$userScripts\cp - GLOBAL\UI.ms"
+include "$userScripts\cp - GLOBAL\DragDialog.ms"
 )	
 ---------------presse papier ---------
 global urba_clipboard_batiment = ""
