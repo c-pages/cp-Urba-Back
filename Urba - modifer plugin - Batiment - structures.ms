@@ -155,6 +155,7 @@ struct str_datasMgr (
 				case type of (
 					string:						(
 						local data  = dataTab[2]
+						if data   == undefined do data =""
 						setProperty _element propNom data
 						i+= 1
 					)
@@ -293,7 +294,9 @@ struct 	str_facades (
 			dialog.initialiser ()
 		),
 		fn set_nom 	_nom 	_this =(
+			
 			facade_courante.nom = _nom
+			debug "facade_courante" var:facade_courante
 			actualiser _this
 		)
 )

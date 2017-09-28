@@ -263,9 +263,11 @@ rollout roll_facades "Façades" width:510 height:813
 		btn_ajouterFacade.enabled 	= enabled
 		btn_supprimerFacade.enabled = enabled		
 		
-		if a_un_trace do 
-			lbx_facades.items = for comp in facades.get_items this collect comp.nom
-		
+		if a_un_trace do (
+			local listTmp = for comp in facades.get_items this collect comp.nom
+				debug "listTmp 				lbx_facades" var:listTmp
+			lbx_facades.items = listTmp
+		)
 		
 	)
 	

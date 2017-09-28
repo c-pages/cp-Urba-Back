@@ -88,7 +88,9 @@ struct str_presets_batiment (
 				local type = classof prop
 				
 				case type of (
-					string:						( setproperty 	_this 	nomProp	param[2]
+					string:						( 
+						if param[2] = undefined do param[2]  = ""
+						setproperty 	_this 	nomProp	param[2]
 					)
 					ArrayParameter: (
 						local paramTab = filterString 	param[2]		separateur_items

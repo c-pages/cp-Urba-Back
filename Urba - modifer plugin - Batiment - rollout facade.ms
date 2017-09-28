@@ -52,17 +52,17 @@
 		
 		
 		
-		listbox 'lbx3' "" pos:[7,173] width:232 height:9 align:#left
-		button 'btn5' "+" pos:[209,157] width:16 height:16 align:#left
-		button 'btn6' "-" pos:[224,157] width:16 height:16 align:#left
+		listbox 'lbx_composants' "" pos:[7,173] width:232 height:9 align:#left
+		button 'btn_ajouter_composant' "+" pos:[209,157] width:16 height:16 align:#left
+		button 'btn_supprimer_composant' "-" pos:[224,157] width:16 height:16 align:#left
 		GroupBox 'grp3' "Propriétés" pos:[7,296] width:232 height:186 align:#left
-		spinner 'spn11' "" pos:[85,314] width:67 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+		spinner 'spn_largeur_composant' "" pos:[85,314] width:67 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 		label 'lbl11' "Largeur:" pos:[17,311] width:53 height:16 align:#left
-		spinner 'spn12' "" pos:[167,314] width:67 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		checkbox 'chk7' "" pos:[152,315] width:14 height:14 align:#left
-		listbox 'lbx4' "" pos:[16,351] width:214 height:9 align:#left
-		button 'btn7' "+" pos:[200,335] width:16 height:16 align:#left
-		button 'btn8' "-" pos:[215,335] width:16 height:16 align:#left
+		spinner 'spn_largeurMax_composant' "" pos:[167,314] width:67 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+		checkbox 'chk__largeurMax_composant' "" pos:[152,315] width:14 height:14 align:#left
+		listbox 'lbx_modeles' "" pos:[16,351] width:214 height:9 align:#left
+		button 'btn_ajouter_modele' "+" pos:[200,335] width:16 height:16 align:#left
+		button 'btn_supprimer_modele' "-" pos:[215,335] width:16 height:16 align:#left
 		label 'lbl12' "Modèles:" pos:[17,332] width:53 height:16 align:#left
 		
 		label 'lbl23' "Séquence" pos:[7,156] width:67 height:15 align:#left
@@ -109,7 +109,29 @@
 		
 		---- Drag ----
 		
-		on edt_nom_facade changed 		txt 	do
+		on chk_repetable			changed state do ()
+		on chk_etirable			changed state do ()
+			
+		on spn_proba			changed val do ()
+		on spn_largeur			changed val do ()
+		on spn_largeurMax			changed val do ()
+		on spn_etages			changed val do ()
+		on spn_etagesMax			changed val do ()
+		
+-- 		on ddl_appliquerA
+		on chk_largeur	changed state do ()
+		on chk_etages	changed state do ()
+-- 		on lbx_composants
+		on btn_ajouter_composant				pressed do ()
+		on btn_supprimer_composant		pressed do ()
+		on spn_largeur_composant				changed val do ()
+		on spn_largeurMax_composant			changed val do ()
+		on chk__largeurMax_composant		changed state do ()
+-- 		on lbx_modeles
+		on btn_ajouter_modele					pressed do ()
+		on btn_supprimer_modele				pressed do ()
+		
+		on edt_nom_facade entered 		txt 	do
 			m_prt.set_nom 		txt		m_cible
 		
 		on roll_urba_editeurFacades lbuttondown _pos 	do
