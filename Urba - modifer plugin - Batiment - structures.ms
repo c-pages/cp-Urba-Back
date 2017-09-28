@@ -178,10 +178,13 @@ struct str_facade (
 		
 		etages_nbre_min	= 	1,
 		etages_nbre_max	=	0,
+		etages_use_max	=	false,
 		
 		longueur_min		=	0,
 		longueur_max		=	0,
+		longueur_use_max	=	false,
 		
+		probabilite 			= 100.,
 		murs						=	1,			---- (pignons, gouttereaux, les deux)
 		
 		repeter					=	true,
@@ -293,12 +296,72 @@ struct 	str_facades (
 			dialog.m_cible 	= _this
 			dialog.initialiser ()
 		),
+		
+		
+		/* 
+		
+		murs						=	1,			---- (pignons, gouttereaux, les deux)
+		 */
+		
 		fn set_nom 	_nom 	_this =(
-			
 			facade_courante.nom = _nom
-			debug "facade_courante" var:facade_courante
 			actualiser _this
-		)
+		),
+		
+		fn set_repetable		_state		_this =(
+			facade_courante.repeter = _state
+			actualiser _this
+		),
+		fn set_etirable			_state		_this=(
+			facade_courante.etirer = _state
+			actualiser _this
+		),
+			
+		fn set_proba				_val		_this=(
+			facade_courante.probabilite = _val
+			actualiser _this
+		),
+		fn set_largeur			_val		_this=(
+			facade_courante.longueur_min = _val
+			actualiser _this
+		),
+		fn set_largeurMax		_val		_this=(
+			facade_courante.longueur_max = _val
+			actualiser _this
+		),
+		fn set_etages			_val		_this=(
+			facade_courante.etages_nbre_min = _val
+			actualiser _this
+		),
+		fn set_etagesMax		_val		_this=(
+			facade_courante.etages_nbre_max = _val
+			actualiser _this
+		),
+		
+		fn set_largeurMaxState			state		_this =(
+			facade_courante.longueur_use_max = state
+			actualiser _this
+		),
+		fn set_etagesMaxState			state		_this=(
+			facade_courante.etages_use_max = state
+			actualiser _this
+		),
+		
+		fn ajouter_composant				state		m_cible		=(
+			),
+		fn supprimer_composant			state		m_cible	=(
+			),
+		fn set_largeur_composant			state		m_cible	=(
+			),
+		fn set_largeurMax_composant				state		m_cible	=(
+			),
+		fn set_largeurMax_composantState			state		m_cible	=(
+			),
+-- 		fn lbx_modeles
+		fn ajouter_modele				state		m_cible	=(
+			),
+		fn supprimer_modele				state		m_cible	=(
+			)
 )
 
 

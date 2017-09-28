@@ -35,6 +35,10 @@
 		checkbox 'chk_etirable' "Etirable" pos:[6,87] width:64 height:14 align:#left
 		spinner 'spn_proba' "" pos:[85,139] width:71 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
 		label 'lbl_proba' "Probabilité:" pos:[7,139] width:67 height:15 align:#left
+
+		
+		
+		
 		
 		spinner 'spn_largeur' "" pos:[85,105] width:71 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 		label 'lbl_largeur' "Largeur:" pos:[7,103] width:53 height:16 align:#left
@@ -59,7 +63,7 @@
 		spinner 'spn_largeur_composant' "" pos:[85,314] width:67 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 		label 'lbl11' "Largeur:" pos:[17,311] width:53 height:16 align:#left
 		spinner 'spn_largeurMax_composant' "" pos:[167,314] width:67 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		checkbox 'chk__largeurMax_composant' "" pos:[152,315] width:14 height:14 align:#left
+		checkbox 'chk_largeurMax_composant' "" pos:[152,315] width:14 height:14 align:#left
 		listbox 'lbx_modeles' "" pos:[16,351] width:214 height:9 align:#left
 		button 'btn_ajouter_modele' "+" pos:[200,335] width:16 height:16 align:#left
 		button 'btn_supprimer_modele' "-" pos:[215,335] width:16 height:16 align:#left
@@ -81,7 +85,21 @@
 		
 		
 		fn actualiser = (
-			edt_nom_facade.text = m_prt.facade_courante.nom
+			local fcdTmp = m_prt.facade_courante
+			edt_nom_facade.text 		= fcdTmp.nom
+			chk_repetable.checked 		= fcdTmp.repeter
+			chk_etirable.checked 			= fcdTmp.etirer
+			spn_proba.value				= fcdTmp.probabilite
+			spn_largeur.value				= fcdTmp.longueur_min
+			spn_largeurMax.value			= fcdTmp.longueur_max
+			spn_etages.value				= fcdTmp.etages_nbre_min
+			spn_etagesMax.value			= fcdTmp.etages_nbre_max
+			
+			chk_largeur.checked			= fcdTmp.longueur_use_max
+			chk_etages.checked			= fcdTmp.etages_use_max
+
+			
+			
 		)
 		
 		---- Initialisation de la fenetre  -----
@@ -109,27 +127,44 @@
 		
 		---- Drag ----
 		
-		on chk_repetable			changed state do ()
-		on chk_etirable			changed state do ()
+		on chk_repetable			changed state do 
+			m_prt.set_repetable		state		m_cible
+		on chk_etirable			changed state do 
+			m_prt.set_etirable		state		m_cible
 			
-		on spn_proba			changed val do ()
-		on spn_largeur			changed val do ()
-		on spn_largeurMax			changed val do ()
-		on spn_etages			changed val do ()
-		on spn_etagesMax			changed val do ()
+		on spn_proba			changed val do
+			m_prt.set_proba		val		m_cible
+		on spn_largeur			changed val do 
+			m_prt.set_largeur			val		m_cible
+		on spn_largeurMax			changed val do 
+			m_prt.set_largeurMax			val		m_cible
+		on spn_etages			changed val do 
+			m_prt.set_etages			val		m_cible
+		on spn_etagesMax			changed val do 
+			m_prt.set_etagesMax			val		m_cible
 		
 -- 		on ddl_appliquerA
-		on chk_largeur	changed state do ()
-		on chk_etages	changed state do ()
+		on chk_largeur	changed state do 
+			m_prt.set_largeurMaxState			state		m_cible
+		on chk_etages	changed state do 
+			m_prt.set_etagesMaxState			state		m_cible
 -- 		on lbx_composants
-		on btn_ajouter_composant				pressed do ()
-		on btn_supprimer_composant		pressed do ()
-		on spn_largeur_composant				changed val do ()
-		on spn_largeurMax_composant			changed val do ()
-		on chk__largeurMax_composant		changed state do ()
+		
+		on btn_ajouter_composant				pressed do 
+			m_prt.ajouter_composant				state		m_cible
+		on btn_supprimer_composant		pressed do 
+			m_prt.supprimer_composant			state		m_cible
+		on spn_largeur_composant				changed val do 
+			m_prt.set_largeur_composant			state		m_cible
+		on spn_largeurMax_composant			changed val do 
+			m_prt.set_largeurMax_composant				state		m_cible
+		on chk_largeurMax_composant		changed state do 
+			m_prt.set_largeurMax_composantState			state		m_cible
 -- 		on lbx_modeles
-		on btn_ajouter_modele					pressed do ()
-		on btn_supprimer_modele				pressed do ()
+		on btn_ajouter_modele					pressed do 
+			m_prt.ajouter_modele				state		m_cible
+		on btn_supprimer_modele				pressed do 
+			m_prt.supprimer_modele				state		m_cible
 		
 		on edt_nom_facade entered 		txt 	do
 			m_prt.set_nom 		txt		m_cible
@@ -140,6 +175,8 @@
 			m_drag.arreter ()
 		on roll_urba_editeurFacades mouseMove _pos 	do
 			m_drag.suivreSouris ()
+		
+		
 		on ui_btnFermer mouseover do
 			etatBtnFermer #Survol
 		on ui_btnFermer mouseout do
