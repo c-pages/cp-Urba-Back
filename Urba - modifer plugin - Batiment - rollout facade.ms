@@ -16,7 +16,7 @@
 		
 		local m_cible		-- le plus cilbé
 --- images bouton fermer ---
-		local murs_types 	= #()
+		local murs_types 	= #("Gouttereaux + Pignons", "Gouttereaux", "Pignons")
 		local icos_fermer 	= #(	openBitMap "$userScripts\cp - GLOBAL\ico\ico_fermer_R.jpg" ,		-- Repos ----
 										openBitMap "$userScripts\cp - GLOBAL\ico\ico_fermer_S.jpg" ,		-- Survol ----
 										openBitMap "$userScripts\cp - GLOBAL\ico\ico_fermer_P.jpg" 			-- Pressé ----
@@ -36,10 +36,6 @@
 		spinner 'spn_proba' "" pos:[85,139] width:71 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
 		label 'lbl_proba' "Probabilité:" pos:[7,139] width:67 height:15 align:#left
 
-		
-		
-		
-		
 		spinner 'spn_largeur' "" pos:[85,105] width:71 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 		label 'lbl_largeur' "Largeur:" pos:[7,103] width:53 height:16 align:#left
 		spinner 'spn_largeurMax' "" pos:[169,105] width:71 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
@@ -85,7 +81,9 @@
 		
 		
 		fn actualiser = (
+			
 			local fcdTmp = m_prt.facade_courante
+			
 			edt_nom_facade.text 		= fcdTmp.nom
 			chk_repetable.checked 		= fcdTmp.repeter
 			chk_etirable.checked 			= fcdTmp.etirer
@@ -97,9 +95,25 @@
 			
 			chk_largeur.checked			= fcdTmp.longueur_use_max
 			chk_etages.checked			= fcdTmp.etages_use_max
-
+			
+			ddl_appliquerA.selection 	= fcdTmp.murs
+			
+			lbx_composants.items = for compo in m_prt.get_sequence 	m_cible		collect compo.nom
+			local enabled = lbx_composants.selection != 0 
 			
 			
+			btn_supprimer_composant.enabled = enabled
+			grp3.enabled = enabled
+			spn_largeur_composant.enabled = enabled
+			spn_largeurMax_composant.enabled = enabled
+			lbl11.enabled = enabled
+			chk_largeurMax_composant.enabled = enabled
+			
+			lbx_modeles.enabled = enabled
+			btn_ajouter_modele.enabled = enabled
+			btn_supprimer_modele.enabled = enabled
+			lbl12.enabled = enabled
+-- 			get_composants
 		)
 		
 		---- Initialisation de la fenetre  -----
@@ -127,55 +141,92 @@
 		
 		---- Drag ----
 		
-		on chk_repetable			changed state do 
+		on chk_repetable			changed state do (
 			m_prt.set_repetable		state		m_cible
-		on chk_etirable			changed state do 
+			actualiser ()
+		)
+		on chk_etirable			changed state do (
 			m_prt.set_etirable		state		m_cible
+			actualiser ()
+		)
 			
-		on spn_proba			changed val do
+		on spn_proba			changed val do(
 			m_prt.set_proba		val		m_cible
-		on spn_largeur			changed val do 
+			actualiser ()
+		)
+		on spn_largeur			changed val do  (
 			m_prt.set_largeur			val		m_cible
-		on spn_largeurMax			changed val do 
+			actualiser ()
+		)
+		on spn_largeurMax			changed val do  (
 			m_prt.set_largeurMax			val		m_cible
-		on spn_etages			changed val do 
+			actualiser ()
+		)
+		on spn_etages			changed val do  (
 			m_prt.set_etages			val		m_cible
-		on spn_etagesMax			changed val do 
+			actualiser ()
+		)
+		on spn_etagesMax			changed val do  (
 			m_prt.set_etagesMax			val		m_cible
+			actualiser ()
+		)
 		
--- 		on ddl_appliquerA
-		on chk_largeur	changed state do 
+		on ddl_appliquerA selected  arg do  (
+			m_prt.set_murs			arg		m_cible
+			actualiser ()
+		)
+			
+		on chk_largeur	changed state do (
 			m_prt.set_largeurMaxState			state		m_cible
-		on chk_etages	changed state do 
+			actualiser ()
+		)
+		on chk_etages	changed state do (
 			m_prt.set_etagesMaxState			state		m_cible
+			actualiser ()
+		)
 -- 		on lbx_composants
 		
-		on btn_ajouter_composant				pressed do 
-			m_prt.ajouter_composant				state		m_cible
-		on btn_supprimer_composant		pressed do 
-			m_prt.supprimer_composant			state		m_cible
-		on spn_largeur_composant				changed val do 
+		on btn_ajouter_composant				pressed do (
+			m_prt.ajouter_composant				m_cible
+			actualiser ()
+		)
+		on btn_supprimer_composant		pressed do (
+			m_prt.supprimer_composant			lbx_composants.selection 		m_cible
+			actualiser ()
+		)
+		on spn_largeur_composant				changed val do (
 			m_prt.set_largeur_composant			state		m_cible
-		on spn_largeurMax_composant			changed val do 
+			actualiser ()
+		)
+		on spn_largeurMax_composant			changed val do (
 			m_prt.set_largeurMax_composant				state		m_cible
-		on chk_largeurMax_composant		changed state do 
+			actualiser ()
+		)
+		on chk_largeurMax_composant		changed state do (
 			m_prt.set_largeurMax_composantState			state		m_cible
+			actualiser ()
+		)
 -- 		on lbx_modeles
-		on btn_ajouter_modele					pressed do 
+		on btn_ajouter_modele					pressed do (
 			m_prt.ajouter_modele				state		m_cible
-		on btn_supprimer_modele				pressed do 
+			actualiser ()
+		)
+		on btn_supprimer_modele				pressed do (
 			m_prt.supprimer_modele				state		m_cible
+			actualiser ()
+		)
 		
-		on edt_nom_facade entered 		txt 	do
+		on edt_nom_facade entered 		txt 	do 
 			m_prt.set_nom 		txt		m_cible
 		
-		on roll_urba_editeurFacades lbuttondown _pos 	do
+		on roll_urba_editeurFacades lbuttondown _pos 	do 
 			m_drag.demarrer ()
-		on roll_urba_editeurFacades lbuttonup _pos 	do
+		on roll_urba_editeurFacades lbuttonup _pos 	do 
 			m_drag.arreter ()
-		on roll_urba_editeurFacades mouseMove _pos 	do
+		on roll_urba_editeurFacades mouseMove _pos 	do 
 			m_drag.suivreSouris ()
 		
+	
 		
 		on ui_btnFermer mouseover do
 			etatBtnFermer #Survol
@@ -191,8 +242,10 @@
 		on btn_enregistrer pressed do
 			m_prt.enregistrer  ()
 		
-		on btn_charger pressed do
-			m_prt.charger ()
+		on btn_charger pressed do (
+			m_prt.charger 	m_cible
+			actualiser ()
+		)
 		
 		
 		

@@ -89,7 +89,7 @@ struct str_presets_batiment (
 				
 				case type of (
 					string:						( 
-						if param[2] = undefined do param[2]  = ""
+						if param[2] == undefined do param[2]  = ""
 						setproperty 	_this 	nomProp	param[2]
 					)
 					ArrayParameter: (

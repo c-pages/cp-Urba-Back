@@ -74,6 +74,7 @@ parameters params_infos rollout:roll_infos			(
 )
 parameters params_facades 	rollout:roll_facades			(
 	
+	facades_items				type:#stringTab 		tabSize:0 			tabSizeVariable:true
 	facades_composants		type:#stringTab 		tabSize:0 			tabSizeVariable:true
 	
 )
@@ -81,7 +82,7 @@ parameters params_toiture rollout:roll_toiture			(
 	
 -- 	toit_nbrePentes	type: #radiobtnIndex 	default:2		ui:rdo_pentes
 	toit_pente			type: #float 				default:20		ui:spn_pente
-	toit_type			type: #integer 			default:3		ui:ddl_toiture
+	toit_type			type: #integer 			default:1		ui:ddl_toiture
 	toit_hauteur		type: #float 				default:20.		ui:spn_toit_hauteur
 	
 )
@@ -265,7 +266,6 @@ rollout roll_facades "Façades" width:510 height:813
 		
 		if a_un_trace do (
 			local listTmp = for comp in facades.get_items this collect comp.nom
-				debug "listTmp 				lbx_facades" var:listTmp
 			lbx_facades.items = listTmp
 		)
 		
@@ -274,7 +274,10 @@ rollout roll_facades "Façades" width:510 height:813
 	
 	on roll_facades open do
 		actualiser()
-	
+		on roll_facades close	do (
+			format "FERMER FENETRE\n"
+			facades.fermer ()
+		)
 	on lbx_facades doubleClicked  arg do facades.ouvrir 	lbx_facades.selection 	this
 	on btn_ajouterFacade pressed do	(
 			facades.creer this

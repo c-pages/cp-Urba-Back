@@ -31,14 +31,60 @@
 -- unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
 
 (
------------- DEBUG	-------------------------------------------------------------------------------------------------------------------------
-include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
-	
-include "$userScripts\cp - GLOBAL\UI.ms"
-include "$userScripts\cp - GLOBAL\DragDialog.ms"
+	------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
+	include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
+	include "$userScripts\cp - GLOBAL\UI.ms"
+	include "$userScripts\cp - GLOBAL\DragDialog.ms"
 )	
+
+struct str_facade_composant (
+		
+		id							= "",
+		nom 						=	"Composant de façade",
+		longueur				=	0,
+		longueur_max		=	0,
+		modeles_ids			=	#(),
+		modeles_probas		=	#(),
+		etirable					=	false,
+	
+	
+		on create do (
+			local result ="ID"
+			for i= 1 to 10 do (
+				result += ( random 0 9 ) as string
+			)
+			id = result
+		)
+		
+)
+
+struct str_facade (
+	
+		nom 						=	"Facade",
+		
+		etages_nbre_min	= 	1,
+		etages_nbre_max	=	0,
+		etages_use_max	=	false,
+		
+		longueur_min		=	0,
+		longueur_max		=	0,
+		longueur_use_max	=	false,
+		
+		probabilite 			= 100.,
+		murs						=	1,			---- (les deux ,gouttereaux, pignons )
+		
+		repeter					=	true,
+		etirer					=	false,
+		
+		sequence				=	#()
+		
+)
+
 ---------------presse papier ---------
 global urba_clipboard_batiment = ""
+
+
+
 	
 plugin geometry 	urba_batiment
 name:"Batiment"
@@ -159,7 +205,7 @@ extends:Editable_poly replaceUI:true version:0
 				local pt = o.trace_courant[i] *  o.transform 
 				local pt_suivant = o.trace_courant[j] *  o.transform 
 				
-			---- les pignons et gouttereaux -----
+				---- les pignons et gouttereaux -----
 				local col = red
 				local estPignon = findItem o.idtrace_pignons i != 0 
 				if estPignon then (
@@ -181,19 +227,13 @@ extends:Editable_poly replaceUI:true version:0
 						
 					)
 				)
-			---- les points du trace_courant -----
+				---- les points du trace_courant -----
 				if o.affiche_trace do (
 					gw.text 		(pt + [0,0,10]) 	(i as string)  	color:yellow
 -- 					gw.Marker 	pt 	#hollowBox 	color:yellow
 				)
 			
-				
-				
 			)
-			
-			
-						
-
 			
 		)
 		gw.enlargeUpdateRect #whole  
@@ -219,6 +259,19 @@ extends:Editable_poly replaceUI:true version:0
 		roll_toiture.actualiser	()
 		roll_infos.actualiser 	()
 	)
+	
+	
+	
+	fn assigner_trace 	_nvtrace	_node	= (
+		
+		trace.definir		_nvtrace	_node
+		trace.actualiser	this
+		construire.batiment this
+		
+	)
+	
+	
+	
 	
 	--------------- CREATION  ----------------------------------------------------------------------------------------------------------------------	
 	tool create (	
@@ -259,21 +312,18 @@ extends:Editable_poly replaceUI:true version:0
 
 for obj in objects do if superclassof obj == GeometryClass do delete obj
 bat1 = urba_batiment ()
-select bat1
 clearlistener ()
+bat1.assigner_trace 	$Shape007	bat1
 
+bat1.facades.creer 	bat1
+
+
+select bat1
 
 
 
 
  */
-
-
-
-
-
-
-
 
 
 

@@ -115,25 +115,32 @@ struct str_plan (
 
 struct str_datasMgr (
 	private
-		separateur_params ="§",
-		separateur_mutation = ":",
-		separateur_items = ";",
+		separateur_params 	="§",
+		separateur_mutation 	= ":",
+		separateur_mutationTab 		= "%",
+		separateur_items 		= ";",
 	public
 		fn get_datas_string 		_element	=(
 			local txtResult = ""
 			local propNames = getPropNames _element
 			for param in propNames do (
+				
+			format "param  %\n" param
 				local prop = ( getProperty  _element 	param )
 				local type = classof prop
+			format "type  %\n" type
 				case type of (
 					MAXScriptFunction:	()
 					string:						(
 						txtResult+=  param as string  + separateur_mutation	+	prop as string  + separateur_params
 					)
-					ArrayParameter: (
+					array: (
 						local tabString = ""
-						for item in prop do
-							tabString += item + separateur_items
+						for item in prop do (
+							tabString += item as string + separateur_items
+			format "	item  %\n" item
+							
+						)
 						txtResult+=  param as string  + separateur_mutation 	+	tabString  + separateur_params
 					)
 					default:						(
@@ -141,6 +148,7 @@ struct str_datasMgr (
 					)
 				)
 			)
+			format "txtResult  %\n" txtResult
 			txtResult
 			
 		),
@@ -153,13 +161,23 @@ struct str_datasMgr (
 				local propNom = dataTab[1]
 				local type = classof ( getProperty _element propNom  )
 				case type of (
+					MAXScriptFunction:	()
 					string:						(
 						local data  = dataTab[2]
 						if data   == undefined do data =""
 						setProperty _element propNom data
 						i+= 1
 					)
-					MAXScriptFunction:	()
+					array: (
+						if dataTab.count >1 do (
+							local datas  = filterString	dataTab[2] 	separateur_items
+							local tabResult =#()
+							for data in datas do
+								append tabResult ( data)
+							setProperty _element 	propNom 	tabResult
+						)
+						i+= 1
+					)
 					default:						(
 						if dataTab[2] != undefined do  (
 							local data  = execute dataTab[2]
@@ -169,38 +187,8 @@ struct str_datasMgr (
 					)
 				)
 			)
+			_element
 		)
-)
-	
-struct str_facade (
-
-		nom 						="Facade",
-		
-		etages_nbre_min	= 	1,
-		etages_nbre_max	=	0,
-		etages_use_max	=	false,
-		
-		longueur_min		=	0,
-		longueur_max		=	0,
-		longueur_use_max	=	false,
-		
-		probabilite 			= 100.,
-		murs						=	1,			---- (pignons, gouttereaux, les deux)
-		
-		repeter					=	true,
-		etirer					=	false,
-		
-		sequence				=#()
-
-)
-
-struct str_facade_composant (
-	
-	longueur				=	0,
-	modeles_ids			=	"",
-	modeles_probas		=	"",
-	etirable					=	false
-	
 )
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -208,7 +196,6 @@ struct str_facade_composant (
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 ---- manager des facades -----
 struct 	str_facades (
-	
 	
 	------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
 	m_debug = true,
@@ -231,44 +218,76 @@ struct 	str_facades (
 														fichier_categorie:		"Urba - Façades"	\
 														fichier_extension:		"fcd"	\
 														params_aEnregistrer:	params_aEnregistrer,
-	
-	public
-		facade_courante = str_facade (),
-		id_courant = 0,
-	
 		
-		fn charger 		 =(
+	public
+		facade_courante 			= str_facade (),
+		id_courant = 0,
+		composant_courant 	,
+		
+		fn actualiser		_this =(
+			_this.facades_items[id_courant] = (datasMgr.get_datas_string  facade_courante)
+			_this.actualiser_rollouts ()
+		),
+		
+		fn charger 		 _this =(
 			presets.charger  facade_courante
+			actualiser		_this 
 		),
 		fn enregistrer 	 =(
 			presets.enregistrer  facade_courante
 		),
 		
 		
-		fn get_items 			_this	=(
+		
+		fn get_composants 				_this		=(
 			local result =#()
 			for comp in _this.facades_composants 	do (
+				local nvComposant =   str_facade_composant ()
+				datasMgr.set_datas_string		comp	nvComposant
+				append result nvComposant
+			)
+			
+			debug "get_composants" var:result
+			result
+		),
+		
+		fn get_composant			_id	_this	=(
+			local result
+			local composants = get_composants 				_this	
+			for compo in composants do
+				if compo.id == _id do result = compo
+			debug "get_composant		_id	" var:_id	
+			debug "get_composant" var:result
+			result
+		),
+		
+		fn get_sequence 				_this		=(
+			local result =#()
+			local composants = get_composants 				_this	
+			for id_comp in facade_courante.sequence 	do (				
+				append result (get_composant	id_comp	_this	)
+			)
+			result
+		),
+		fn get_items 				_this	=(
+			local result =#()
+			for comp in _this.facades_items 	do (
 				local nvlFacade =   str_facade ()
 				datasMgr.set_datas_string		comp	nvlFacade
 				append result nvlFacade
 			)
 			result
 		),
-		fn creer 					_this	=(
+		fn creer 						_this	=(
 			local nvlFacade = str_facade ()
-			append _this.facades_composants (datasMgr.get_datas_string  nvlFacade)
+			append _this.facades_items (datasMgr.get_datas_string  nvlFacade)
 			nvlFacade
 		),
-		fn supprimer	_this		_id 	=(
-			deleteItem _this.facades_composants 	_id
+		fn supprimer		_this		_id 	=(
+			deleteItem _this.facades_items 	_id
 		),
-		fn actualiser		_this =(
-			
-			
-			_this.facades_composants[id_courant] = (datasMgr.get_datas_string  facade_courante)
-			_this.actualiser_rollouts ()
-		),
-		fn fermer =(
+		fn fermer 								=(
+			debug "Fermer rollout"
 			--- Actiualiser position pour reouverture prochaine ----
 			if dialog_estOuvert do
 				dialog_pos = getDialogPos dialog	
@@ -276,18 +295,18 @@ struct 	str_facades (
 			---- fermer la fenêtre ----
 			try destroydialog dialog catch ()
 		),
-		fn ouvrir  	_id 	_this =(
+		fn ouvrir  			_id 		_this =(
 			
 			id_courant 			= _id
-			datasMgr.set_datas_string 		_this.facades_composants[id_courant]  	 facade_courante
+			facade_courante 	= datasMgr.set_datas_string 		_this.facades_items[id_courant]  	 facade_courante
 			
 			include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - rollout facade.ms"
 			dialog = roll_urba_editeurFacades
 			
 			---- creation de la fenetre ----
 			createDialog dialog 	style:				#(#style_resizing) \
-											lockHeight:			true	\
-											lockWidth:			true	\
+											lockHeight:		true						\
+											lockWidth:			true						\
 											pos:					dialog_pos
 			dialog_estOuvert = true
 			
@@ -297,11 +316,6 @@ struct 	str_facades (
 			dialog.initialiser ()
 		),
 		
-		
-		/* 
-		
-		murs						=	1,			---- (pignons, gouttereaux, les deux)
-		 */
 		
 		fn set_nom 	_nom 	_this =(
 			facade_courante.nom = _nom
@@ -316,7 +330,7 @@ struct 	str_facades (
 			facade_courante.etirer = _state
 			actualiser _this
 		),
-			
+		
 		fn set_proba				_val		_this=(
 			facade_courante.probabilite = _val
 			actualiser _this
@@ -342,28 +356,43 @@ struct 	str_facades (
 			facade_courante.longueur_use_max = state
 			actualiser _this
 		),
-		fn set_etagesMaxState			state		_this=(
+		fn set_etagesMaxState			state		_this	=(
 			facade_courante.etages_use_max = state
 			actualiser _this
 		),
 		
-		fn ajouter_composant				state		m_cible		=(
-			),
-		fn supprimer_composant			state		m_cible	=(
-			),
-		fn set_largeur_composant			state		m_cible	=(
-			),
-		fn set_largeurMax_composant				state		m_cible	=(
-			),
-		fn set_largeurMax_composantState			state		m_cible	=(
-			),
+		fn ajouter_composant			_this		=(
+			
+			composant_courant							=	str_facade_composant ()
+			append facade_courante.sequence 		 ( composant_courant.id )
+			append _this.facades_composants		 ( datasMgr.get_datas_string  composant_courant )
+			actualiser 	_this
+			composant_courant
+			
+		),
+		fn supprimer_composant			_id		_this	=(
+			deleteItem facade_courante.sequence 	_id			
+			actualiser _this
+		),
+		fn set_largeur_composant			state		_this	=(
+		),
+		fn set_largeurMax_composant				state		_this	=(
+		),
+		fn set_largeurMax_composantState			state		_this	=(
+		),
 -- 		fn lbx_modeles
-		fn ajouter_modele				state		m_cible	=(
-			),
-		fn supprimer_modele				state		m_cible	=(
-			)
+		fn ajouter_modele				state		_this	=(
+		),
+		fn supprimer_modele				state		_this	=(
+		),
+			
+			
+		fn set_murs				val		_this	=(
+			facade_courante.murs = val		
+			actualiser 	_this
+		)
+		
 )
-
 
 
 ----------- Creation des geometries poly ----------------
