@@ -72,7 +72,7 @@
 		label 'lbl_fichier' "Fichier:" pos:[25,553] width:40 height:15 align:#left
 		spinner 'spn_proba_modele' "" pos:[95,488] width:71 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
 		label 'lbl_proba_modele' "Probabilité:" pos:[25,488] width:58 height:15 align:#left
-		dropdownList 'ddl_mode' "" pos:[86,56] width:153 height:21 items:#("Répéter", "Etrirer", "Centrer") selection:3 align:#left
+		dropdownList 'ddl_mode' "" pos:[86,56] width:153 height:21 items:#("Répéter", "Etrirer", "Centrer", "Espacer") selection:3 align:#left
 		checkbox 'chk_longueur' "longueur:" pos:[6,97] width:62 height:14 align:#left
 		checkbox 'chk_etages' "Etages:" pos:[6,112] width:52 height:14 align:#left
 		label 'lbl_mode' "Mode:" pos:[8,61] width:33 height:15 align:#left

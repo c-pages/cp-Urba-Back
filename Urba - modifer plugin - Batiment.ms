@@ -48,7 +48,10 @@ struct str_facade_modele (
 		faces		=#(),		
 		SMs		=#(),
 		matIDs	=#(),
-	
+		
+		longueur 	= 0.,
+		hauteur		=	0.,
+		
 		on create do (
 			local result ="FAC_MOD_"
 			for i= 1 to 10 do (
@@ -339,7 +342,7 @@ extends:Editable_poly replaceUI:true version:0
 /* 
 
 
-for obj in objects do if superclassof obj == GeometryClass and obj != $'triple002' do delete obj
+for obj in objects do if superclassof obj == GeometryClass and obj != $'triple002'  and obj != $'Porte002'  and obj != $'Porte003' do delete obj
 bat1 = urba_batiment ()
 clearlistener ()
 bat1.assigner_trace 	$Shape009	bat1

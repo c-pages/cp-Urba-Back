@@ -122,8 +122,8 @@ struct str_enregistreurDeNode (
 	fn get_datas 		_node 		=(
 		
 		local modele_result 	= str_facade_modele ()
-		local nodeTemp 		= copy  _node
-		convertToPoly nodeTemp
+		local nodeTemp 		=   _node
+-- 		convertToPoly nodeTemp
 		
 		modele_result.verts 		= for i=1 to (polyop.getNumVerts  	nodeTemp )  	collect ( polyop.getVert  						nodeTemp 	i )		
 		modele_result.edges		= for i=1 to (polyop.getNumEdges  	nodeTemp )  	collect ( polyop.getEdgeVerts  				nodeTemp 	i )
@@ -131,7 +131,10 @@ struct str_enregistreurDeNode (
 		modele_result.SMs 		= for i=1 to (polyop.getNumFaces  	nodeTemp )  	collect ( polyop.getFaceSmoothGroup  	nodeTemp 	i )
 		modele_result.matIDs	= for i=1 to (polyop.getNumFaces  	nodeTemp )  	collect ( polyop.getFaceMatID   			nodeTemp 	i )
 		
-		delete nodeTemp
+		local  BB = nodeGetBoundingBox 	nodeTemp	(matrix3 1)
+		modele_result.longueur 	=  BB[2].x - BB[1].x
+		modele_result.hauteur 	=  BB[2].z - BB[1].z
+-- 		delete nodeTemp
 		
 		format "modele_result :%\n" modele_result
 		modele_result
@@ -657,26 +660,22 @@ struct 	str_facades (
 		fn assigner_node 	_node	_this =(			
 			debug "assigner_node"
 			
-			local nd_Tmp		=		preparer_modele		_node
-			local  BB = nodeGetBoundingBox 	nd_Tmp	(matrix3 1)
-			debug "assigner_node 	---->		BB" var:BB
-			debug "assigner_node 	---->		composant_courant" var:composant_courant.nom
-			debug "assigner_node 	---->		composant_courant.longueur" var:composant_courant.longueur
+			--- preparation du model -------
+			local nd_Tmp =  _node 
+			
+			positionnerPivot_modele 	nd_Tmp
+			nd_Tmp.rotation = quat 0 0 0 1
+			nd_Tmp.pos  = [0,0,0]
 
 			local modeleTmp = 		scan.get_datas 		nd_Tmp
-			composant_courant.longueur = BB[2].x - BB[1].x
+			if 	composant_courant.longueur < modeleTmp.longueur	do
+				composant_courant.longueur = modeleTmp.longueur
 			
-			debug "assigner_node 	---->		composant_courant.longueur ----> 1 -> " var:composant_courant.longueur
-			delete nd_Tmp
-			debug "assigner_node 	---->		composant_courant.longueur ----> 2 -> " var:composant_courant.longueur
-			
-			debug "modeleTmp" var:modeleTmp
 			modele_courant.verts	 	=	modeleTmp.verts	
 			modele_courant.edges	 	=	modeleTmp.edges
 			modele_courant.faces	 	=	modeleTmp.faces
 			modele_courant.SMs	 		=	modeleTmp.SMs 
 			modele_courant.matIDs	 	=	modeleTmp.matIDs
-			
 			
 			actualiser_composant	_this
 			actualiser_modele		_this
@@ -1219,13 +1218,13 @@ struct str_construire (
 -- 			debug "creer sequence()"
 			local normDir						=	normalize ( _pt2 - _pt1)
 			local rot 							= get_angle_vecteur		normDir
-			local longueurMinSequence 	= 0
+			local longueur_sequence 	= 0
 			local sequence 					= _this.facades.get_sequence 		_facade		_this			
-			for composant 	in sequence do	longueurMinSequence += composant.longueur
+			for composant 	in sequence do	
+				longueur_sequence += composant.longueur
 			
 			local longueurFacade = distance _pt1 _pt2
--- 			debug "longueurFacade" var:longueurFacade
--- 			debug "longueurMinSequence" var:longueurMinSequence
+			
 
 			local pt1 			= 	_pt1
 			local pt2		
@@ -1233,13 +1232,89 @@ struct str_construire (
 			local longueur_restant 			
 			local longueur_espacement 	
 			
-			if longueurMinSequence > 0 then (
-				case _facade.mode of (
+			
+			/* local sequenceComplete 		= #()
+			local longueur_sequence 	= 0 	
+			for composant in sequence do (
+				
+				local ids_modelsTmp = #()
+				for i = 1 to composant.modeles_ids.count do
+					append ids_modelsTmp 	i
+				
+				for id in ids_modelsTmp do
+					
+				
+				--- choix du model ----
+				local ids_modelsTmp = #()
+				for i = 1 to composant.modeles_ids.count do
+					append ids_modelsTmp 	i
+				
+				
+				---- si on a pas de model -----
+				if ids_modelsTmp.count == 0  then (
+					pt2		=	pt1 + normDir * composant.longueur						
+					geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this.niveaux_hauteur 
+					pt1 = pt2
+					append sequenceComplete 0
+					longueur_sequence += composant.longueur
+				) else (
+					
+					---- sinon on tire au hasare le modele parmis ceux qui restent ------------
+					local probaTotal = 0
+					for id in ids_modelsTmp do 
+						probaTotal += composant.modeles_probas[id]
+					local tirage = random  1.  probaTotal
+					local modeleTmp_idUnique
+					local trouve = false
+					local id = 1
+					local probacourant = 0
+					while not trouve and probacourant <= probaTotal	do (
+						probacourant += composant.modeles_probas[id]
+						if tirage < probacourant do (
+							trouve = true
+							modeleTmp_idUnique = composant.modeles_ids[id]
+							local modl = _this.facades.get_modele 		modeleTmp_idUnique		_this
+							longueur_sequence += modl.longueur
+							
+						)
+						id += 1
+					)
+					
+					append sequenceComplete modeleTmp_idUnique
+				) 
+			)*/
+			
+			local b_espacer = false
+			case _facade.mode of (
+					1:  	(	--- Repeter ----
+						nbrRepetitions				= floor ( longueurFacade / longueur_sequence )
+						longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
+						longueur_espacement 	= longueur_restant / 2	
+					)
+					2: 	(	--- Etirer ----
+						nbrRepetitions				= 1						
+						longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
+						longueur_espacement 	= longueur_restant / 2	
+
+					)
+					3: 	(	--- Centrer ----					
+						nbrRepetitions				= 1		
+						longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
+						longueur_espacement 	= longueur_restant / 2				
+					)
+					4:	(	--- Espacer ----	
+						nbrRepetitions				= floor ( longueurFacade / longueur_sequence )
+						longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
+						longueur_espacement 	= longueur_restant / ( nbrRepetitions +1 )
+						b_espacer = true
+					)						
+				)
+			
+-- 			if longueurMinSequence > 0 then (
+				/* case _facade.mode of (
 					1:  	(	--- Repeter ----
 						
 						nbrRepetitions				= floor ( longueurFacade / longueurMinSequence )
-						longueur_restant 			= longueurFacade - longueurMinSequence * (nbrRepetitions )		
-						longueur_espacement 	= longueur_restant / 2	
 						
 							
 					)
@@ -1249,11 +1324,62 @@ struct str_construire (
 					3: 	(	--- Centrer ----
 					
 						nbrRepetitions				= 1
-						longueur_restant 			= longueurFacade - longueurMinSequence * (nbrRepetitions )		
-						longueur_espacement 	= longueur_restant / 2	
 					
 					)
 				)
+				local sequenceComplete = #()
+				local sequenceComplete = #()
+				---- analyse de la facade ----------------
+				for i = 1 to nbrRepetitions do (
+					--- la sequence --------
+					for composant in sequence do (
+						--- choix du model ----
+						local ids_modelsTmp = #()
+						for i = 1 to composant.modeles_ids.count do
+							append ids_modelsTmp 	i
+						
+						local longueurAvantFin = distance _pt2	pt1
+						
+						---- si on a pas de model -----
+						if ids_modelsTmp.count == 0  then (
+							pt2		=	pt1 + normDir * composant.longueur						
+							geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this.niveaux_hauteur 
+							pt1 = pt2
+							append sequenceComplete 0
+						) else if longueurAvantFin <  composant.longueur then (
+							pt2		=	_pt2					
+							geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this.niveaux_hauteur 
+							pt1 = pt2
+						
+						
+						) else (
+							
+							
+							---- on tire au hasare le modele parmis ceux qui restent ------------
+							local probaTotal = 0
+							for id in ids_modelsTmp do 
+								probaTotal += composant.modeles_probas[id]
+							local tirage = random  1.  probaTotal
+							local modeleTmp_idUnique
+							local trouve = false
+							local id = 1
+							local probacourant = 0
+							while not trouve and probacourant <= probaTotal	do (
+								probacourant += composant.modeles_probas[id]
+								if tirage < probacourant do (
+									trouve = true
+									modeleTmp_idUnique = composant.modeles_ids[id]
+									
+								)
+								id += 1
+							)
+							
+							append sequenceComplete modeleTmp_idUnique
+						)
+					)
+				)
+ */				
+				
 				
 				
 				
@@ -1264,18 +1390,17 @@ struct str_construire (
 				pt1 = pt2
 				
 				for i = 1 to nbrRepetitions do (
-					
 					--- la sequence --------
 					for composant in sequence do (
 						--- choix du model ----
-						local modelsTmp = #()
-						for modele_id in composant.modeles_ids do
-							append modelsTmp 	modele_id
+						local ids_modelsTmp = #()
+						for i = 1 to composant.modeles_ids.count do
+							append ids_modelsTmp 	i
 						
 						local longueurAvantFin = distance _pt2	pt1
 						
 						---- si on a pas de model -----
-						if modelsTmp.count == 0  then (
+						if ids_modelsTmp.count == 0  then (
 							pt2		=	pt1 + normDir * composant.longueur						
 							geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this.niveaux_hauteur 
 							pt1 = pt2
@@ -1288,7 +1413,30 @@ struct str_construire (
 						
 						) else (
 							
-							local modeleTmp_idUnique  	= modelsTmp[1]
+							
+							---- on tire au hasare le modele parmis ceux qui restent ------------
+							local probaTotal = 0
+							for id in ids_modelsTmp do 
+								probaTotal += composant.modeles_probas[id]
+							local tirage = random  1.  probaTotal
+							local modeleTmp_idUnique
+							local trouve = false
+							local id = 1
+							local probacourant = 0
+							while not trouve and probacourant <= probaTotal	do (
+								probacourant += composant.modeles_probas[id]
+								if tirage < probacourant do (
+									trouve = true
+									modeleTmp_idUnique = composant.modeles_ids[id]
+								)
+								id += 1
+							)					
+							debug "tirage" var:tirage
+							debug "probaTotal" var:probaTotal
+							debug "modeleTmp_idUnique" var:modeleTmp_idUnique
+							
+							
+-- 							local modeleTmp_idUnique  	= modelsTmp[1]
 							local modeleTmp_id				=	_this.facades.get_idModele_fromIdUnique		modeleTmp_idUnique		_this
 							local modele_node 				= modeles_import[modeleTmp_id]
 							local hauteur_modele 			= get_hauteurNodeModele modele_node
@@ -1311,6 +1459,16 @@ struct str_construire (
 							local nvlFace = geo_ptr.creerFaceVerticale 	pt1 	pt2 	( z + hauteur_modele )		hauteurQuiReste	
 							
 							pt1 = pt2
+							
+							
+							if b_espacer do (
+								pt2		=	pt1 + normDir * longueur_espacement						
+								geo_ptr.creerFaceVerticale 		pt1		pt2 	z 		_this.niveaux_hauteur 
+								pt1 = pt2
+				
+							)
+							
+							
 						)
 						
 					) --- fin de la sequence -----
@@ -1319,10 +1477,10 @@ struct str_construire (
 				
 				--- le dernier espacement --------
 				pt2		=	pt1 + normDir * longueur_espacement						
-				geo_ptr.creerFaceVerticale 		pt1		pt2 	z 		_this.niveaux_hauteur 
+				geo_ptr.creerFaceVerticale 		pt1		_pt2 	z 		_this.niveaux_hauteur 
 				
-			) else 
-				geo_ptr.creerFaceVerticale 		_pt1		_pt2 	z 		_this.niveaux_hauteur 
+-- 			) else 
+-- 				geo_ptr.creerFaceVerticale 		_pt1		_pt2 	z 		_this.niveaux_hauteur 
 	
 			
 		),
@@ -1356,9 +1514,9 @@ struct str_construire (
 				)
 			
 				
+-- 					debug "facades_possibles" var:facades_possibles
 				---- si on  a pas de facades ------
 				if 	facades_possibles.count == 0 then (
-					
 					---- on remplis avec murs pleins ------------
 					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	_this.niveaux_hauteur 
 					facesDunEtage  += nvlsFaces		
