@@ -28,7 +28,7 @@ struct str_presets_batiment (
 		
 		------------ MEMBRES	----------------------------------------------------------------------------------
 	public
-		fichier_dossier 		= "",		--- a initialiser a la creation ---------
+		fichier_dossier 	= "",		--- a initialiser a la creation ---------
 		fichier_categorie	= "",		--- a initialiser a la creation ---------
 		fichier_extension	= "",		--- a initialiser a la creation ---------
 		
@@ -37,9 +37,9 @@ struct str_presets_batiment (
 	private
 		fichier_type 			= fichier_categorie + "(*." + fichier_extension + ")|*." + fichier_extension + "|All|*.*|",
 		
-		separateur_params 	="¤",
-		separateur_mutation 	= "=",
-		separateur_items 		= ";",
+		separateur_params 		="¤",
+		separateur_mutation 	= "µ",
+		separateur_items 		= "`",
 		
 		------------ FOPNCTIONS	----------------------------------------------------------------------------------
 	public
@@ -78,7 +78,7 @@ struct str_presets_batiment (
 			txtResult
 		),
 		fn set_Params 		_this		_datas =(
-			
+			debug "set_Params"
 			local params = filterString _datas		separateur_params
 			for paramStrg in params do (
 				local param = filterString paramStrg		separateur_mutation
@@ -87,17 +87,23 @@ struct str_presets_batiment (
 				local prop = ( getProperty  _this 	nomProp )
 				local type = classof prop
 				
+				debug "nomProp" var:nomProp
+				debug "type" var:type
 				case type of (
+					MAXScriptFunction:	()
 					string:						( 
 						if param[2] == undefined do param[2]  = ""
 						setproperty 	_this 	nomProp	param[2]
+						debug "----> string" var:param[2]
 					)
 					ArrayParameter: (
 						local paramTab = filterString 	param[2]		separateur_items
+						debug "----> ArrayParameter" var:paramTab
 						setproperty 	_this 	nomProp	paramTab
 					)
-					MAXScriptFunction:	()
-					default:						(setproperty 	_this 	nomProp	(execute param[2])
+					default:						(
+						setproperty 	_this 	nomProp	(execute param[2])
+						debug "----> default" var:param[2]
 					)
 				)
 			)
@@ -106,9 +112,9 @@ struct str_presets_batiment (
 		fn charger  	_this 	= (
 			
 			local fichierCible 	=	getopenFileName 		caption:				"Charger" 				\
-																			filename:				fichier_dossier 		\
-																			types:					fichier_type			\
-																			historyCategory:	fichier_categorie
+																	filename:			fichier_dossier 		\
+																	types:				fichier_type			\
+																	historyCategory:	fichier_categorie
 			if fichierCible != undefined do (
 				local datas = lire_datas 	fichierCible
 				set_Params 	_this 	datas

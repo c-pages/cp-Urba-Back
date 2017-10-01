@@ -33,50 +33,78 @@
 (
 	------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
 	include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
-	include "$userScripts\cp - GLOBAL\UI.ms"
-	include "$userScripts\cp - GLOBAL\DragDialog.ms"
 )	
 
+
+
+
+struct str_facade_modele (
+		
+		id			= "",
+		nom 		=	"Modèle",
+		
+		verts 	=#(),
+		edges	=#(),
+		faces		=#(),		
+		SMs		=#(),
+		matIDs	=#(),
+	
+		on create do (
+			local result ="FAC_MOD_"
+			for i= 1 to 10 do (
+				result += ( random 0 9 ) as string
+			)
+			id = result
+		)
+
+)
 struct str_facade_composant (
 		
 		id							= "",
 		nom 						=	"Composant de façade",
 		longueur				=	0,
 		longueur_max		=	0,
+		longueur_maxEnable		=	false,
 		modeles_ids			=	#(),
 		modeles_probas		=	#(),
 		etirable					=	false,
 	
 	
 		on create do (
-			local result ="ID"
+			local result ="FAC_CMP_"
 			for i= 1 to 10 do (
 				result += ( random 0 9 ) as string
 			)
 			id = result
 		)
-		
+	
 )
 
 struct str_facade (
 	
 		nom 						=	"Facade",
 		
-		etages_nbre_min	= 	1,
+		mode						=	1,			---- (repeter, etrier, centrer)
+		murs						=	1,			---- (les deux ,gouttereaux, pignons )
+		
+		
+		etages_use			=	false,
+		etages_nbre_min	= 	0,
 		etages_nbre_max	=	0,
 		etages_use_max	=	false,
 		
+		longueur_use			=	false,
 		longueur_min		=	0,
 		longueur_max		=	0,
 		longueur_use_max	=	false,
 		
 		probabilite 			= 100.,
-		murs						=	1,			---- (les deux ,gouttereaux, pignons )
-		
 		repeter					=	true,
 		etirer					=	false,
 		
 		sequence				=	#()
+		
+		
 		
 )
 
@@ -116,10 +144,11 @@ extends:Editable_poly replaceUI:true version:0
 	---- le model dessiné d'un batiment vide ------------------
 	local traceLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
 
-	local params_aEnregistrer = #(	#niveaux_hauteur, #niveaux_hauteur, #niveaux_nbre, 
-													#toit_pente, #toit_type, #toit_hauteur ,
-													#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho ,
-													#facades_composants )
+	local params_aEnregistrer = 	#(		/*  ----	Global  	----  */		#niveaux_hauteur, #niveaux_nbre, 
+													/*  ----	Toiture 	----  */		#toit_pente, #toit_type, #toit_hauteur ,
+													/*  ----	Tracé  	----  */		#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho ,
+													/*  ----	 Facades  	----  */		#facades_composants , #facades_items, #facades_modeles
+											)
 	
 	---- constantes------------------
 	local ep_ssBassement 	= 	100
@@ -291,7 +320,7 @@ extends:Editable_poly replaceUI:true version:0
 	)
 	on clone 	_original 	do (
 		debug "clone du plugin" 
-		initialiser ()
+-- 		initialiser ()
 	)
 	on create do (
 		debug "creation du plugin"		
@@ -310,15 +339,23 @@ extends:Editable_poly replaceUI:true version:0
 /* 
 
 
-for obj in objects do if superclassof obj == GeometryClass do delete obj
+for obj in objects do if superclassof obj == GeometryClass and obj != $'triple002' do delete obj
 bat1 = urba_batiment ()
 clearlistener ()
-bat1.assigner_trace 	$Shape007	bat1
-
+bat1.assigner_trace 	$Shape009	bat1
 bat1.facades.creer 	bat1
-
-
+-- Sphere radius:143.349 smooth:on segs:32 chop:0 slice:off sliceFrom:0 sliceTo:0 mapcoords:on recenter:off pos:[11188.5,-13914.2,0] isSelected:on
 select bat1
+
+
+
+
+
+
+debug_mode = true
+
+
+
 
 
 

@@ -33,35 +33,35 @@
 parameters params_global rollout:roll_global			(
 	
 	------- AXE PRINCIPAL	------------------
-	axeP_mtrx		type:#matrix3	
-	axeP_BB		type:#point3Tab		tabSize:2			tabSizeVariable:false
-	axeP_orientation			type:#float				default:0.			ui:spn_rotation_axeP
+	axeP_mtrx				type:#matrix3	
+	axeP_BB					type:#point3Tab		tabSize:2			tabSizeVariable:false
+	axeP_orientation		type:#float				default:0.			ui:spn_rotation_axeP
 	
 	------- tracés			------------------
-	a_un_trace			type:#boolean			default:false
+	a_un_trace				type:#boolean			default:false
 	
-	trace_original		type:#point3Tab 		tabSize:0 			tabSizeVariable:true
-	trace_courant						type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+	trace_original			type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+	trace_courant			type:#point3Tab 		tabSize:0 			tabSizeVariable:true
 	
-	trace_optimiser		type:#boolean			default:false		ui:chk_optimiser
-	trace_souder			type:#boolean			default:false		ui:chk_souder
-	trace_ortho			type:#boolean			default:false		ui:chk_ortho
+	trace_optimiser		type:#boolean			default:true		ui:chk_optimiser
+	trace_souder			type:#boolean			default:true		ui:chk_souder
+	trace_ortho			type:#boolean			default:true		ui:chk_ortho
 	
-	seuil_optimiser		type:#float				default:20.			ui:spn_optimiser
+	seuil_optimiser			type:#float				default:20.			ui:spn_optimiser
 	seuil_souder			type:#float				default:30.			ui:spn_souder
-	seuil_ortho			type:#float				default:100.		ui:spn_ortho
+	seuil_ortho				type:#float				default:100.		ui:spn_ortho
 	
 	-------  	murs		------------------
-	idtrace_pignons			type:#intTab 			tabSize:0 			tabSizeVariable:true
-	idtrace_gouttereaux		type:#intTab	 		tabSize:0 			tabSizeVariable:true
+	idtrace_pignons		type:#intTab 			tabSize:0 			tabSizeVariable:true
+	idtrace_gouttereaux	type:#intTab	 		tabSize:0 			tabSizeVariable:true
 	
-	niveaux_hauteur	type: #float 		default:250.	ui:spn_hauteur
-	niveaux_nbre		type: #integer		default:1		ui:spn_nbres
+	niveaux_hauteur		type: #float 			default:250.		ui:spn_hauteur
+	niveaux_nbre			type: #integer			default:1			ui:spn_nbres
 	
 )
 parameters params_infos rollout:roll_infos			(
 	
-	surface			type: #float 		default:0.	
+	surface					type: #float 			default:0.	
 	
 	------- AFFICHAGE 		 ------------------
 	affiche_axe					type:#boolean			default:false	ui:ckb_axe
@@ -74,9 +74,10 @@ parameters params_infos rollout:roll_infos			(
 )
 parameters params_facades 	rollout:roll_facades			(
 	
-	facades_items				type:#stringTab 		tabSize:0 			tabSizeVariable:true
+	facades_items					type:#stringTab 		tabSize:0 			tabSizeVariable:true
 	facades_composants		type:#stringTab 		tabSize:0 			tabSizeVariable:true
-	
+	facades_modeles				type:#stringTab 		tabSize:0 			tabSizeVariable:true
+	facades_modeles_imgs		type:#bitmapTab		tabSize:0 			tabSizeVariable:true
 )
 parameters params_toiture rollout:roll_toiture			(
 	
@@ -272,13 +273,19 @@ rollout roll_facades "Façades" width:510 height:813
 	)
 	
 	
-	on roll_facades open do
+	on roll_facades open do (
 		actualiser()
-		on roll_facades close	do (
-			format "FERMER FENETRE\n"
-			facades.fermer ()
-		)
+		if facades.est_ouvert () do facades.ouvrir 	lbx_facades.selection 	this
+	)
+	on roll_facades close	do (
+-- 			format "FERMER FENETRE\n"
+		try  destroydialog facades.dialog catch ()
+-- 		facades.fermer ()
+		
+	)
 	on lbx_facades doubleClicked  arg do facades.ouvrir 	lbx_facades.selection 	this
+	on lbx_facades selected 		 arg do if  facades.est_ouvert ()  do	facades.ouvrir 	lbx_facades.selection 	this
+		
 	on btn_ajouterFacade pressed do	(
 			facades.creer this
 			actualiser()

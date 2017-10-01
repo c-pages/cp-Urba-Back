@@ -112,23 +112,86 @@ struct str_plan (
 		
 )
 
+	
+struct str_enregistreurDeNode (
+	private
+	separateur_items 	= ";",
+	separateur_tableaux = "§",
+	
+	public
+	fn get_datas 		_node 		=(
+		
+		local modele_result 	= str_facade_modele ()
+		local nodeTemp 		= copy  _node
+		convertToPoly nodeTemp
+		
+		modele_result.verts 		= for i=1 to (polyop.getNumVerts  	nodeTemp )  	collect ( polyop.getVert  						nodeTemp 	i )		
+		modele_result.edges		= for i=1 to (polyop.getNumEdges  	nodeTemp )  	collect ( polyop.getEdgeVerts  				nodeTemp 	i )
+		modele_result.faces 		= for i=1 to (polyop.getNumFaces  	nodeTemp )  	collect ( polyop.getFaceVerts  				nodeTemp 	i )
+		modele_result.SMs 		= for i=1 to (polyop.getNumFaces  	nodeTemp )  	collect ( polyop.getFaceSmoothGroup  	nodeTemp 	i )
+		modele_result.matIDs	= for i=1 to (polyop.getNumFaces  	nodeTemp )  	collect ( polyop.getFaceMatID   			nodeTemp 	i )
+		
+		delete nodeTemp
+		
+		format "modele_result :%\n" modele_result
+		modele_result
+	),
+
+	fn creer_objet		_modele		ndDest:	=(
+		
+		if ndDest == unsupplied do
+			ndDest = delegate
+		
+		-- les vertex -- 
+		local pts = _modele.verts
+		for pt in  pts do 
+			polyop.createVert ndDest	pt
+			
+		-- les edges -- 
+		local edges = _modele.edges
+		for edge_pts in  edges do 
+			polyop.createEdge ndDest		edge_pts[1] 	edge_pts[2]
+		
+		-- les faces -- 
+		local faces = _modele.faces
+		for face_pts in  faces do 
+			polyop.createPolygon	 ndDest		face_pts
+		
+		--- les smoothing group ----
+		local SGs = _modele.SMs
+		for i = 1 to  SGs.count do 
+			polyop.setFaceSmoothGroup	 ndDest		i  SGs[i]
+		
+		--- les material ID ----
+		local matIDs = _modele.matIDs
+		for i = 1 to  matIDs.count do 
+			polyop.setFaceMatID	 ndDest		i  matIDs[i]
+		
+	)
+	
+) --- fin struct enregistreur de nodes ----------
+
+
+
+
+
 
 struct str_datasMgr (
 	private
-		separateur_params 	="§",
-		separateur_mutation 	= ":",
-		separateur_mutationTab 		= "%",
-		separateur_items 		= ";",
+		separateur_params 			="§",
+		separateur_mutation 		= "¨",
+		separateur_mutationTab 	= "£",
+		separateur_items 			= "^",
 	public
 		fn get_datas_string 		_element	=(
 			local txtResult = ""
 			local propNames = getPropNames _element
 			for param in propNames do (
 				
-			format "param  %\n" param
+-- 			format "param  %\n" param
 				local prop = ( getProperty  _element 	param )
 				local type = classof prop
-			format "type  %\n" type
+-- 			format "type  %\n" type
 				case type of (
 					MAXScriptFunction:	()
 					string:						(
@@ -138,7 +201,7 @@ struct str_datasMgr (
 						local tabString = ""
 						for item in prop do (
 							tabString += item as string + separateur_items
-			format "	item  %\n" item
+-- 			format "	item  %\n" item
 							
 						)
 						txtResult+=  param as string  + separateur_mutation 	+	tabString  + separateur_params
@@ -148,17 +211,19 @@ struct str_datasMgr (
 					)
 				)
 			)
-			format "txtResult  %\n" txtResult
+-- 			format "txtResult  %\n" txtResult
 			txtResult
 			
 		),
 		fn set_datas_string 		_datas_string 	_element =(
 			local datasTab = filterString _datas_string 		separateur_params
+-- 			format "----------------> datasTab  %\n" datasTab
 			local i =1
 			local propNames = getPropNames _element
 			for datas in datasTab do (
 				local dataTab= filterString datas 	separateur_mutation
 				local propNom = dataTab[1]
+-- 			format "--> propNom  %\n" propNom
 				local type = classof ( getProperty _element propNom  )
 				case type of (
 					MAXScriptFunction:	()
@@ -171,9 +236,16 @@ struct str_datasMgr (
 					array: (
 						if dataTab.count >1 do (
 							local datas  = filterString	dataTab[2] 	separateur_items
+-- 							format "-->	array --> datas  %\n" datas
 							local tabResult =#()
-							for data in datas do
-								append tabResult ( data)
+							for data in datas do (
+								local data_exe = execute data
+								if data_exe == undefined then 
+									append tabResult ( data)
+								else
+									append tabResult ( data_exe )
+							)
+-- 							format "-->	array --> tabResult  %\n" tabResult
 							setProperty _element 	propNom 	tabResult
 						)
 						i+= 1
@@ -205,25 +277,33 @@ struct 	str_facades (
 		catch ()
 	),
 	
-	private
+	
+	public
 		dialog,
-		dialog_pos = [500,500],
+	
+	private
+		dialog_pos = [1235,223],
 		dialog_estOuvert = false,
 		
 		datasMgr = str_datasMgr (),
 		
 		params_aEnregistrer = #(	#nom, #etages_nbre_min, #etages_nbre_max, #longueur_min, #longueur_max, #murs, #repeter, #etirer, #sequence	),
 	
+	public
 		presets 	= str_presets_batiment 	fichier_dossier:			( getDir #userScripts	 + "\\cp-Urba\\lib\\façades\\"		)	\
 														fichier_categorie:		"Urba - Façades"	\
 														fichier_extension:		"fcd"	\
 														params_aEnregistrer:	params_aEnregistrer,
-		
-	public
+		scan 		= str_enregistreurDeNode (),
+	
 		facade_courante 			= str_facade (),
 		id_courant = 0,
 		composant_courant 	,
-		
+		modele_courant	,
+	
+	
+	
+	public
 		fn actualiser		_this =(
 			_this.facades_items[id_courant] = (datasMgr.get_datas_string  facade_courante)
 			_this.actualiser_rollouts ()
@@ -246,22 +326,63 @@ struct 	str_facades (
 				datasMgr.set_datas_string		comp	nvComposant
 				append result nvComposant
 			)
-			
-			debug "get_composants" var:result
 			result
 		),
 		
-		fn get_composant			_id	_this	=(
+		fn get_composant			_idUnique	_this	=(
 			local result
 			local composants = get_composants 				_this	
 			for compo in composants do
-				if compo.id == _id do result = compo
-			debug "get_composant		_id	" var:_id	
-			debug "get_composant" var:result
+				if compo.id == _idUnique do result = compo
 			result
 		),
 		
-		fn get_sequence 				_this		=(
+		fn afficher_composant 		_id	_this	=(
+			composant_courant = get_composant 	facade_courante.sequence[_id]		_this
+		),
+		
+		
+		fn get_idComposant_fromIdUnique		_idUnique	_this	=(
+			local composants = get_composants 	_this	
+			local result = 0
+			for i= 1 to 	composants.count	 do
+				if composants[i].id == _idUnique do result = i
+			result
+		),
+		
+		
+		fn actualiser_composant		_this =(
+			
+			local id_compo = get_idComposant_fromIdUnique		composant_courant.id	_this
+			
+			_this.facades_composants[id_compo] = (datasMgr.get_datas_string  composant_courant)
+			_this.actualiser_rollouts ()
+		),
+		
+		
+		
+		
+		
+		
+		fn get_longueurMin_sequence	_this =(
+			local result = 0.
+			for idComp in facade_courante.sequence 	do (
+				local comp = get_composant 	idComp	_this
+				result += comp.longueur
+			)
+			result
+		),
+		
+		fn get_sequence 		_facade		_this		=(
+			local result =#()
+			local composants = get_composants 				_this	
+			for id_comp in _facade.sequence 	do (				
+				append result (get_composant	id_comp	_this	)
+			)
+			result
+		),
+		
+		fn get_sequence_courante 				_this		=(
 			local result =#()
 			local composants = get_composants 				_this	
 			for id_comp in facade_courante.sequence 	do (				
@@ -269,6 +390,7 @@ struct 	str_facades (
 			)
 			result
 		),
+		
 		fn get_items 				_this	=(
 			local result =#()
 			for comp in _this.facades_items 	do (
@@ -278,16 +400,124 @@ struct 	str_facades (
 			)
 			result
 		),
+		
+		
+		
+		
+		
+		fn get_modeles 	_this =(
+			local result =#()
+			for modele_strg in _this.facades_modeles do (
+				local modeleTmp =   str_facade_modele ()
+				datasMgr.set_datas_string		modele_strg	modeleTmp
+				append result	modeleTmp
+			)
+			result
+		),
+		
+		fn get_modele		_idUnique	_this	=(
+			local result
+			local modeles = get_modeles 	_this
+			for modele in modeles do
+				if modele.id == _idUnique do result = modele
+			result
+		),
+		
+		fn get_modeles_courant 	_this =(
+			local result =#()
+			for modele_id in composant_courant.modeles_ids 	do 
+				append result ( get_modele	 modele_id _this )
+			result
+		),
+		
+		
+		fn get_idModele_fromIdUnique		_idUnique	_this	=(
+			local modeles = get_modeles 	_this	
+			local result = 0
+			for i= 1 to 	modeles.count	 do
+				if modeles[i].id == _idUnique do result = i
+			result
+		),
+		
+		fn afficher_modele 		_id	_this	=(
+			modele_courant = get_modele 	composant_courant.modeles_ids[_id]		_this
+		),
+		
+		
+		
+		
+		
+		
+		
+		
+		fn positionnerPivot_modele	 _node =(
+			local segmentsOuverts 	= polyop.getOpenEdges _node
+			local pointsSegsOuverts 	=#()
+			local pointsResult 			=[0,0,0]
+			for seg in segmentsOuverts do (
+				local ptsDuSegment = polyop.getVertsUsingEdge   _node	seg
+				for pt in ptsDuSegment do
+					appendIfUnique pointsSegsOuverts	pt
+			)
+			
+			--- on cherche le point  ------
+			format "pointsSegsOuverts : %\n" pointsSegsOuverts
+			
+			for idPt in pointsSegsOuverts do (
+				
+				if idPt == pointsSegsOuverts[1] then pointsResult = _node.verts[ idPt ].pos
+				else (
+					local pt =_node.verts[ idPt ].pos
+					if pt.x < pointsResult.x do pointsResult = pt
+					if pt.y < pointsResult.y do pointsResult = pt
+					if pt.z < pointsResult.z do pointsResult = pt
+				)
+			)
+			_node.pivot = pointsResult
+			
+		),
+		fn preparer_modele 	_node	=(
+			
+				--- preparation du model -------
+				local nvModel_node = copy _node 
+				convertToPoly 	nvModel_node
+				local  BB = nodeGetBoundingBox 	nvModel_node	(matrix3 1)
+				positionnerPivot_modele 	nvModel_node
+				nvModel_node.rotation = quat 0 0 0 1
+				nvModel_node.pos  = [0,0,0]
+				
+				nvModel_node
+		),
+		
+		
+		fn actualiser_modele		_this =(
+			
+			local id_modele = get_idModele_fromIdUnique		modele_courant.id	_this
+			
+			_this.facades_modeles[id_modele] = (datasMgr.get_datas_string  modele_courant)
+			_this.actualiser_rollouts ()
+			
+		),
+		
+		
+		
+		
+		
+		
+		
 		fn creer 						_this	=(
 			local nvlFacade = str_facade ()
+			nvlFacade.nom	+=	" " + (_this.facades_items.count + 1  ) as string
 			append _this.facades_items (datasMgr.get_datas_string  nvlFacade)
 			nvlFacade
 		),
-		fn supprimer		_this		_id 	=(
+		fn supprimer	_id	_this		 	=(
 			deleteItem _this.facades_items 	_id
 		),
+		
+		fn est_ouvert =dialog_estOuvert,
 		fn fermer 								=(
-			debug "Fermer rollout"
+-- 			debug "Fermer rollout"
 			--- Actiualiser position pour reouverture prochaine ----
 			if dialog_estOuvert do
 				dialog_pos = getDialogPos dialog	
@@ -298,16 +528,26 @@ struct 	str_facades (
 		fn ouvrir  			_id 		_this =(
 			
 			id_courant 			= _id
+			facade_courante = str_facade ()
 			facade_courante 	= datasMgr.set_datas_string 		_this.facades_items[id_courant]  	 facade_courante
+			
+			if facade_courante.sequence.count>0 then (
+				composant_courant = get_composant		facade_courante.sequence[1]	_this
+				if composant_courant.modeles_ids.count >0 then
+					modele_courant = get_modele		composant_courant.modeles_ids[1]		_this
+			)
+			else
+				composant_courant = undefined
+			
 			
 			include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - rollout facade.ms"
 			dialog = roll_urba_editeurFacades
 			
 			---- creation de la fenetre ----
-			createDialog dialog 	style:				#(#style_resizing) \
+			createDialog dialog 	style:				#(#style_resizing) 	\
 											lockHeight:		true						\
-											lockWidth:			true						\
-											pos:					dialog_pos
+											lockWidth:		true						\
+											pos:				dialog_pos
 			dialog_estOuvert = true
 			
 			---- initialisation de la fenetre ----
@@ -317,6 +557,12 @@ struct 	str_facades (
 		),
 		
 		
+		
+		
+		
+		
+		
+		--------- INTERFACE ----------------------
 		fn set_nom 	_nom 	_this =(
 			facade_courante.nom = _nom
 			actualiser _this
@@ -335,11 +581,11 @@ struct 	str_facades (
 			facade_courante.probabilite = _val
 			actualiser _this
 		),
-		fn set_largeur			_val		_this=(
+		fn set_longueur			_val		_this=(
 			facade_courante.longueur_min = _val
 			actualiser _this
 		),
-		fn set_largeurMax		_val		_this=(
+		fn set_longueurMax		_val		_this=(
 			facade_courante.longueur_max = _val
 			actualiser _this
 		),
@@ -352,7 +598,7 @@ struct 	str_facades (
 			actualiser _this
 		),
 		
-		fn set_largeurMaxState			state		_this =(
+		fn set_longueurMaxState			state		_this =(
 			facade_courante.longueur_use_max = state
 			actualiser _this
 		),
@@ -361,35 +607,118 @@ struct 	str_facades (
 			actualiser _this
 		),
 		
+		
+		fn set_nom_composants	_nom	_this =(
+			composant_courant.nom = _nom
+			actualiser_composant		_this
+		),
 		fn ajouter_composant			_this		=(
 			
 			composant_courant							=	str_facade_composant ()
-			append facade_courante.sequence 		 ( composant_courant.id )
-			append _this.facades_composants		 ( datasMgr.get_datas_string  composant_courant )
+			append facade_courante.sequence 	( composant_courant.id )
+			composant_courant.nom	+=	" " + facade_courante.sequence.count as string
+			append _this.facades_composants		( datasMgr.get_datas_string  composant_courant )
 			actualiser 	_this
 			composant_courant
 			
 		),
 		fn supprimer_composant			_id		_this	=(
-			deleteItem facade_courante.sequence 	_id			
+			local id_compo = findItem 	facade_courante.sequence		composant_courant.id
+			deleteItem facade_courante.sequence 	_id		
+			deleteItem _this.facades_composants		id_compo
 			actualiser _this
 		),
-		fn set_largeur_composant			state		_this	=(
+		fn set_longueur_composant			val		_this	=(
+			composant_courant.longueur = val
+			actualiser_composant		_this
 		),
-		fn set_largeurMax_composant				state		_this	=(
+		fn set_longueurMax_composant				val		_this	=(
+			composant_courant.longueur_max = val
+			actualiser_composant		_this
 		),
-		fn set_largeurMax_composantState			state		_this	=(
+		fn set_longueurMax_composantState			state		_this	=(
+			composant_courant.longueur_maxEnable = state
+			actualiser_composant		_this
 		),
--- 		fn lbx_modeles
+		
 		fn ajouter_modele				state		_this	=(
+			modele_courant	 = str_facade_modele ()
+			append composant_courant.modeles_ids 			( modele_courant.id )
+			append composant_courant.modeles_probas 	100
+			modele_courant.nom	+=	" " + composant_courant.modeles_ids.count as string
+			append _this.facades_modeles		( datasMgr.get_datas_string  modele_courant )
+			actualiser_composant		_this
 		),
 		fn supprimer_modele				state		_this	=(
+			
 		),
+		
+		
+		fn assigner_node 	_node	_this =(			
+			debug "assigner_node"
+			
+			local nd_Tmp		=		preparer_modele		_node
+			local  BB = nodeGetBoundingBox 	nd_Tmp	(matrix3 1)
+			debug "assigner_node 	---->		BB" var:BB
+			debug "assigner_node 	---->		composant_courant" var:composant_courant.nom
+			debug "assigner_node 	---->		composant_courant.longueur" var:composant_courant.longueur
+
+			local modeleTmp = 		scan.get_datas 		nd_Tmp
+			composant_courant.longueur = BB[2].x - BB[1].x
+			
+			debug "assigner_node 	---->		composant_courant.longueur ----> 1 -> " var:composant_courant.longueur
+			delete nd_Tmp
+			debug "assigner_node 	---->		composant_courant.longueur ----> 2 -> " var:composant_courant.longueur
+			
+			debug "modeleTmp" var:modeleTmp
+			modele_courant.verts	 	=	modeleTmp.verts	
+			modele_courant.edges	 	=	modeleTmp.edges
+			modele_courant.faces	 	=	modeleTmp.faces
+			modele_courant.SMs	 		=	modeleTmp.SMs 
+			modele_courant.matIDs	 	=	modeleTmp.matIDs
 			
 			
+			actualiser_composant	_this
+			actualiser_modele		_this
+			
+		),
+		
+		fn merge_modele 		_this =(			
+			
+			--- nouveau node -----
+			local 	nvNode = convertToPoly (mesh ())
+			polyop.deleteFaces	nvNode	(#{1..25} as array)
+			
+			
+			scan.creer_objet		modele_courant	ndDest:nvNode
+
+		),
+		
+		
 		fn set_murs				val		_this	=(
 			facade_courante.murs = val		
 			actualiser 	_this
+		),
+		
+		fn set_longueurMaxState				state		_this	=(
+			facade_courante.longueur_use_max = state
+			actualiser		_this
+		),
+		fn set_etagesMaxState			state		_this	=(
+			facade_courante.etages_use_max = state
+			actualiser		_this
+		),
+		fn set_longueurState				state		_this	=(
+			facade_courante.longueur_use = state
+			actualiser		_this
+		),
+		fn set_etagesState			state		_this	=(
+			facade_courante.etages_use = state
+			actualiser		_this
+		),
+		fn set_mode			state		_this	=(
+			facade_courante.mode = state
+			actualiser		_this
 		)
 		
 )
@@ -407,19 +736,19 @@ struct str_geo (
 	),
 	fn creerFace  		_listeDesPoints   nd: 								=(
 		
-		local  ndCible = if nd != unsupplied then nd else delegate
-		local verts = polyop.getNumEdges ndCible
+		
+		local  ndCible 	= if nd != unsupplied then nd else delegate
+		local verts 	= polyop.getNumVerts ndCible
 		
 		-- les vertex --
-		for pt in  _listeDesPoints do (
-			polyop.createVert ndCible	pt
-		)
+		for pt in  _listeDesPoints do 
+				polyop.createVert ndCible	pt 
 		
 		-- les edges --
 		for i = 1 to _listeDesPoints.count do (
 			local j= i+1
 			if j > _listeDesPoints.count do j = 1
-			polyop.createEdge ndCible (verts+i) (verts+j)
+			polyop.createEdge ndCible (verts+i) (verts+j) 
 		)
 		
 		-- la face --
@@ -427,18 +756,21 @@ struct str_geo (
 		for i = 1 to _listeDesPoints.count  do 
 			append listeVertexPrFace ( verts+i )
 		
-		
-		polyop.createPolygon ndCible  listeVertexPrFace
+		polyop.createPolygon ndCible  listeVertexPrFace 
 		
 	),
 	fn creerFaceVerticale 	pt1 	pt2 	z 	hauteur							=(
 		
-		local verts = polyop.getNumEdges delegate
+		local verts = polyop.getNumVerts delegate		
+-- 		format "verts avant :%\n" verts
 		
 		polyop.createVert delegate	[pt2.x, pt2.y, z]	
+-- 		format "result :%\n" result
 		polyop.createVert delegate	[pt1.x, pt1.y, z]
 		polyop.createVert delegate	[pt1.x, pt1.y, z + hauteur]
 		polyop.createVert delegate	[pt2.x, pt2.y, z + hauteur]
+		
+-- 		format "polyop.getNumEdges delegate :%\n" (polyop.getNumEdges delegate)
 		
 		polyop.createEdge delegate (verts+1) (verts+2)
 		polyop.createEdge delegate (verts+2) (verts+3)
@@ -480,16 +812,15 @@ struct str_trace (
 		geo_ptr,
 		-----------------  Opérations diverses ----------------------
 		fn surface 							_trace 	=(
-			--- on crée un poly avec le tracee  ------
-			local 	nvNode = convertToPoly (mesh ())
-			nvNode.EditablePoly.SetSelection #Face #{1..25}
-			nvNode.EditablePoly.delete #Face
-				
-			geo_ptr.creerFace 	_trace 	nd:nvNode
-				
+			--- on creer une face sur le tracé ---------
+			local faceTemp = geo_ptr.creerFace 	_trace 	--nd:nvNode
+			
 			--- pour utiliser cette fonction : ------
-			local result = polyop.getFaceArea  nvNode 1
-			delete nvNode
+			local result = polyop.getFaceArea  delegate faceTemp
+			
+			--- on supprime la face, verts et edges créés--------
+			polyop.deleteFaces 	delegate faceTemp
+			
 			result
 		),
 		fn edge_lePlusGrand			_trace 	=(
@@ -602,9 +933,7 @@ struct str_trace (
 	-- 			result
 		),
 		fn souder 			_this		=(
-	-- 			local _this.trace_courant =  	_trace
-	-- 			debug "souder"
-	-- 			debug "nbre de point avant :" var:_this.trace_courant.count
+			
 			local i = 1
 			while i <=_this.trace_courant.count do (
 				local j= i+1
@@ -618,11 +947,10 @@ struct str_trace (
 				)
 				i+=i
 			)
-	-- 			debug "nbre de point apres :" var:_this.trace_courant.count
-	-- 			result
+			
 		),
 		fn optimiser 		_this		=(
-	-- 			local result =  	_trace
+			
 			local i = 1
 			while i <= _this.trace_courant.count do (
 				
@@ -667,8 +995,6 @@ struct str_trace (
 		),
 		fn BB_axeP			_trace  		_mtrxAxe  	=(
 			
-	-- 			local mtrxAxePrincipal	=	get.axeP_mtrx 	_spline	_idSpline
-			
 			local pt1 = _trace[1] * inverse _mtrxAxe
 			local xMin = xMax = pt1.x
 			local yMin = yMax = pt1.y
@@ -703,7 +1029,7 @@ struct str_trace (
 			 
 		),
 	
-		
+		fn est_pignon 		_id	_this	= findItem _this.idtrace_pignons 	_id 	!= 0,
 		fn actualiser_pignonsEtGouttereaux  _this =(
 			
 			_this.idtrace_pignons 		=#()
@@ -773,7 +1099,7 @@ struct str_trace (
 			trace_absolu
 		),
 	
-		
+		 
 		fn actualiser 	_this 	=(
 			
 			_this.trace_courant = _this.trace_original as array
@@ -791,8 +1117,6 @@ struct str_trace (
 			if _this.trace_optimiser do
 				optimiser		_this
 			
-			----- calcul de la surface du trace_courant ------
-			_this.surface = surface 		_this.trace_courant
 			
 			actualiser_axeP 	_this
 		),
@@ -823,7 +1147,8 @@ struct str_trace (
 				--- Axe principal-------------------coordsys
 				_thisNode.a_un_trace 			= true
 				
-				
+				----- calcul de la surface du trace_courant ------
+				_thisNode.surface = surface 		_thisNode.trace_courant
 			)
 			actualiser  _thisNode
 		)
@@ -832,7 +1157,47 @@ struct str_trace (
 
 ----------- Construction des batiments----------------------------------------------------------------------
 struct str_construire (
-	geo_ptr,
+	
+	------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
+	m_debug = true,
+	m_dbgPrefix ="urba | str_construire",
+	fn debug 	_txt  var:	 param:    =(
+		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		catch ()
+	),
+	
+	
+		geo_ptr,		
+		modeles_import 					=#(),
+	
+	
+		fn get_hauteurNodeModele 	_nd	=(
+			local  BB = nodeGetBoundingBox 	_nd	(matrix3 1)
+			local hauteur = BB[2].z -  BB[1].z 
+			hauteur
+		),
+		fn get_largeurNodeModele 	_nd	=(
+			local  BB = nodeGetBoundingBox 	_nd	(matrix3 1)
+			local largeur = BB[2].x -  BB[1].x 
+			largeur
+		),
+		fn get_angle_vecteur 	vec	=(
+			
+			local result = 0
+			local angle_tan = atan ( vec.y / vec.x )
+			
+			if vec.x >=0 then (
+				if vec.y >= 0 then 	result = angle_tan
+				else 	result = 360 + angle_tan
+			) else (		
+				if vec.y >= 0 then 	result = 180 + angle_tan
+				else result = 180 + angle_tan
+			)
+			
+			result
+		),		
+	
+	
 		------------ FACADES-------------------------
 		fn ssBassement  	_this		&z	=(
 			
@@ -842,52 +1207,220 @@ struct str_construire (
 			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_dalle
 			z += ep_dalle
 			
-			
 		),
 		fn RdC 					_this		&z	=(
-			
-			--- un etage ---
-	-- 			local styleFacade = m_urba.facades.presets.get_parIdUnique 		_presetBat.rdc_facade
-	-- 			creer_etage	_nodeBat	z 	_presetBat.niveaux_hauteur	styleFacade
-	-- 			z += _presetBat.niveaux_hauteur
 			
 			geo_ptr.creerFacesContour	 _this.trace_courant		z 	_this.niveaux_hauteur			
 			z += _this.niveaux_hauteur	
 			
 		),
-		fn etages 				_this		&z	=(
+		
+		fn creer_sequence		_pt1		_pt2			&z 		_facade		_this			=(
+-- 			debug "creer sequence()"
+			local normDir						=	normalize ( _pt2 - _pt1)
+			local rot 							= get_angle_vecteur		normDir
+			local longueurMinSequence 	= 0
+			local sequence 					= _this.facades.get_sequence 		_facade		_this			
+			for composant 	in sequence do	longueurMinSequence += composant.longueur
 			
-			local niveaux_hauteur	= _this.niveaux_hauteur
-			local niveaux_nbre		= _this.niveaux_nbre
+			local longueurFacade = distance _pt1 _pt2
+-- 			debug "longueurFacade" var:longueurFacade
+-- 			debug "longueurMinSequence" var:longueurMinSequence
+
+			local pt1 			= 	_pt1
+			local pt2		
+			local nbrRepetitions 		
+			local longueur_restant 			
+			local longueur_espacement 	
+			
+			if longueurMinSequence > 0 then (
+				case _facade.mode of (
+					1:  	(	--- Repeter ----
+						
+						nbrRepetitions				= floor ( longueurFacade / longueurMinSequence )
+						longueur_restant 			= longueurFacade - longueurMinSequence * (nbrRepetitions )		
+						longueur_espacement 	= longueur_restant / 2	
+						
+							
+					)
+					2: 	(	--- Etirer ----
+						
+					)
+					3: 	(	--- Centrer ----
+					
+						nbrRepetitions				= 1
+						longueur_restant 			= longueurFacade - longueurMinSequence * (nbrRepetitions )		
+						longueur_espacement 	= longueur_restant / 2	
+					
+					)
+				)
+				
+				
+				
+				
+				--- le premier espacement --------
+				pt2		=	pt1 + normDir * longueur_espacement						
+				geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this.niveaux_hauteur 
+				pt1 = pt2
+				
+				for i = 1 to nbrRepetitions do (
+					
+					--- la sequence --------
+					for composant in sequence do (
+						--- choix du model ----
+						local modelsTmp = #()
+						for modele_id in composant.modeles_ids do
+							append modelsTmp 	modele_id
+						
+						local longueurAvantFin = distance _pt2	pt1
+						
+						---- si on a pas de model -----
+						if modelsTmp.count == 0  then (
+							pt2		=	pt1 + normDir * composant.longueur						
+							geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this.niveaux_hauteur 
+							pt1 = pt2
+							
+						) else if longueurAvantFin <  composant.longueur then (
+							pt2		=	_pt2					
+							geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this.niveaux_hauteur 
+							pt1 = pt2
+						
+						
+						) else (
+							
+							local modeleTmp_idUnique  	= modelsTmp[1]
+							local modeleTmp_id				=	_this.facades.get_idModele_fromIdUnique		modeleTmp_idUnique		_this
+							local modele_node 				= modeles_import[modeleTmp_id]
+							local hauteur_modele 			= get_hauteurNodeModele modele_node
+							local largeur_modele 			= get_largeurNodeModele modele_node
+							
+							
+							local nv_modele 		= copy modele_node
+							
+							rotate nv_modele (angleaxis rot [0,0,1])
+							nv_modele.pos 				= pt1
+							nv_modele.pos.z 				= z
+							
+							local facesDuNodeAvant 	= polyop.getNumFaces delegate
+							delegate.attach	nv_modele		modele_node
+							-----	facette du dessus -----
+							pt2 = pt1 + normDir * largeur_modele
+							
+							local hauteurQuiReste = 	_this.niveaux_hauteur 	- hauteur_modele
+							
+							local nvlFace = geo_ptr.creerFaceVerticale 	pt1 	pt2 	( z + hauteur_modele )		hauteurQuiReste	
+							
+							pt1 = pt2
+						)
+						
+					) --- fin de la sequence -----
+					
+				)  --- fin de la repetition
+				
+				--- le dernier espacement --------
+				pt2		=	pt1 + normDir * longueur_espacement						
+				geo_ptr.creerFaceVerticale 		pt1		pt2 	z 		_this.niveaux_hauteur 
+				
+			) else 
+				geo_ptr.creerFaceVerticale 		_pt1		_pt2 	z 		_this.niveaux_hauteur 
+	
+			
+		),
+		
+		
+		fn etages 				_this				&z	=(
+			
 			
 			local facesDunEtage =#()
 			
-			if niveaux_nbre != 0 do (
+			
+			
+			for n_etage = 0 to _this.niveaux_nbre  do (
 				
-				--- creation de l'etage modele ---------------------
-				--- plancher ---
+				local facades_possibles =#()
+				
+				--- on filtre par etages ---------------
+				for fcade in _this.facades.get_items 	_this	do (					
+					if fcade.etages_use then (
+						if n_etage	>= fcade.etages_nbre_min  do (
+							if fcade.etages_use_max then (
+								if n_etage <= fcade.etages_nbre_max   do 	
+									append facades_possibles fcade
+							)	else (
+								append facades_possibles fcade
+							)
+						)
+					) else (
+						append facades_possibles fcade
+					)
+				)
+			
+				
+				---- si on  a pas de facades ------
+				if 	facades_possibles.count == 0 then (
+					
+					---- on remplis avec murs pleins ------------
+					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	_this.niveaux_hauteur 
+					facesDunEtage  += nvlsFaces		
+					z += _this.niveaux_hauteur
+					
+					
+				---- sinon on a des facades -----------
+				) else (
+					
+					
+					local listePts = _this.trace_courant
+					
+					for i_pt = 1 to listePts.count do	 (
+						
+						local facadesTmp =  facades_possibles
+												
+						--- on chope les deux points du segment de la facade ---
+						local pt_1 = listePts[i_pt]
+						local pt_2 
+						if i_pt == listePts.count then
+							pt_2 = listePts[1]
+						else pt_2 =  listePts[i_pt + 1 ]
+						
+						--- si c'est un pignon -----
+						if _this.trace.est_pignon	i_pt	_this then (
+							
+							facadesTmp = for facde in facades_possibles where facde.murs != 2	collect  facde
+							
+						---  c'est un gouttereau -----
+						) else (
+							
+							facadesTmp = for facde in facades_possibles where facde.murs != 3	collect  facde
+							
+						)
+							
+						
+						if facadesTmp.count >0 then (
+-- 							debug "on a une facade"
+							local facadeTmp = facadesTmp[1]
+							creer_sequence		pt_1		pt_2			&z 	facadeTmp		_this	
+						) else (
+-- 							debug "on dessine pas de sequence"
+							geo_ptr.creerFaceVerticale 		pt_1		pt_2 	z 	_this.niveaux_hauteur
+						)
+						
+					)
+					z += _this.niveaux_hauteur
+				)
+				
+				
+				
+				
+				--- dalle plancher ---
 				if ep_dalle  != 0 do (
 					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	ep_dalle
 					facesDunEtage  += nvlsFaces
 					z += ep_dalle
 				) 
 				
-				local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	niveaux_hauteur
-				facesDunEtage  += nvlsFaces		
-				z += niveaux_hauteur
+			) --- fin boucle etages -------------
 				
 				
-				--- on copie l'etage x fois ----
-				for i = 2 to niveaux_nbre do (
-					local vertsfin = polyop.getNumEdges delegate
-					polyop.detachFaces delegate	 facesDunEtage delete:false	
-					local vertsABouger = #{(vertsfin+1)..(polyop.getNumEdges delegate)}
-					polyop.moveVert 	delegate 	vertsABouger [0,0, ( niveaux_hauteur + ep_dalle ) *  (i-1) ]
-					z += ep_dalle
-					z += niveaux_hauteur
-				)
-				
-			)
 			
 			
 		),
@@ -895,11 +1428,9 @@ struct str_construire (
 		------------ TOITURES-------------------------		
 		fn toitPentes 		_this		&z	_nbrePentes	=(
 			
-			
 			local	 mtrx_axeP	=	_this.axeP_mtrx
 			local	 BB_axeP	=	_this.axeP_BB
 			translate mtrx_axeP	BB_axeP[1]
-			
 			
 			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP) - (BB_axeP[1]  * inverse mtrx_axeP)
 			local largeur 		=	diag_axeP.x
@@ -1104,13 +1635,13 @@ struct str_construire (
 				)
 				2: (	---- ACROTERE	----
 					
-					local trace_courant 		= _this.trace_courant
+-- 					local trace_courant 		= _this.trace_courant
 					
-					--- dalle ---
+					/* --- dalle ---
 					if ep_dalle  != 0 do (
 						geo_ptr.creerFacesContour	_this.trace_courant 	z 	ep_dalle
 						z += ep_dalle
-					) 
+					)  */
 					
 					--- creation de la facette globale-----
 					local trace_courant 		= for pt in _this.trace_courant collect [pt.x,pt.y,z]
@@ -1128,23 +1659,52 @@ struct str_construire (
 			)
 		),		
 		
+		
+		fn importer_modeles		_this		=(
+			
+			modeles_import =#()
+			for modele in _this.facades.get_modeles 	_this	 do (
+				--- nouveau node -----
+				local 	nvNode = convertToPoly (mesh ())
+				append 	modeles_import		nvNode
+				polyop.deleteFaces	nvNode	(#{1..25} as array)				
+				_this.facades.scan.creer_objet		modele	ndDest:nvNode
+			)
+		),
+		fn retirer_modelesImports	=(			
+			for modele in modeles_import	 do delete modele
+			modeles_import =#()
+		),
+		
+		
+		
 		fn batiment 	_this =(
 			
 			---- creation de la surface de base -------
 			geo_ptr.vider ()
 			
+			importer_modeles		_this	
+			
 			local zCourant = -( ep_ssBassement + ep_dalle )
 			
 			ssBassement 	_this	&zCourant
-			RdC 				_this	&zCourant
 			etages			_this	&zCourant
 			toit				_this	&zCourant
+			
+			retirer_modelesImports ()
 			
 			redrawViews () 
 		)
 	
 	
 ) ---- fin struct construire ------------------
+
+
+
+
+
+
+
 
 
 
