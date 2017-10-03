@@ -86,7 +86,7 @@ struct str_facade_composant (
 )
 
  
-
+ 
 
 
 struct str_facade (
@@ -351,11 +351,16 @@ for obj in objects do if superclassof obj == GeometryClass and obj != $'triple00
 bat1 = urba_batiment ()
 clearlistener ()
 bat1.assigner_trace 	$Shape009	bat1
-bat1.facades.creer 	bat1
+bat1.facades.creer_facade 	bat1
 -- Sphere radius:143.349 smooth:on segs:32 chop:0 slice:off sliceFrom:0 sliceTo:0 mapcoords:on recenter:off pos:[11188.5,-13914.2,0] isSelected:on
 select bat1
 
 
+
+
+$.facades.modeles_total
+$.facades_modeles[1]
+$.facades.composants_total
 
 
 $.facades.get_composants $

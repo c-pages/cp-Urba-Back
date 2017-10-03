@@ -154,7 +154,7 @@
 		
 		on btn_ajouter_modele picked 	_node 	do
 		(
-					m_prt.m_prt.ajouter_modele		m_composant	 _node	m_cible
+					m_prt.m_prt.creer_modele		m_composant	 _node	m_cible
 					actualiser ()
 				)
 				
@@ -182,7 +182,7 @@
 				)
 		on btn_merge pressed do
 		(
--- 					m_prt.ajouter_modele				state		m_cible
+-- 					m_prt.creer_modele				state		m_cible
 					actualiser ()
 				)
 	)

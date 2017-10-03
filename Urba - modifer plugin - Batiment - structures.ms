@@ -191,11 +191,8 @@ struct str_datasMgr (
 			local txtResult = ""
 			local propNames = getPropNames _element
 			for param in propNames do (
-				
--- 			format "get_datas_string-------------------------param  %\n" param
 				local prop = ( getProperty  _element 	param )
 				local type = classof prop
--- 			format "type  %\n" type
 				case type of (
 					MAXScriptFunction:	()
 					string:						(
@@ -204,7 +201,6 @@ struct str_datasMgr (
 					array: (
 						local tabString = ""
 						for item in prop do (
--- 			format "classof item    %\n" (classof item  )
 							case classof item  of (
 								string:	tabString += item 		as string + separateur_items
 								Integer:	tabString += item 		as string + separateur_items
@@ -221,7 +217,6 @@ struct str_datasMgr (
 								)
 							)
 						)
--- 			format "get_datas_string-------------------------tabString	%\n" tabString
 						txtResult+=  param as string  + separateur_mutation 	+	tabString  + separateur_params
 					)
 					Name:		(
@@ -233,94 +228,66 @@ struct str_datasMgr (
 				) -- fin scase --
 				
 			)
-			format "get_datas_string-------------------------	txtResult	%\n" txtResult
 			txtResult
 			
 		),
 		fn set_datas_string 		_datas_string 		_element 	_this	=(
 			local datasTab = filterString _datas_string 		separateur_params
-			
--- 			format "set_datas_string-------------------------_datas_string  %\n" _datas_string
--- 			format "set_datas_string-------------------------_element  %\n" _element
-			
-			local i =1
 			local propNames = getPropNames _element
+			
 			for datas in datasTab do (
 				local dataTab		= filterString datas 	separateur_mutation
 				local propNom 	= dataTab[1]
--- 				format "set_datas_string-------------------------propNom  %\n" propNom
-				local type = classof ( getProperty _element propNom  )
--- 				format "set_datas_string------------------------- type  %\n"  type
-				case type of (
+				local typeProp 	= classof ( getProperty _element propNom  )
+				
+				case typeProp of (
 					MAXScriptFunction:	()
 					string:					(
-						local data  = dataTab[2]
-						if data   == undefined do data =""
-						setProperty _element propNom data
-						i+= 1
+							local data  = dataTab[2]
+							if data   == undefined do data =""
+							setProperty _element propNom data
 					)
 					array: (
 						if dataTab.count >1 do (
 							local datas_liste  = filterString	dataTab[2] 	separateur_items
 							local tabResult =#()
-							format "set_datas_string--------------------datas_liste : %\n"  	datas_liste
-							format "set_datas_string--------------------datas.count : %\n"  datas.count
-							format "set_datas_string--------------------i : %\n"  i
 							for data in datas_liste do (
-								
-								format "set_datas_string--------------------data : %\n"  data
 								local data_exe 	= execute data
 								
-								--- string ---
 								if data_exe 		== undefined then (
-									
+								--------------- string ---------------
 									append tabResult ( data)
+								) else	if classof data_exe == Name then (	
 									
-								--- un objet -----------
-								) else	if classof data_exe == Name then (
-									format "set_datas_string---------------------------- un objet -----------\n" 
-									
+								--------------- un objet ---------------
 									---- un composant ------------
-									if findString data "#FAC_CMP" != 0 then ( 
-										format "set_datas_string--------------------------------------- un composant -----------\n" 
-										local compoTmp =  ( m_prt.get_composant  ( data ) 	_this	)			
-										format "set_datas_string-------------------------------------------------- compoTmp : %\n" 	 compoTmp
-										append tabResult		compoTmp
-									)
+									local elemTmp =  ( m_prt.get_composant  ( data ) 	_this	)	
 									---- un modele ------------
-									else if findString data "#FAC_MOD" != 0 then ( 
-										format "set_datas_string--------------------------------------- un modele -----------\n" 
-										local compoTmp =  ( m_prt.get_modele  ( data ) 	_this	)									
-										append tabResult		compoTmp
-									)
+									if elemTmp == undefined do 
+										elemTmp = ( m_prt.get_modele  ( data ) 	_this	)	
 									--- un id (name)------
-									else (							
-										format "set_datas_string--------------------------------------- un id name-----------\n" 
-										append tabResult		data
-										
-									)
-									format "set_datas_string--------------------------------------------------------tabResult :%\n"  tabResult
+									if elemTmp == undefined do
+										elemTmp = data
 									
+									append tabResult		elemTmp
 									
-								--- Nombres ---
-								) else 	(									
+								) else 	(						
+								--------------- Nombres ---------------			
 									append tabResult 	( data_exe)
 								)
 							)
 							setProperty _element 	propNom 	tabResult
 						)
-						i+= 1
 					)
 					default:						(
 						if dataTab[2] != undefined do  (
 							local data  = execute dataTab[2]
 							setProperty _element propNom data
 						)
-						i+= 1
+						
 					)
 				)
 			)
-			format "set_datas_string------------------------- FINNNNNNNNNNN	-> _element  %\n"  _element
 			_element
 		)
 )
@@ -356,29 +323,65 @@ struct 	str_facades (
 														fichier_extension:			"fcd"	\
 														params_aEnregistrer:	params_aEnregistrer,
 		scan 		= str_enregistreurDeNode (),
-	
-		facade_courante 			= str_facade (),
-		id_courant = 0,
-		composant_courant 	,
-		modele_courant	,
+		
 	
 	
 	
 	public
-		fn actualiser		_this =(
-			_this.facades_items[id_courant] = (datasMgr.get_datas_string  facade_courante)
-			_this.actualiser_rollouts ()
+		facades_total				= #(), ---- les facades du batiment en struct---------------
+		composants_total		= #(), ---- les composant du batiment en struct---------------
+		modeles_total				= #(), ---- les modeles du batiment en struct---------------
+		
+		facade_courante 			= str_facade (),
+		id_courant = 0,
+		composant_courant 	,
+		modele_courant	,
+		
+		
+		
+		fn params_toStructs 	_this	=		(
+			debug "params_toStructs"  
+			
+			modeles_total				= #()
+			for modele in _this.facades_modeles 	do (
+				local nvModele =   str_facade_modele ()
+				datasMgr.set_datas_string		modele		nvModele	_this
+				append modeles_total 	nvModele
+			)
+			debug "params_toStructs 1 "  
+			
+			composants_total		= #()
+			for compo in _this.facades_composants 	do (
+				local nvCompo =   str_facade_composant ()
+				datasMgr.set_datas_string		compo		nvCompo	_this
+				append composants_total 		nvCompo
+			)
+			debug "params_toStructs 2 "  
+			
+			facades_total				= #()
+			for fac in _this.facades_items 	do (
+				local nvfacade =   str_facade ()
+				datasMgr.set_datas_string		fac		nvfacade	_this
+				append facades_total 		nvfacade
+			)
+			
+			debug "params_toStructs FIN"  
+			debug "		modeles_total"  		var:modeles_total
+			debug "		composants_total"  	var:composants_total
+			debug "		facades_total"  		var:facades_total
 		),
 		
+	public
+		/* 
 		fn charger 		 	_this =(
 			presets.charger  facade_courante
 			actualiser		_this 
 		),
 		
-		fn enregistrer 	 =(
+		fn enregistrer_preset_facade 	 =(
 			presets.enregistrer  facade_courante
 		),
-		
+		 */
 		fn get_composants_total 				_this		=(
 			local result =#()
 			for comp in _this.facades_composants 	do (
@@ -417,7 +420,25 @@ struct 	str_facades (
 		),
 		
 		
-		fn get_idComposant_fromIdUnique		_idUnique	_this	=(
+		
+		
+		
+		fn get_composant_idUnique_param	_id _this =(
+			local strg_param 	= _this.facades_composants[_id]
+			local idStrg 			= findstring 	strg_param		"#FAC_CMP_"
+			local result 			= substring 	strg_param 	idStrg	  19 
+			result
+		),
+		fn get_composants_ids_param 	_this =(
+			local result =#()
+			for i = 1 to _this.facades_composants.count	 do (
+				append result  ( get_composant_idUnique_param i	_this )
+			)
+			result
+		),
+		fn get_composant_idParam		_idUnique	_this	=(
+			
+				
 			local composants = get_composants_total 	_this	
 			local result = 0
 			for i= 1 to 	composants.count	 do
@@ -425,35 +446,26 @@ struct 	str_facades (
 			result
 		),
 		
+		fn get_composant			_idUnique	_this	=(
+			
+			local result
+			for compo in composants_total do
+				if compo.id == _idUnique do result = compo
+			result
+			
+		),
+		
+		
+		
 		/* 
 		fn enregistrer_composant		_this =(
 			
-			local id_compo = get_idComposant_fromIdUnique		composant_courant.id	_this
+			local id_compo = get_composant_idParam		composant_courant.id	_this
 			
 			_this.facades_composants[id_compo] = (datasMgr.get_datas_string  composant_courant)
 			_this.actualiser_rollouts ()
 		),
 		*/
-		
-		fn enregistrer_composant	 _composant	_this =(
-			debug "enregistrer_composant"
-			debug "_composant" var:_composant.nom
-			
-			local id_compo = get_idComposant_fromIdUnique		_composant.id		_this
-			local string_compo = (datasMgr.get_datas_string  _composant)
-			debug "string_compo" var:string_compo
-			debug "id_compo" var:id_compo
-			
-			if id_compo != 0 then (
-				debug "enregistrer_composant ---> MISE A JOUR : EXISTE DEJA" 
-				_this.facades_composants[id_compo] =	string_compo
-			) else (
-				debug "enregistrer_composant ---> MISE A JOUR : NOUVEAU" 
-				append	_this.facades_composants			string_compo
-			)
-			debug "enregistrer_composant ---> MISE A JOUR : OK" 
-			_this.actualiser_rollouts ()
-		),
 		
 		
 		
@@ -487,8 +499,8 @@ struct 	str_facades (
 			result
 		),
 		
-		fn get_items 				_this	=(
-			debug "get_items"
+		fn get_facades_param 				_this	=(
+			debug "get_facades_param"
 			local result =#()
 			for facde in _this.facades_items 	do (
 				debug "facde" var:facde
@@ -496,7 +508,7 @@ struct 	str_facades (
 				datasMgr.set_datas_string		facde		nvlFacade	_this
 				append result nvlFacade
 			)
-			debug "get_items - result" var:result
+			debug "get_facades_param - result" var:result
 			result
 		),
 		
@@ -504,7 +516,69 @@ struct 	str_facades (
 		
 		
 		
-		fn get_modeles 	_this =(
+		
+		/* 
+		
+		fn get_modele_idUnique_param	_id _this =(
+			local strg_param 	= _this.facades_modeles[_id]
+			local idStrg 			= findstring 	strg_param		"#FAC_MOD_"
+			local result 		
+		= substring 	strg_param 	idStrg	  19 
+			result
+		),
+		fn get_modeles_ids_param 	_this =(
+			local result =#()
+			for i = 1 to _this.facades_modeles.count	 do (
+				append result  ( get_modele_idUnique_param i	_this )
+			)
+			result
+		),
+		
+		
+		fn get_modele_idParam		_idUnique	_this	=(
+			
+			local modeles_ids = get_modeles_ids_param 	_this	
+			local result = 0
+			for i= 1 to 	modeles_ids.count	 do
+				if modeles_ids[i] == _idUnique do result = i
+			result
+		), */
+		
+		/* 	
+		fn get_facade_idUnique_param	_id _this =(
+			local strg_param 	= _this.facades_items[_id]
+			local idStrg 			= findstring 	strg_param		"#FAC_MOD_"
+			local result 		= substring 	strg_param 	idStrg	  19 
+			result
+		),
+		fn get_facades_ids_param 	_this =(
+			local result =#()
+			for i = 1 to _this.facades_modeles.count	 do (
+				append result  ( get_modele_idUnique_param i	_this )
+			)
+			result
+		),
+		
+		
+		
+		
+		fn get_facade_idParam		_idUnique	_this	=(
+			local modeles = get_modeles_param 	_this	
+			local result = 0
+			for i= 1 to 	modeles.count	 do
+				if modeles[i].id == _idUnique do result = i
+			result
+		),
+		 */
+		
+		
+		
+		
+		
+		
+		/* 
+		
+		fn get_modeles_param 	_this =(
 			local result =#()
 			for modele_strg in _this.facades_modeles do (
 				local modeleTmp =   str_facade_modele ()
@@ -514,13 +588,6 @@ struct 	str_facades (
 			result
 		),
 		
-		fn get_modele		_idUnique	_this	=(
-			local result
-			local modeles = get_modeles 	_this
-			for modele in modeles do
-				if modele.id == _idUnique do result = modele
-			result
-		),
 		
 		fn get_modeles_courant 	_this =(
 			local result =#()
@@ -529,19 +596,47 @@ struct 	str_facades (
 			result
 		),
 		
+		 */
 		
-		fn get_idModele_fromIdUnique		_idUnique	_this	=(
-			local modeles = get_modeles 	_this	
-			local result = 0
-			for i= 1 to 	modeles.count	 do
-				if modeles[i].id == _idUnique do result = i
+		
+		
+		-- #("id¨#FAC_MOD_5137656481§faces¨#(56, 57, 58, 59)^#(1, 23, 4, 3)^#(23, 14, 5, 4)^#(14, 2, 6, 5)^#(2, 1, 3, 6)^#(79, 80, 7, 8)^#(7, 80, 9, 11)^#(79, 8, 12, 10)^#(8, 7, 11, 12)^#(12, 11, 9, 10)^#(23, 77, 13, 14)^#(3, 4, 16, 15)^#(4, 5, 17, 16)^#(5, 6, 18, 17)^#(6, 3, 15, 18)^#(15, 16, 20, 19)^#(16, 17, 21, 25, 29, 28, 24, 20)^#(17, 18, 22, 21)^#(18, 15, 19, 27, 31, 30, 26, 22)^#(63, 60, 61, 62)^#(67, 64, 65, 66)^#(29, 25, 26, 30)^#(31, 27, 24, 28)^#(28, 29, 33, 32)^#(29, 30, 34, 33)^#(30, 31, 35, 34)^#(31, 28, 32, 35)^#(21, 22, 37, 36)^#(22, 26, 38, 37)^#(26, 25, 39, 38)^#(25, 21, 36, 39)^#(19, 20, 41, 40)^#(20, 24, 42, 41)^#(24, 27, 43, 42)^#(27, 19, 40, 43)^#(32, 33, 45, 44)^#(33, 34, 46, 45)^#(34, 35, 47, 46)^#(35, 32, 44, 47)^#(36, 37, 49, 48)^#(37, 38, 50, 49)^#(38, 39, 51, 50)^#(39, 36, 48, 51)^#(40, 41, 53, 52)^#(41, 42, 54, 53)^#(42, 43, 55, 54)^#(43, 40, 52, 55)^#(44, 45, 57, 56)^#(45, 46, 58, 57)^#(46, 47, 59, 58)^#(47, 44, 56, 59)^#(48, 49, 61, 60)^#(49, 50, 62, 61)^#(50, 51, 63, 62)^#(51, 48, 60, 63)^#(52, 53, 65, 64)^#(53, 54, 66, 65)^#(54, 55, 67, 66)^#(55, 52, 64, 67)^#(68, 70, 71, 69)^#(72, 73, 75, 74)^#(68, 69, 73, 72)^#(69, 71, 75, 73)^#(71, 70, 74, 75)^#(70, 68, 72, 74)^#(1, 2, 78, 76)^#(23, 1, 76, 77)^#(2, 14, 13, 78)^§nom¨Modèle 0§longueur¨166.227§matIDs¨1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^1^2^1^5^4^6^3^1^1^1^§verts¨[8.11363,6.47593e-07,208.227]^[158.114,6.47593e-07,208.227]^[8.11363,10,208.227]^[8.11363,10,100]^[158.114,10,100]^[158.114,10,208.227]^[8.11363,-4.77716,100]^[158.114,-4.77716,100]^[8.11363,0.000479869,97.8517]^[158.114,0.000479869,97.8517]^[8.11363,-4.77716,97.8516]^[158.114,-4.77716,97.8516]^[166.227,0,0]^[158.114,-3.91459e-07,100]^[13.1136,10,195]^[13.1136,10,105]^[153.114,10,105]^[153.114,10,195]^[13.1136,13,195]^[13.1136,13,105]^[153.114,13,105]^[153.114,13,195]^[8.11363,-3.91459e-07,100]^[57.7803,13,105]^[108.447,13,105]^[108.447,13,195]^[57.7803,13,195]^[61.7803,13,105]^[104.447,13,105]^[104.447,13,195]^[61.7803,13,195]^[61.7803,16,105]^[104.447,16,105]^[104.447,16,195]^[61.7803,16,195]^[153.114,16,105]^[153.114,16,195]^[108.447,16,195]^[108.447,16,105]^[13.1136,16,195]^[13.1136,16,105]^[57.7803,16,105]^[57.7803,16,195]^[65.7803,16,109]^[100.447,16,109]^[100.447,16,191]^[65.7803,16,191]^[149.114,16,109]^[149.114,16,191]^[112.447,16,191]^[112.447,16,109]^[17.1136,16,191]^[17.1136,16,109]^[53.7803,16,109]^[53.7803,16,191]^[65.7803,19,109]^[100.447,19,109]^[100.447,19,191]^[65.7803,19,191]^[149.114,19,109]^[149.114,19,191]^[112.447,19,191]^[112.447,19,109]^[17.1136,19,191]^[17.1136,19,109]^[53.7803,19,109]^[53.7803,19,191]^[8.11363,10.0004,198.227]^[158.114,10.0004,198.227]^[8.11363,10.0004,208.227]^[158.114,10.0004,208.227]^[8.11363,-2.99964,198.227]^[158.114,-2.99963,198.227]^[8.11363,-2.99964,208.227]^[158.114,-2.99963,208.227]^[0,1.82677e-06,215.464]^[0,0,0]^[166.227,1.82677e-06,215.464]^[158.114,0.000647716,100]^[8.11363,0.000647716,100]^§SMs¨0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^0^§EDGES¨#(56, 57)^#(57, 58)^#(58, 59)^#(59, 56)^#(1, 23)^#(23, 4)^#(4, 3)^#(3, 1)^#(23, 14)^#(14, 5)^#(5, 4)^#(14, 2)^#(2, 6)^#(6, 5)^#(2, 1)^#(3, 6)^#(79, 80)^#(80, 7)^#(7, 8)^#(8, 79)^#(80, 9)^#(9, 11)^#(11, 7)^#(8, 12)^#(12, 10)^#(10, 79)^#(11, 12)^#(9, 10)^#(23, 77)^#(77, 13)^#(13, 14)^#(4, 16)^#(16, 15)^#(15, 3)^#(5, 17)^#(17, 16)^#(6, 18)^#(18, 17)^#(15, 18)^#(16, 20)^#(20, 19)^#(19, 15)^#(17, 21)^#(21, 25)^#(25, 29)^#(29, 28)^#(28, 24)^#(24, 20)^#(18, 22)^#(22, 21)^#(19, 27)^#(27, 31)^#(31, 30)^#(30, 26)^#(26, 22)^#(63, 60)^#(60, 61)^#(61, 62)^#(62, 63)^#(67, 64)^#(64, 65)^#(65, 66)^#(66, 67)^#(25, 26)^#(30, 29)^#(27, 24)^#(28, 31)^#(29, 33)^#(33, 32)^#(32, 28)^#(30, 34)^#(34, 33)^#(31, 35)^#(35, 34)^#(32, 35)^#(22, 37)^#(37, 36)^#(36, 21)^#(26, 38)^#(38, 37)^#(25, 39)^#(39, 38)^#(36, 39)^#(20, 41)^#(41, 40)^#(40, 19)^#(24, 42)^#(42, 41)^#(27, 43)^#(43, 42)^#(40, 43)^#(33, 45)^#(45, 44)^#(44, 32)^#(34, 46)^#(46, 45)^#(35, 47)^#(47, 46)^#(44, 47)^#(37, 49)^#(49, 48)^#(48, 36)^#(38, 50)^#(50, 49)^#(39, 51)^#(51, 50)^#(48, 51)^#(41, 53)^#(53, 52)^#(52, 40)^#(42, 54)^#(54, 53)^#(43, 55)^#(55, 54)^#(52, 55)^#(45, 57)^#(56, 44)^#(46, 58)^#(47, 59)^#(49, 61)^#(60, 48)^#(50, 62)^#(51, 63)^#(53, 65)^#(64, 52)^#(54, 66)^#(55, 67)^#(68, 70)^#(70, 71)^#(71, 69)^#(69, 68)^#(72, 73)^#(73, 75)^#(75, 74)^#(74, 72)^#(69, 73)^#(72, 68)^#(71, 75)^#(70, 74)^#(2, 78)^#(78, 76)^#(76, 1)^#(76, 77)^#(13, 78)^§hauteur¨215.464§")
+		
+		
+		
+		
+		fn get_modele_idUnique_param	_id _this =(
+			local strg_param 	= _this.facades_modeles[_id]
+			local idStrg 			= findstring 	strg_param		"#FAC_MOD_"
+			local result 			= substring 	strg_param 	idStrg	  19 
 			result
 		),
+		fn get_modeles_ids_param 	_this =(
+			local result =#()
+			for i = 1 to _this.facades_modeles.count	 do (
+				append result  ( get_modele_idUnique_param i	_this )
+			)
+			result
+		),
+		fn get_modele_idParam		_idUnique	_this	=(
+			
+			local modeles_ids = get_modeles_ids_param 	_this	
+			local result = 0
+			for i= 1 to 	modeles_ids.count	 do
+				if modeles_ids[i] == _idUnique do result = i
+			result
+		),
+		fn get_modele		_idUnique	_this	=(
+			local result
+			for modele in modeles_total do
+				if modele.id == _idUnique do result = modele
+			result
+		),
+		
 		
 		fn afficher_modele 		_id	_this	=(
 			modele_courant = get_modele 	composant_courant.modeles_ids[_id]		_this
 		),
-		
 		
 		
 		
@@ -589,31 +684,61 @@ struct 	str_facades (
 		),
 		
 		
+		
+		
+		
+		
+		
 		fn enregistrer_modele		_modele	_this =(
 			
-			local id_modele = get_idModele_fromIdUnique		_modele.id	_this
+			local id_modele = get_modele_idParam		_modele.id	_this
 			
 			if id_modele != 0 then
-				_this.facades_modeles[id_modele] = (datasMgr.get_datas_string  _modele)
+				_this.facades_modeles[id_modele] = 	(datasMgr.get_datas_string  _modele)
 			else
-				append	_this.facades_modeles		(datasMgr.get_datas_string  _modele)
+				append	_this.facades_modeles			(datasMgr.get_datas_string  _modele)
 			
-			_this.actualiser_rollouts ()
+		),
+		
+		fn enregistrer_composant	 _composant	_this =(
+			debug "enregistrer_composant"
+			debug "_composant" var:_composant.nom
 			
+			local id_compo 			= get_composant_idParam		_composant.id		_this
+			
+			local string_compo 		= (datasMgr.get_datas_string  _composant)
+			
+			
+			debug "string_compo" var:string_compo
+			debug "id_compo" var:id_compo
+			
+			if id_compo != 0 then (
+				debug "enregistrer_composant ---> MISE A JOUR : EXISTE DEJA" 
+				_this.facades_composants[id_compo] =	string_compo
+			) else (
+				debug "enregistrer_composant ---> MISE A JOUR : NOUVEAU" 
+				append	_this.facades_composants			string_compo
+			)
+			debug "enregistrer_composant ---> MISE A JOUR : OK" 
+			
+		),
+		
+		fn enregistrer_facade		_facade		_this =(
+			
+			local id_compo 		= id_courant
+			local string_compo 	= (datasMgr.get_datas_string  _facade )
+			
+			if id_courant != 0 then
+				_this.facades_items[id_courant] = (datasMgr.get_datas_string  _facade)
+			else
+				append	_this.facades_items		(datasMgr.get_datas_string  _facade)
+			
+-- 			_this.actualiser_rollouts ()
 		),
 		
 		
 		
 		
-		fn creer 						_this	=(
-			local nvlFacade = str_facade ()
-			nvlFacade.nom	+=	" " + (_this.facades_items.count + 1  ) as string
-			append _this.facades_items (datasMgr.get_datas_string  nvlFacade)
-			nvlFacade
-		),
-		fn supprimer	_id	_this		 	=(
-			deleteItem _this.facades_items 	_id
-		),
 		
 		
 		
@@ -627,43 +752,6 @@ struct 	str_facades (
 		
 		
 		
-		
-		
-		fn est_ouvert =dialog_estOuvert,
-		fn fermer 								=(
--- 			debug "Fermer rollout"
-			--- Actiualiser position pour reouverture prochaine ----
-			if dialog_estOuvert do
-				dialog_pos = getDialogPos dialog	
-			dialog_estOuvert = false
-			---- fermer la fenêtre ----
-			try destroydialog dialog catch ()
-		),
-		fn ouvrir  			_id 		_this =(
-			
-			id_courant 			= _id
-			facade_courante = str_facade ()
-			facade_courante 	= datasMgr.set_datas_string 		_this.facades_items[id_courant]  	 facade_courante		_this
-			
-			
-			include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - rollout facade.ms"
-			dialog = roll_urba_editeurFacades
-			
-			---- creation de la fenetre ----
-			createDialog dialog 	style:				#(#style_resizing) 	\
-										pos:				dialog_pos
--- 										lockHeight:		true						\
--- 										lockWidth:		true						\
-			dialog_estOuvert = true
-			
-			---- initialisation de la fenetre ----
-			dialog.m_prt	 	= this
-			dialog.m_cible 		= _this
-			dialog.m_facade 	= facade_courante
-			
-			dialog.initialiser ()
-			
-		),
 		
 		
 		
@@ -671,20 +759,47 @@ struct 	str_facades (
 		
 		--------- INTERFACE ----------------------
 		fn valider_facade		_this =(
-			_this.facades_items[id_courant] = ( datasMgr.get_datas_string  facade_courante )
-			_this.actualiser_rollouts ()
-			
 			debug "valider_facade"	
+			
 			for compo in facade_courante.sequence do (
 				debug "compo" var: compo
 				
+				for modele in compo.modeles do (
+					enregistrer_modele	modele	 _this 
+				)
+				
 				enregistrer_composant	compo	 _this 
 			)
+			
+			
+			enregistrer_facade		facade_courante		_this 
 			debug "valider_facade FIN OK?!?!,######################################################################################################"	
-				
+			
+			
+			
+			_this.actualiser_rollouts ()			
+			_this.construire.batiment 	_this
+			
 		),
 		
-		fn ajouter_modele				_composant	_node	_this	=(
+		
+		
+		
+		
+		
+		----------- CREATIONs --------------------
+		
+		fn creer_facade 						_this	=(
+			local nvlFacade = str_facade ()
+			
+			nvlFacade.nom	+=	" " + (_this.facades_items.count + 1  ) as string
+-- 			append _this.facades_items (datasMgr.get_datas_string  nvlFacade)
+			append facades_total	nvlFacade
+			nvlFacade
+		),
+		
+		
+		fn creer_modele				_composant	_node	_this	=(
 			
 			--- preparation du model -------
 			local nd_Tmp 			=  _node
@@ -704,23 +819,94 @@ struct 	str_facades (
 			append _composant.modeles				nvModele
 			append _composant.modeles_probas 	100
 			
-			--- on l'enregistre dans les parmatere du batiment -----
-			enregistrer_modele		nvModele 	_this
+			append modeles_total	nvModele
+-- 			--- on l'enregistre dans les parmatere du batiment -----
+-- 			enregistrer_modele		nvModele 	_this
 			
 		),
 		
-		fn ajouter_composant		_pos	 _type	_this =(
+		fn creer_composant		_pos	 _type	_this =(
 			
 			local 		nvComposant 	= str_facade_composant 	type:_type
 			
 			insertItem 			nvComposant 		facade_courante.sequence 	( _pos + 1 )
 			
-			enregistrer_composant		nvComposant 	_this
+			append composants_total		nvComposant
+			
+-- 			enregistrer_composant		nvComposant 	_this
 			
 			nvComposant
 			
-		)
+		),
 		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		fn supprimer	_id	_this		 	=(
+			debug "supprimer -> TODO"
+			/*
+			deleteItem _this.facades_items 	_id
+			*/
+		),
+		
+		
+		
+		
+		
+		
+		
+		--------- FENETRE---------------------		
+		
+		fn est_ouvert =dialog_estOuvert,
+		fn fermer 						_this		quiet:false	=(
+-- 			debug "Fermer rollout"
+			
+			if not quiet do
+				if queryBox "Enregistrer les modifications ?"	title:"Urba | Bâtiment | Façade" 	do 
+					valider_facade 	_this
+					
+			
+			--- Actiualiser position pour reouverture prochaine ----
+			if dialog_estOuvert do
+				dialog_pos = getDialogPos dialog	
+			dialog_estOuvert = false
+			---- fermer la fenêtre ----
+			try destroydialog dialog catch ()
+		),
+		fn ouvrir  			_id 		_this =(
+			
+			id_courant 			= _id
+			facade_courante 	= str_facade ()
+			facade_courante 	= facades_total[_id]	--datasMgr.set_datas_string 		_this.facades_items[id_courant]  	 facade_courante		_this
+			
+			
+			include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - rollout facade.ms"
+			dialog = roll_urba_editeurFacades
+			
+			---- creation de la fenetre ----
+			createDialog dialog 	style:				#(#style_resizing) 	\
+										pos:				dialog_pos
+-- 										lockHeight:		true						\
+-- 										lockWidth:		true						\
+			dialog_estOuvert = true
+			
+			---- initialisation de la fenetre ----
+			dialog.m_prt	 	= this
+			dialog.m_cible 		= _this
+			dialog.m_facade 	= facade_courante
+			
+			dialog.initialiser ()
+			
+		)
 		
 		
 		
@@ -731,7 +917,7 @@ struct 	str_facades (
 			nvComposant.type			= #Espacement
 			insertItem 	nvComposant.id 		facade_courante.sequence 	(_pos+1)
 			append _this.facades_composants (datasMgr.get_datas_string  nvComposant)
-			actualiser _this
+			enregistrer_facade _this
 		),
 		fn ajouter_longueurFixe		_pos	_this =(
 			debug "ajouter_longueurFixe"
@@ -739,17 +925,17 @@ struct 	str_facades (
 			nvComposant.type			= #LongueurFixe
 			insertItem 	nvComposant.id 		facade_courante.sequence 	(_pos+1)
 			append _this.facades_composants (datasMgr.get_datas_string  nvComposant)
-			actualiser _this
+			enregistrer_facade _this
 			
 		),
-		fn ajouter_modele			_pos		_this =(
-			debug "ajouter_modele"			
+		fn creer_modele			_pos		_this =(
+			debug "creer_modele"			
 			local 		nvComposant 	= str_facade_composant ()		
 			nvComposant.type			= #Modele
 			insertItem 	nvComposant.id 		facade_courante.sequence 	(_pos+1)
 			append _this.facades_composants (datasMgr.get_datas_string  nvComposant)
 			
-			actualiser _this
+			enregistrer_facade _this
 		)
 		*/
 		
@@ -758,46 +944,46 @@ struct 	str_facades (
 		--------- INTERFACE ----------------------
 		fn set_nom 	_nom 	_this =(
 			facade_courante.nom = _nom
-			actualiser _this
+			enregistrer_facade _this
 		),
 		
 		fn set_repetable		_state		_this =(
 			facade_courante.repeter = _state
-			actualiser _this
+			enregistrer_facade _this
 		),
 		fn set_etirable			_state		_this=(
 			facade_courante.etirer = _state
-			actualiser _this
+			enregistrer_facade _this
 		),
 		
 		fn set_proba				_val		_this=(
 			facade_courante.probabilite = _val
-			actualiser _this
+			enregistrer_facade _this
 		),
 		fn set_longueur			_val		_this=(
 			facade_courante.longueur_min = _val
-			actualiser _this
+			enregistrer_facade _this
 		),
 		fn set_longueurMax		_val		_this=(
 			facade_courante.longueur_max = _val
-			actualiser _this
+			enregistrer_facade _this
 		),
 		fn set_etages			_val		_this=(
 			facade_courante.etages_nbre_min = _val
-			actualiser _this
+			enregistrer_facade _this
 		),
 		fn set_etagesMax		_val		_this=(
 			facade_courante.etages_nbre_max = _val
-			actualiser _this
+			enregistrer_facade _this
 		),
 		
 		fn set_longueurMaxState			state		_this =(
 			facade_courante.longueur_use_max = state
-			actualiser _this
+			enregistrer_facade _this
 		),
 		fn set_etagesMaxState			state		_this	=(
 			facade_courante.etages_use_max = state
-			actualiser _this
+			enregistrer_facade _this
 		),
 		
 		
@@ -805,13 +991,13 @@ struct 	str_facades (
 			composant_courant.nom = _nom
 			enregistrer_composant		_this
 		),
-		fn ajouter_composant			_this		=(
+		fn creer_composant			_this		=(
 			
 			composant_courant							=	str_facade_composant ()
 			append facade_courante.sequence 	( composant_courant.id )
 			composant_courant.nom	+=	" " + facade_courante.sequence.count as string
 			append _this.facades_composants		( datasMgr.get_datas_string  composant_courant )
-			actualiser 	_this
+			enregistrer_facade 	_this
 			composant_courant
 			
 		),
@@ -819,7 +1005,7 @@ struct 	str_facades (
 			local id_compo = findItem 	facade_courante.sequence		composant_courant.id
 			deleteItem facade_courante.sequence 	_id		
 			deleteItem _this.facades_composants		id_compo
-			actualiser _this
+			enregistrer_facade _this
 		),
 		fn set_longueur_composant			val		_this	=(
 			composant_courant.longueur = val
@@ -834,7 +1020,7 @@ struct 	str_facades (
 			enregistrer_composant		_this
 		),
 		
-		fn ajouter_modele				state		_this	=(
+		fn creer_modele				state		_this	=(
 			modele_courant	 = str_facade_modele ()
 			append composant_courant.modeles_ids 			( modele_courant.id )
 			append composant_courant.modeles_probas 	100
@@ -848,7 +1034,7 @@ struct 	str_facades (
 		
 		fn set_proba_modele				val		_this	=(
 			
-			local idModel = get_idModele_fromIdUnique	modele_courant.id	_this
+			local idModel = get_modele_idParam	modele_courant.id	_this
 			composant_courant.modeles_probas[idModel] = val
 			enregistrer_composant		_this
 		),
@@ -892,28 +1078,28 @@ struct 	str_facades (
 		
 		fn set_murs				val		_this	=(
 			facade_courante.murs = val		
-			actualiser 	_this
+			enregistrer_facade 	_this
 		),
 		
 		fn set_longueurMaxState				state		_this	=(
 			facade_courante.longueur_use_max = state
-			actualiser		_this
+			enregistrer_facade		_this
 		),
 		fn set_etagesMaxState			state		_this	=(
 			facade_courante.etages_use_max = state
-			actualiser		_this
+			enregistrer_facade		_this
 		),
 		fn set_longueurState				state		_this	=(
 			facade_courante.longueur_use = state
-			actualiser		_this
+			enregistrer_facade		_this
 		),
 		fn set_etagesState			state		_this	=(
 			facade_courante.etages_use = state
-			actualiser		_this
+			enregistrer_facade		_this
 		),
 		fn set_mode			state		_this	=(
 			facade_courante.mode = state
-			actualiser		_this
+			enregistrer_facade		_this
 		)
 		*/
 )

@@ -71,7 +71,7 @@ struct str_construire (
 			local normDir						=	normalize ( _pt2 - _pt1)
 			local rot 							= get_angle_vecteur		normDir
 			local longueur_sequence 	= 0
-			local sequence 					= _this.facades.get_sequence 		_facade		_this			
+			local sequence 					= _facade.sequence 						
 			for composant 	in sequence do	
 				longueur_sequence += composant.longueur
 			
@@ -123,7 +123,7 @@ struct str_construire (
 					for composant in sequence do (
 						--- choix du model ----
 						local ids_modelsTmp = #()
-						for i = 1 to composant.modeles_ids.count do
+						for i = 1 to composant.modeles.count do
 							append ids_modelsTmp 	i
 						
 						local longueurAvantFin = distance _pt2	pt1
@@ -156,7 +156,7 @@ struct str_construire (
 								probacourant += composant.modeles_probas[id]
 								if tirage < probacourant do (
 									trouve = true
-									modeleTmp_idUnique = composant.modeles_ids[id]
+									modeleTmp_idUnique = composant.modeles[id].id
 								)
 								id += 1
 							)					
@@ -166,7 +166,7 @@ struct str_construire (
 							
 							
 -- 							local modeleTmp_idUnique  	= modelsTmp[1]
-							local modeleTmp_id				=	_this.facades.get_idModele_fromIdUnique		modeleTmp_idUnique		_this
+							local modeleTmp_id				=	_this.facades.get_modele_idParam		modeleTmp_idUnique		_this
 							local modele_node 				= modeles_import[modeleTmp_id]
 							local hauteur_modele 			= get_hauteurNodeModele modele_node
 							local largeur_modele 			= get_largeurNodeModele modele_node
@@ -228,8 +228,8 @@ struct str_construire (
 				local facades_possibles =#()
 				
 				--- on filtre par etages ---------------
-				for fcade in _this.facades.get_items 	_this	do (					
-					if fcade.etages_use then (
+				for fcade in _this.facades.facades_total 		do (					
+					if fcade.etages_use_min then (
 						if n_etage	>= fcade.etages_nbre_min  do (
 							if fcade.etages_use_max then (
 								if n_etage <= fcade.etages_nbre_max   do 	
@@ -551,7 +551,7 @@ struct str_construire (
 		fn importer_modeles		_this		=(
 			
 			modeles_import =#()
-			for modele in _this.facades.get_modeles 	_this	 do (
+			for modele in _this.facades.modeles_total	 do (
 				--- nouveau node -----
 				local 	nvNode = convertToPoly (mesh ())
 				append 	modeles_import		nvNode

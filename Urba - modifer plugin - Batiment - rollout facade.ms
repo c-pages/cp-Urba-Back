@@ -146,7 +146,6 @@
 		
 		
 		fn redimensionnerFenetre 		_taille 	=(
-			format "redimensionnerFenetre\n"
 			
 			if 	_taille.x < 255 do 
 				roll_urba_editeurFacades.width = _taille.x =  255
@@ -266,9 +265,7 @@
 		on ui_btnFermer 	mouseDown 	do	etatBtnFermer #Press
 		on ui_btnFermer 	mouseUp 		do	etatBtnFermer #Repos
 		on ui_btnFermer 	click 				do	(
-					if queryBox "Enregistrer les modifications ?"	title:"Urba | Bâtiment | Façade" 	do 
-						m_prt.valider_facade 	m_cible
-					m_prt.fermer ()
+					m_prt.fermer 	m_cible
 				)
 		
 		
@@ -360,7 +357,7 @@
 		on btn_ajouter_espacement pressed do
 		(
 					format "lbx_sequence.selection:%\n" lbx_sequence.selection
-					m_composant_courant = m_prt.ajouter_composant		lbx_sequence.selection	 #Espacement		m_cible 
+					m_composant_courant = m_prt.creer_composant		lbx_sequence.selection	 #Espacement		m_cible 
 					actualiser()
 					
 					lbx_sequence.selection	+= 1
@@ -368,7 +365,7 @@
 		on btn_ajouter_modele pressed do
 		(
 					format "lbx_sequence.selection:%\n" lbx_sequence.selection
-					m_composant_courant = m_prt.ajouter_composant		lbx_sequence.selection	 #Modele	m_cible
+					m_composant_courant = m_prt.creer_composant		lbx_sequence.selection	 #Modele	m_cible
 					actualiser()
 					
 					lbx_sequence.selection	+= 1
@@ -378,7 +375,7 @@
 		on btn_ajouter_longueurFixe pressed do
 		(
 					format "lbx_sequence.selection:%\n" lbx_sequence.selection
-					m_composant_courant	= m_prt.ajouter_composant		lbx_sequence.selection	 #LongueurFixe	m_cible 
+					m_composant_courant	= m_prt.creer_composant		lbx_sequence.selection	 #LongueurFixe	m_cible 
 					actualiser()
 					
 					lbx_sequence.selection	+= 1
@@ -392,14 +389,12 @@
 		---- Validation / Annulation	--------------------------
 		on btn_annuler pressed do
 		(
-					if queryBox "Enregistrer les modifications ?"	title:"Urba | Bâtiment | Façade" 	do 
-						m_prt.valider_facade 	m_cible
-					m_prt.fermer ()
+					m_prt.fermer m_cible
 				)
 		on btn_valider pressed do
 		(
 					m_prt.valider_facade 	m_cible
-					m_prt.fermer ()
+					m_prt.fermer m_cible 	quiet:true
 				)
 				
 				

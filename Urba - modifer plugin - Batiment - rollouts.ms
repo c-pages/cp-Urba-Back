@@ -277,7 +277,7 @@ rollout roll_facades "Façades" width:510 height:813
 		
 		if a_un_trace do (
 			debug "a_un_trace" var:a_un_trace
-			local listTmp = for comp in facades.get_items this collect comp.nom
+			local listTmp = for comp in facades.get_facades_param this collect comp.nom
 			debug "listTmp" var:listTmp
 			lbx_facades.items = listTmp
 		)
@@ -286,21 +286,24 @@ rollout roll_facades "Façades" width:510 height:813
 	
 	
 	on roll_facades open do (
+		facades.params_toStructs		this
 		actualiser()
 		if facades.est_ouvert () do facades.ouvrir 	lbx_facades.selection 	this
 	)
 	on roll_facades close	do (
 -- 			format "FERMER FENETRE\n"
-		try  destroydialog facades.dialog catch ()
--- 		facades.fermer ()
+-- 		try  destroydialog facades.dialog catch ()
+		if facades.est_ouvert () do
+			facades.fermer  this		
 		
 	)
 	on lbx_facades doubleClicked  arg do facades.ouvrir 	lbx_facades.selection 	this
 	on lbx_facades selected 		 arg do if  facades.est_ouvert ()  do	facades.ouvrir 	lbx_facades.selection 	this
 		
 	on btn_ajouterFacade pressed do	(
-			facades.creer this
-			actualiser()
+			facades.creer_facade this
+			facades.ouvrir		(facades.facades_total.count)	this
+-- 			actualiser() 
 		)
 	on btn_supprimerFacade pressed do	(
 			facades.supprimer  lbx_facades.selection	 this
