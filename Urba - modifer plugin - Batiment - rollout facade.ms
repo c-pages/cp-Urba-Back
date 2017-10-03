@@ -1,30 +1,49 @@
 
+	
+	
+	
+	
+	
 	------------------------------------------------------------------------------
 	----------	Fenetre								 -------------------------
 	------------------------------------------------------------------------------
-	rollout roll_urba_editeurFacades "urba_editeurFacades" width:247 height:626
+	rollout roll_urba_editeurFacades "urba_editeurFacades" width:255 height:267
 	(
 		
 		include "$userScripts\cp - GLOBAL\UI.ms"
 		include "$userScripts\cp - GLOBAL\DragDialog.ms"
+		include "$userScripts\cp - GLOBAL\Mgr - ListView.ms"
 		
+
 		------------  Membres	----------------------------------------------------------------------------------
 		---- Pointeurs ----
 		local m_prt				---- pointeur vers la structure de controle ----
+		local m_cible			---  le plugin cilbé
+		local m_facade
+		local m_composant_courant
 		
 		---- Structures ----
 		local m_drag			---- la structure gerant le drag de la fenetre ----
 		
-		--- ctro des imgtags ---
-		local m_titre
+		--- ui  virtuel perso ---
+		local m_titre		
 		
-		local m_cible		-- le plus cilbé
---- images bouton fermer ---
+		-- les fenetre secondaires ---
+		local dialog_modele, dialog_longueurFixe
+		
+		--- images bouton fermer ---
 		local murs_types 	= #("Gouttereaux + Pignons", "Gouttereaux", "Pignons")
 		local icos_fermer 	= #(	openBitMap "$userScripts\cp - GLOBAL\ico\ico_fermer_R.jpg" ,		-- Repos ----
-										openBitMap "$userScripts\cp - GLOBAL\ico\ico_fermer_S.jpg" ,		-- Survol ----
-										openBitMap "$userScripts\cp - GLOBAL\ico\ico_fermer_P.jpg" 			-- Pressé ----
+											openBitMap "$userScripts\cp - GLOBAL\ico\ico_fermer_S.jpg" ,		-- Survol ----
+											openBitMap "$userScripts\cp - GLOBAL\ico\ico_fermer_P.jpg" 			-- Pressé ----
 										)
+		
+		
+		local note_etagesMinMax = "\n0 : RdC\nValeurs négative pour compter les étages en descendant, à partir du dernier (-1: dernier étage)"
+-- 		local note_etagesMinMax = ""
+		
+		local lv_mgr
+		
 		------------  UI	----------------------------------------------------------------------------------		
 		---- le bouton pour fermer la fenetre ----
 		ImgTag 'ui_btnFermer' "X" pos:[0,0] width:20 height:20 toolTip:"Fermer" style:#bmp_center align:#left
@@ -32,61 +51,48 @@
 		ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
 	 
 		
-		edittext 'edt_nom_facade' "" pos:[3,40] width:236 height:16 align:#left
+		edittext 'edt_nom_facade' "" pos:[7,25] width:200 height:16 align:#left
 		
-		spinner 'spn_longueur' "" pos:[84,96] width:71 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		spinner 'spn_longueurMax' "" pos:[167,96] width:71 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		spinner 'spn_etages' "" pos:[84,111] width:71 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-		spinner 'spn_etagesMax' "" pos:[167,111] width:71 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+		spinner 'spn_etages' "" pos:[103,53] width:64 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+		spinner 'spn_etagesMax' "" pos:[180,53] width:63 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
 		
 		
-		dropdownList 'ddl_appliquerA' "" pos:[86,76] width:153 height:21 items:#("Gouttereaux + Pignons", "Gouttereaux", "Pignons") selection:3 align:#left
-		label 'lbl_appliquerA' "Murs:" pos:[8,78] width:32 height:15 align:#left
+		dropdownList 'ddl_murs' "" pos:[90,68] width:154 height:21 items:#("Gouttereaux + Pignons", "Gouttereaux", "Pignons") selection:3 align:#left
+		label 'lbl_appliquerA' "Murs:" pos:[12,72] width:32 height:15 align:#left
 		
-		checkbox 'chk_longueurMax' "" pos:[157,98] width:12 height:12 align:#left
-		checkbox 'chk_etagesMax' "" pos:[157,113] width:12 height:12 align:#left
+		checkbutton 'chk_etagesMax' "" pos:[167,53] width:16 height:16 highlightColor:(color 255 255 0) toolTip:"Etage maximum." align:#left
 		
 		
 		
-		edittext 'edt_nom_composant' "" pos:[12,285] width:220 height:16 align:#left
-		listbox 'lbx_composants' "" pos:[7,142] width:217 height:9 align:#left
-		button 'btn_ajouter_composant' "+" pos:[194,127] width:16 height:16 align:#left
-		button 'btn_supprimer_composant' "-" pos:[209,127] width:16 height:16 align:#left
-		GroupBox 'grp3' "Propriétés composant :" pos:[7,269] width:232 height:328 align:#left
-		spinner 'spn_longueur_composant' "" pos:[85,302] width:67 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		spinner 'spn_longueurMax_composant' "" pos:[165,302] width:67 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-		checkbox 'chk_longueurMax_composant' "" pos:[155,304] width:12 height:12 align:#left
-		listbox 'lbx_modeles' "" pos:[16,349] width:214 height:9 align:#left
-		button 'btn_ajouter_modele' "+" pos:[200,334] width:16 height:16 align:#left
-		button 'btn_supprimer_modele' "-" pos:[215,334] width:16 height:16 align:#left
-		label 'lbl12' "Modèles:" pos:[17,334] width:53 height:15 align:#left
 		
-		label 'lbl23' "Séquence:" pos:[7,128] width:52 height:15 align:#left
+		ListBox 'lbx_sequence' "" pos:[91,109] width:137 height:9 align:#left
 		
-		button 'btn_enregistrer' "Enregistrer sous" pos:[123,24] width:117 height:16 align:#left
-		button 'btn_charger' "Charger" pos:[7,24] width:117 height:16 align:#left
-		
-		button 'btn_monter' "^" pos:[224,180] width:16 height:16 align:#left
-		button 'btn_descendre' "v" pos:[224,195] width:16 height:16 align:#left
-		edittext 'edt_fichier' "" pos:[89,553] width:100 height:16 align:#left
-		label 'lbl_fichier' "Fichier:" pos:[25,553] width:40 height:15 align:#left
-		spinner 'spn_proba_modele' "" pos:[95,488] width:71 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
-		label 'lbl_proba_modele' "Probabilité:" pos:[25,488] width:58 height:15 align:#left
-		dropdownList 'ddl_mode' "" pos:[86,56] width:153 height:21 items:#("Répéter", "Etrirer", "Centrer", "Espacer") selection:3 align:#left
-		checkbox 'chk_longueur' "longueur:" pos:[6,97] width:62 height:14 align:#left
-		checkbox 'chk_etages' "Etages:" pos:[6,112] width:52 height:14 align:#left
-		label 'lbl_mode' "Mode:" pos:[8,61] width:33 height:15 align:#left
-		checkbox 'chk_troncable' "Troncable" pos:[15,319] width:63 height:14 align:#left
-		GroupBox 'grp_model' "Modèle :" pos:[16,472] width:213 height:120 align:#left
-		button 'btn_from_fichier' "..." pos:[205,553] width:16 height:16 align:#left
+-- 		dotNetControl 'lbx_sequence'	 "System.Windows.Forms.ListView" pos:[91,109] 	width:490 height:190 
 		
 		
-		checkbox 'chk_longueur_compo' "longueur:" pos:[15,303] width:62 height:14 align:#left
 		
 		
-		button 'btn_merge_modele' "Merge" pos:[127,507] width:52 height:16 align:#left
-		pickbutton 'pck_model_scene' "Pick" pos:[76,507] width:52 height:16 align:#left
+		button 'btn_supprimer_composant' "-" pos:[228,217] width:16 height:16 toolTip:"Supprimer le composant" align:#left
 		
+		label 'lbl23' "Séquence:" pos:[11,90] width:52 height:15 align:#left
+		
+		button 'btn_enregistrer' "S" pos:[224,24] width:19 height:19 toolTip:"Sauvegarder preset." align:#left
+		button 'btn_charger' "O" pos:[206,24] width:19 height:19 toolTip:"Ouvrir preset." align:#left
+		
+		button 'btn_monter' "/\\" pos:[-50,108] width:16 height:25 toolTip:"Monter le composant." align:#left
+		button 'btn_descendre' "\/" pos:[228,132] width:16 height:25 toolTip:"Descendre le composant." align:#left
+		dropdownList 'ddl_mode' "" pos:[90,88] width:154 height:21 items:#("Répéter", "Etrirer", "Centrer", "Espacer") selection:3 align:#left
+		checkbutton 'chk_etages' "" pos:[90,53] width:16 height:16 enabled:true highlightColor:(color 255 255 0) toolTip:"Etage minimum." align:#left
+	
+		button 'btn_ajouter_espacement' "Espacement" pos:[10,108] width:81 height:16 toolTip:"Ajouter un espacement. Mur plein de longueur varirable, répartis par facade, entre tous les espacement" align:#left
+		button 'btn_ajouter_modele' "Modèle 3D" pos:[10,138] width:81 height:16 toolTip:"Ajouter un modèle 3D." align:#left
+		
+		button 'btn_annuler' "Annuler" pos:[127,242] width:118 height:21 align:#left
+		button 'btn_valider' "Valider" pos:[10,242] width:118 height:21 align:#left
+		
+		label 'lbl95' "Etages:" pos:[12,54] width:43 height:15 align:#left
+		
+		button 'btn_ajouter_longueurFixe' "Longueur fixe" pos:[10,123] width:81 height:16 toolTip:"Ajouter un mur plein de longueur fixe." align:#left
 		
 		
 		------------  Fonctions	----------------------------------------------------------------------------------
@@ -98,276 +104,307 @@
 				#Press : 	ui_btnFermer.bitmap = icos_fermer[3]	
 			)
 		)
-		
-		
 		fn actualiser = (
 			
-			local fcdTmp = m_prt.facade_courante
+			edt_nom_facade.text 			= m_facade.nom
 			
-			edt_nom_facade.text 			= fcdTmp.nom
+			chk_etages.checked				= m_facade.etages_use_min
+			spn_etages.indeterminate 		= not m_facade.etages_use_min	
+			spn_etages.enabled 				= m_facade.etages_use_min	
+			if not spn_etages.indeterminate do
+				spn_etages.value				= m_facade.etages_nbre_min
 			
-			spn_longueur.value				= fcdTmp.longueur_min
-			spn_longueurMax.value			= fcdTmp.longueur_max
-			spn_etages.value					= fcdTmp.etages_nbre_min
-			spn_etagesMax.value			= fcdTmp.etages_nbre_max
+			chk_etagesMax.checked		= m_facade.etages_use_max
+			spn_etagesMax.indeterminate = not m_facade.etages_use_max	
+			spn_etagesMax.enabled		= m_facade.etages_use_max			
+			if not spn_etagesMax.indeterminate do
+				spn_etagesMax.value		= m_facade.etages_nbre_max	
 			
-			chk_longueur.checked			= fcdTmp.longueur_use
-			chk_etages.checked				= fcdTmp.etages_use
+			ddl_murs.selection 				= m_facade.murs
+			ddl_mode.selection 				= m_facade.mode
 			
-			spn_longueurMax.enabled			= chk_longueur.checked
-			spn_etagesMax.enabled			= chk_etages.checked
-			
-			chk_longueurMax.checked		= fcdTmp.longueur_use_max
-			chk_etagesMax.checked		= fcdTmp.etages_use_max
-			
--- 			chk_etages.enabled 				= fcdTmp.etages_use
--- 			chk_longueur.enabled 			= fcdTmp.longueur_use
-			
-			spn_longueur.enabled 			= chk_longueur.checked	
-			spn_etages.enabled 				= chk_etages.checked	
-
-			ddl_appliquerA.selection 		= fcdTmp.murs
-			ddl_mode.selection 				= fcdTmp.mode
-			
-			spn_longueurMax.enabled		= chk_longueurMax.checked
-			spn_etagesMax.enabled		= chk_etagesMax.checked
-			
--- 			lbx_composants.items = for compo in m_prt.get_sequence_courante 	m_cible		collect compo.nom
-			local enabled = lbx_composants.selection != 0 
-			
-			btn_monter.enabled = enabled
-			btn_descendre.enabled = enabled
-			
-			btn_supprimer_composant.enabled = enabled
-			grp3.enabled = enabled
-			spn_longueur_composant.enabled = enabled
-			spn_longueurMax_composant.enabled = enabled
-			chk_longueurMax_composant.enabled = enabled
-			
-			lbx_modeles.enabled = enabled
-			btn_ajouter_modele.enabled = enabled
-			btn_supprimer_modele.enabled = enabled
-			lbl12.enabled = enabled
-			edt_nom_composant.enabled = enabled
-			chk_troncable.enabled = enabled
-			chk_longueur_compo.enabled = enabled
-			chk_longueur_compo.enabled = enabled
-			
-			local compoTmp = m_prt.composant_courant
-			if compoTmp != undefined then (
-				spn_longueur_composant.Indeterminate 	= false
-				spn_longueurMax_composant.Indeterminate = false
+			local itemsTmp = #()
+			for comp in m_facade.sequence		do	(
 				
-				edt_nom_composant.text 					= compoTmp.nom
-				spn_longueur_composant.value 			= compoTmp.longueur
-				chk_longueurMax_composant.state 	= compoTmp.longueur_maxEnable
-				
-				spn_longueurMax_composant.value	 	= compoTmp.longueur_max
-				
-				lbx_modeles.items = for modele in m_prt.get_modeles_courant 	m_cible		collect modele.nom
-				
-			) else (
-				edt_nom_composant.text =""
-				spn_longueur_composant.Indeterminate = true 
-				spn_longueurMax_composant.Indeterminate = true
-				chk_longueurMax_composant.triState	= 2
+				case comp.type of (
+					#Espacement:		append itemsTmp "<--->"
+					#LongueurFixe:	append itemsTmp ("|-----|    "	+ comp.longueur as string  + "cm" )
+					#Modele:			append itemsTmp ("|  #  |    "	+ comp.nom )
+					default:				append itemsTmp comp.nom
+				)
 				
 			)
+			lbx_sequence.items =  itemsTmp
 			
-			lbx_composants.items = for compo in m_prt.get_sequence_courante 	m_cible		collect compo.nom
-			local enabled_model = lbx_composants.selection != 0
+			btn_supprimer_composant.enabled = lbx_sequence.selection != 0
 			
-			grp_model.enabled = enabled_model
-			spn_proba_modele.enabled = enabled_model
+			try dialog_modele.actualiser () 			catch ()
+			try dialog_longueurFixe.actualiser () 	catch ()
+		)
+		
+		
+		
+		
+		fn redimensionnerFenetre 		_taille 	=(
+			format "redimensionnerFenetre\n"
 			
-			lbl_fichier.enabled = enabled_model
-			edt_fichier.enabled = enabled_model
-			btn_from_fichier.enabled = enabled_model
--- 			pck_model_scene.enabled = enabled_model
-			lbl_proba_modele.enabled = enabled_model
+			if 	_taille.x < 255 do 
+				roll_urba_editeurFacades.width = _taille.x =  255
+			if 	_taille.y < 255 do 
+				roll_urba_editeurFacades.height = _taille.y =  255
+			
+			
+			local largeur_btn 		= 17
+			local largeur_bord 		= edt_nom_facade.pos.x
+			
+			ui_btnFermer.pos.x		= 	_taille.x - 20
+			
+			edt_nom_facade.width 	= 	_taille.x - ( 2* largeur_bord	+ 2 * largeur_btn   )
+			btn_enregistrer.pos.x 	= 	edt_nom_facade.width 	+  edt_nom_facade.pos.x
+			btn_charger.pos.x 		= 	largeur_btn 	+  btn_enregistrer.pos.x
+			
+			ddl_murs.width 			= 	ddl_mode.width  = 	_taille.x  - ( ddl_murs.pos.x + largeur_bord )
+			lbx_sequence.width 		= ddl_murs.width 	 - largeur_btn
+			
+			lbx_sequence.height 	= _taille.y - ( lbx_sequence.pos.y + largeur_btn + 2 * largeur_bord )
+			
+			
+			btn_annuler.pos.x		= _taille.x - (  118 + largeur_bord )
+			btn_annuler.pos.y 		= btn_valider.pos.y 	= _taille.y - (  largeur_btn +  largeur_bord )
+			
+			btn_monter.pos.x			=	btn_descendre .pos.x		=	btn_supprimer_composant.pos.x 	= lbx_sequence.pos.x + lbx_sequence.width
+			btn_supprimer_composant.pos.y 	= lbx_sequence.pos.y + lbx_sequence.height - 14
 			
 		)
+		
+		
+		
+		
 		
 		---- Initialisation de la fenetre  -----
 		fn initialiser = (
 			
 			m_drag 		= str_drag 	m_prt:roll_urba_editeurFacades		
 			
-			m_titre 		= str_label 	m_ui:ui_titre			m_texte:"Urba | Editeur de façades"
+			m_titre 		= str_label 	m_ui:ui_titre			m_texte:"Urba | Bâtiment | Façade"
 			m_titre.setCouleur (color 255 255 255 )
--- 			m_titre.setCouleurFond ( color 200 200 200 )
-
 			
 			-- le bouton fermer --
 			ui_btnFermer.pos = [roll_urba_editeurFacades.width - 20,0]
 			ui_btnFermer.bitmap = icos_fermer[1]	
 			
+			
+			
+			-- la fenetre ----
+			redimensionnerFenetre  (getDialogSize	roll_urba_editeurFacades)
 			actualiser()
+		)
+		
+		fn ouvrir_fenetre_modele 			=(
+			
+-- 			try destroyDialog  dialog_modele 			catch ()
+-- 			try destroyDialog  dialog_longueurFixe 	catch ()
+			
+			--- import du rollout ----
+			dialog_modele = include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - rollout Modele.ms"
+			
+			---- creation de la fenetre ----
+			createDialog dialog_modele 	style:			#(#style_resizing) 	\
+													lockHeight:		true						\
+													lockWidth:		true	
+			
+			---- initialisation de la fenetre ----
+			dialog_modele.m_prt	 			= roll_urba_editeurFacades
+			dialog_modele.m_cible 			= m_cible	
+			dialog_modele.m_composant 	= m_composant_courant
+			
+			dialog_modele.initialiser ()
+			
+		)
+		
+		fn ouvrir_fenetre_longueurFixe 		=(
 
-		)
-		
-		
-		------------  Evenements	----------------------------------------------------------------------------------
-		
-		---- Fermer ----
-		
-		---- Drag ----
-		
+-- 			try destroyDialog  dialog_modele 			catch ()
+-- 			try destroyDialog  dialog_longueurFixe 	catch ()
 			
-		
+			--- import du rollout ----
+			dialog_longueurFixe = include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - rollout longueurFixe.ms"
 			
-		
-		on lbx_modeles	selected val do
-			m_prt.afficher_modele		val 	m_cible
-		
-		
-		
-	
-		on pck_model_scene 	picked _node do (
-			format "pck_model_scene+++++++++++++++++++\n"
-			m_prt.assigner_node 	_node	m_cible
-		)
-		on btn_merge_modele pressed do
-	(
-			m_prt.merge_modele		m_cible
+			---- creation de la fenetre ----
+			createDialog dialog_longueurFixe 	style:				#(#style_resizing) 	\
+										lockHeight:		true							\
+										lockWidth:		true	
+			
+			---- initialisation de la fenetre ----
+			dialog_longueurFixe.m_prt	 	= roll_urba_editeurFacades
+			dialog_longueurFixe.m_cible 	= m_cible	
+			dialog_longueurFixe.m_composant 	= m_composant_courant		
+			dialog_longueurFixe.initialiser ()
+			
 		)
 		
 		
 		
 		
+		------------  Evenements	----------------------------------------------------------------------------------	
 		
-		on roll_urba_editeurFacades lbuttondown _pos 	do
-			m_drag.demarrer ()
-		on roll_urba_editeurFacades lbuttonup _pos 	do
-			m_drag.arreter ()
-		on roll_urba_editeurFacades mouseMove _pos 	do
-			m_drag.suivreSouris ()
-		on ui_btnFermer mouseover do
-			etatBtnFermer #Survol
-		on ui_btnFermer mouseout do
-			etatBtnFermer #Repos
-		on ui_btnFermer mouseDown do
-			etatBtnFermer #Press
-		on ui_btnFermer mouseUp do
-			etatBtnFermer #Repos
-		on ui_btnFermer click do
-			m_prt.fermer ()
+		
+		---- rollout	--------------------------
+		on roll_urba_editeurFacades resized 		_taille do	redimensionnerFenetre 	_taille
+		on roll_urba_editeurFacades lbuttondown _pos 	do	m_drag.demarrer ()
+		on roll_urba_editeurFacades lbuttonup 	_pos 	do	m_drag.arreter ()
+		on roll_urba_editeurFacades mouseMove _pos 	do	m_drag.suivreSouris ()
+		on roll_urba_editeurFacades close 					do	(			
+					try destroyDialog  dialog_modele 			catch ()
+					try destroyDialog  dialog_longueurFixe 	catch ()
+				)		
+		
+		
+		---- btn fermer	--------------------------
+		on ui_btnFermer 	mouseover 		do	etatBtnFermer #Survol
+		on ui_btnFermer 	mouseout 		do	etatBtnFermer #Repos
+		on ui_btnFermer 	mouseDown 	do	etatBtnFermer #Press
+		on ui_btnFermer 	mouseUp 		do	etatBtnFermer #Repos
+		on ui_btnFermer 	click 				do	(
+					if queryBox "Enregistrer les modifications ?"	title:"Urba | Bâtiment | Façade" 	do 
+						m_prt.valider_facade 	m_cible
+					m_prt.fermer ()
+				)
+		
+		
+		---- Interface	--------------------------
 		on edt_nom_facade entered txt 	do
-			m_prt.set_nom 		txt		m_cible
-		on spn_longueur changed val do
 		(
-					m_prt.set_longueur			val		m_cible
+					m_facade.nom 					=	txt		
 					actualiser ()
 				)
-		on spn_longueurMax changed val do
+		on spn_etages changed val 	do
 		(
-					m_prt.set_longueurMax			val		m_cible
+					m_facade.etages_nbre_min 	= 	val
 					actualiser ()
 				)
-		on spn_etages changed val do
+		on spn_etagesMax changed val 	do
 		(
-					m_prt.set_etages			val		m_cible
+					m_facade.etages_nbre_max 	= 	val
 					actualiser ()
 				)
-		on spn_etagesMax changed val do
+		on ddl_murs selected sel	 do
 		(
-					m_prt.set_etagesMax			val		m_cible
-					actualiser ()
-				)
-		on ddl_appliquerA selected arg do
-		(
-					m_prt.set_murs			arg		m_cible
-					actualiser ()
-				)
-		on chk_longueurMax changed state do
-		(
-					m_prt.set_longueurMaxState			state		m_cible
+					m_facade.murs 	= 	sel
 					actualiser ()
 				)
 		on chk_etagesMax changed state do
 		(
-					m_prt.set_etagesMaxState			state		m_cible
+					m_facade.etages_use_max 	= 	state		
 					actualiser ()
 				)
-		on edt_nom_composant entered txt do
+		on ddl_mode selected sel	 do
 		(
-					m_prt.set_nom_composants	txt		m_cible
-					actualiser ()
-				)
-		on lbx_composants selected val do
-		(
-					m_prt.afficher_composant 	val 	m_cible
-					actualiser ()
-				)
-		on btn_ajouter_composant pressed do
-		(
-					m_prt.ajouter_composant				m_cible
-					actualiser ()
-				)
-		on btn_supprimer_composant pressed do
-		(
-					m_prt.supprimer_composant			lbx_composants.selection 		m_cible
-					actualiser ()
-				)
-		on spn_longueur_composant changed val do
-		(
-					m_prt.set_longueur_composant			val		m_cible
-					actualiser ()
-				)
-		on spn_longueurMax_composant changed val do
-		(
-					m_prt.set_longueurMax_composant				val		m_cible
-					actualiser ()
-				)
-		on chk_longueurMax_composant changed state do
-		(
-					m_prt.set_longueurMax_composantState			state		m_cible
-					actualiser ()
-				)
-		on btn_ajouter_modele pressed do
-		(
-					m_prt.ajouter_modele				state		m_cible
-					actualiser ()
-				)
-		on btn_supprimer_modele pressed do
-		(
-					m_prt.supprimer_modele				state		m_cible
-					actualiser ()
-				)
-		on btn_enregistrer pressed do
-			m_prt.enregistrer  ()
-		on btn_charger pressed do
-		(
-					m_prt.charger 	m_cible
-					actualiser ()
-				)
-		on btn_monter pressed do
-		(
-		
-					
-					actualiser ()
-				)
-		on btn_descendre pressed do
-		(
-				
-					actualiser ()
-				)
-		on ddl_mode selected val do
-		(
-					m_prt.set_mode 	val 	m_cible
-					actualiser ()
-				)
-		on chk_longueur changed state do
-		(
-					m_prt.set_longueurState			state		m_cible
+					m_facade.mode 	= 	sel
 					actualiser ()
 				)
 		on chk_etages changed state do
 		(
-					m_prt.set_etagesState			state		m_cible
+					m_facade.etages_use_min 	= 	state		
 					actualiser ()
 				)
-	)
+		
+		
+		
+		
+		--- sequence -----------------------
+		on btn_monter 		pressed do (
+					local id_orig = lbx_sequence.selection
+					if id_orig >1 do (
+						local itemTmp = m_facade.sequence[id_orig]
+						deleteItem	m_facade.sequence	id_orig
+						insertItem	itemTmp		m_facade.sequence	(id_orig-1)
+						lbx_sequence.selection	-= 1
+					)
+					actualiser ()
+				)
+		
+		on btn_descendre 	pressed do (
+					local id_orig = lbx_sequence.selection
+					if id_orig < m_facade.sequence.count do (
+						local itemTmp = m_facade.sequence[id_orig]
+						deleteItem	m_facade.sequence	id_orig
+						insertItem	itemTmp		m_facade.sequence	(id_orig+1)
+						lbx_sequence.selection	+= 1
+					)
+					actualiser ()
+				)
+		
+		on btn_supprimer_composant 	pressed do (
+					local id = lbx_sequence.selection
+					if id != 0 do
+						deleteItem	m_facade.sequence	id					
+					actualiser ()
+				)
+		
+		
+		on lbx_sequence selected _sel 	do (
+					m_composant_courant = m_facade.sequence[_sel]
+					
+					actualiser ()
+				)
+		on lbx_sequence 	doubleClicked 	_sel 	do (
+					m_composant_courant = m_facade.sequence[_sel]	
+					if m_composant_courant.type == #Modele then
+						ouvrir_fenetre_modele 	()
+					else if m_composant_courant.type ==#LongueurFixe then
+						ouvrir_fenetre_longueurFixe()
+					actualiser ()
+				)
+		
+		on btn_ajouter_espacement pressed do
+		(
+					format "lbx_sequence.selection:%\n" lbx_sequence.selection
+					m_composant_courant = m_prt.ajouter_composant		lbx_sequence.selection	 #Espacement		m_cible 
+					actualiser()
+					
+					lbx_sequence.selection	+= 1
+				)
+		on btn_ajouter_modele pressed do
+		(
+					format "lbx_sequence.selection:%\n" lbx_sequence.selection
+					m_composant_courant = m_prt.ajouter_composant		lbx_sequence.selection	 #Modele	m_cible
+					actualiser()
+					
+					lbx_sequence.selection	+= 1
+					
+					ouvrir_fenetre_modele 	()
+				)
+		on btn_ajouter_longueurFixe pressed do
+		(
+					format "lbx_sequence.selection:%\n" lbx_sequence.selection
+					m_composant_courant	= m_prt.ajouter_composant		lbx_sequence.selection	 #LongueurFixe	m_cible 
+					actualiser()
+					
+					lbx_sequence.selection	+= 1
+					
+					ouvrir_fenetre_longueurFixe ()
+				)
+				
+				
+				
+				
+		---- Validation / Annulation	--------------------------
+		on btn_annuler pressed do
+		(
+					if queryBox "Enregistrer les modifications ?"	title:"Urba | Bâtiment | Façade" 	do 
+						m_prt.valider_facade 	m_cible
+					m_prt.fermer ()
+				)
+		on btn_valider pressed do
+		(
+					m_prt.valider_facade 	m_cible
+					m_prt.fermer ()
+				)
+				
+				
+				
+	) --- fin rollout --------------------
 	
 	
 	
@@ -378,8 +415,3 @@
 	
 	
 	
-	
-	
-	
-	
-			

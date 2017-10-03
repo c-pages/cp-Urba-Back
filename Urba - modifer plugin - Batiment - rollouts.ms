@@ -77,7 +77,7 @@ parameters params_facades 	rollout:roll_facades			(
 	facades_items					type:#stringTab 		tabSize:0 			tabSizeVariable:true
 	facades_composants		type:#stringTab 		tabSize:0 			tabSizeVariable:true
 	facades_modeles				type:#stringTab 		tabSize:0 			tabSizeVariable:true
-	facades_modeles_imgs		type:#bitmapTab		tabSize:0 			tabSizeVariable:true
+	materiaux						type:#materialTab		tabSize:0 			tabSizeVariable:true
 )
 parameters params_toiture rollout:roll_toiture			(
 	
@@ -251,6 +251,15 @@ rollout roll_global "Global" width:247 height:172
 )
 rollout roll_facades "Façades" width:510 height:813
 (
+		local m_debug = true
+	local m_dbgPrefix ="urba | roll_facades"
+	fn debug 	_txt  var:	 param:    =(
+		try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
+		catch ()
+	)
+	
+	
+	
 	listbox 'lbx_facades' "" pos:[5,15] width:165 height:9 align:#left 
  
  
@@ -259,6 +268,7 @@ rollout roll_facades "Façades" width:510 height:813
 	button 'btn_supprimerFacade' "-" pos:[156,-1] width:16 height:16 align:#left
 
 	fn actualiser =(
+			debug "actualiser"
 		
 		enabled = a_un_trace
 		lbx_facades.enabled 			= enabled
@@ -266,7 +276,9 @@ rollout roll_facades "Façades" width:510 height:813
 		btn_supprimerFacade.enabled = enabled		
 		
 		if a_un_trace do (
+			debug "a_un_trace" var:a_un_trace
 			local listTmp = for comp in facades.get_items this collect comp.nom
+			debug "listTmp" var:listTmp
 			lbx_facades.items = listTmp
 		)
 		

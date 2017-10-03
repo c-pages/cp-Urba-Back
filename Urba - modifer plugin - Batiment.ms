@@ -37,79 +37,73 @@
 
 
 
-
 struct str_facade_modele (
 		
-		id			= "",
-		nom 		=	"Modèle",
+		id				= "#FAC_MOD_",
+		nom 			=	"Modèle",
 		
-		verts 	=#(),
-		edges	=#(),
-		faces		=#(),		
-		SMs		=#(),
-		matIDs	=#(),
+		verts 		= #(),
+		edges		= #(),
+		faces			= #(),		
+		SMs			= #(),
+		matIDs		= #(),
 		
-		longueur 	= 0.,
+		longueur 	=  0.,
 		hauteur		=	0.,
 		
-		on create do (
-			local result ="FAC_MOD_"
-			for i= 1 to 10 do (
-				result += ( random 0 9 ) as string
-			)
-			id = result
+		----- events ------------------------------------------
+		on create do (			
+			---- generation de l'id unique -------
+			for i= 1 to 10 do id += ( random 0 9 ) as string	
 		)
 
 )
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------------------
+
 struct str_facade_composant (
 		
-		id							= "",
+		id							= "#FAC_CMP_",
 		nom 						=	"Composant de façade",
-		longueur				=	0,
-		longueur_max		=	0,
-		longueur_maxEnable		=	false,
-		modeles_ids			=	#(),
+		
+		type						= #Espacement,		--->	#Espacement		#LongueurFixe		#Modele
+		
+		longueur					=	0.,	
+		modeles					=	#(),
 		modeles_probas		=	#(),
-		etirable					=	false,
-	
-	
+		
+		----- events ------------------------------------------
 		on create do (
-			local result ="FAC_CMP_"
-			for i= 1 to 10 do (
-				result += ( random 0 9 ) as string
-			)
-			id = result
+			---- generation de l'id unique -------
+			if type == #Espacement then 
+				id = "#FAC_CMP_ESP"
+			else
+				for i= 1 to 10 do id += ( random 0 9 ) as string	
 		)
 	
 )
 
+ 
+
+
+
 struct str_facade (
+		
+		nom 						=	"Façade",
+		
+		etages_use_min		=	false,
+		etages_nbre_min		= 	0,
+		etages_use_max		=	false,
+		etages_nbre_max		=	0,
 	
-		nom 						=	"Facade",
-		
-		mode						=	1,			---- (repeter, etrier, centrer)
 		murs						=	1,			---- (les deux ,gouttereaux, pignons )
-		
-		
-		etages_use			=	false,
-		etages_nbre_min	= 	0,
-		etages_nbre_max	=	0,
-		etages_use_max	=	false,
-		
-		longueur_use			=	false,
-		longueur_min		=	0,
-		longueur_max		=	0,
-		longueur_use_max	=	false,
-		
-		probabilite 			= 100.,
-		repeter					=	true,
-		etirer					=	false,
+		mode						=	1,			---- (repeter, etrier, centrer)
 		
 		sequence				=	#()
 		
-		
-		
-)
+) 
 
 ---------------presse papier ---------
 global urba_clipboard_batiment = ""
@@ -147,7 +141,7 @@ extends:Editable_poly replaceUI:true version:0
 	---- le model dessiné d'un batiment vide ------------------
 	local traceLogo = #([14.1994,37.717,0], [14.1994,-189.586,0], [287.927,-189.586,0], [287.927,139.601,0], [174.501,253.027,0], [174.501,479.879,0], [61.0754,479.879,0], [61.0754,366.453,0], [-52.3504,479.879,0], [-392.628,139.601,0], [-392.628,-189.586,0], [-118.9,-189.586,0], [-118.9,37.717,0])
 
-	local params_aEnregistrer = 	#(		/*  ----	Global  	----  */		#niveaux_hauteur, #niveaux_nbre, 
+	local params_aEnregistrer = 	#(		/*  ----	Global  	----  */		#niveaux_hauteur, #niveaux_nbre, #axeP_orientation,
 													/*  ----	Toiture 	----  */		#toit_pente, #toit_type, #toit_hauteur ,
 													/*  ----	Tracé  	----  */		#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho ,
 													/*  ----	 Facades  	----  */		#facades_composants , #facades_items, #facades_modeles
@@ -165,6 +159,7 @@ extends:Editable_poly replaceUI:true version:0
 	--------------- import des STRUCTURES  ----------------------------------------------------------------------------------------------------------------------
 	
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
+	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - Construire.ms"
 	
 	local geo 			= 	str_geo 			()
 	local facades		=	str_facades		()
@@ -286,10 +281,20 @@ extends:Editable_poly replaceUI:true version:0
 	)
 	------ Rollouts------------
 	fn actualiser_rollouts =(
-		roll_global.actualiser 	()
-		roll_facades.actualiser ()
+		debug "actualiser_rollouts 0"
+		
+		roll_global.actualiser 	()		
+		debug "actualiser_rollouts 1"
+		
+		roll_facades.actualiser 	()
+		debug "actualiser_rollouts 2"
+		
 		roll_toiture.actualiser	()
-		roll_infos.actualiser 	()
+		debug "actualiser_rollouts 3"
+		
+		roll_infos.actualiser 		()
+		debug "actualiser_rollouts : OK"
+		
 	)
 	
 	
@@ -353,7 +358,9 @@ select bat1
 
 
 
+$.facades.get_composants $
 
+$.facades_composants
 
 debug_mode = true
 
