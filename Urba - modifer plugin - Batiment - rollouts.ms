@@ -124,6 +124,8 @@ rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 	on btn_charger pressed do
 	(
 			presets.charger 		this
+			facades.params_toStructs 	this
+		
 			trace.actualiser this
 			construire.batiment this
 			actualiser_rollouts()
@@ -131,6 +133,8 @@ rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 	on btn_coller pressed do
 	(
 			presets.coller 	this 
+			params_toStructs 	this
+		
 			trace.actualiser this
 			construire.batiment this
 			actualiser_rollouts()
@@ -192,10 +196,18 @@ rollout roll_global "Global" width:247 height:172
 		
 	)
 
+	on spn_hauteur 	buttonDown 	do 	flagForeground $ 	true
+	on spn_hauteur	 buttonUp 		do 	flagForeground $ 	false
+		
+	
+	
 	on spn_nbres changed  arg do (
 		construire.batiment this
 	)
-			
+	on spn_nbres 	buttonDown 	do 	flagForeground $ 	true
+	on spn_nbres	 buttonUp 		do 	flagForeground $ 	false
+	
+	
 	on btn_rotation_inv  	pressed  do (
 		axeP_orientation -= 90
 		trace.actualiser this
@@ -268,7 +280,7 @@ rollout roll_facades "Façades" width:510 height:813
 	button 'btn_supprimerFacade' "-" pos:[156,-1] width:16 height:16 align:#left
 
 	fn actualiser =(
-			debug "actualiser"
+-- 			debug "actualiser"
 		
 		enabled = a_un_trace
 		lbx_facades.enabled 			= enabled
@@ -276,9 +288,9 @@ rollout roll_facades "Façades" width:510 height:813
 		btn_supprimerFacade.enabled = enabled		
 		
 		if a_un_trace do (
-			debug "a_un_trace" var:a_un_trace
+-- 			debug "a_un_trace" var:a_un_trace
 			local listTmp = for comp in facades.get_facades_param this collect comp.nom
-			debug "listTmp" var:listTmp
+-- 			debug "listTmp" var:listTmp
 			lbx_facades.items = listTmp
 		)
 		
@@ -288,7 +300,7 @@ rollout roll_facades "Façades" width:510 height:813
 	on roll_facades open do (
 		facades.params_toStructs		this
 		actualiser()
-		if facades.est_ouvert () do facades.ouvrir 	lbx_facades.selection 	this
+-- 		if facades.est_ouvert () do facades.ouvrir 	lbx_facades.selection 	this
 	)
 	on roll_facades close	do (
 -- 			format "FERMER FENETRE\n"

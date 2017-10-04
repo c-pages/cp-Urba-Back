@@ -36,82 +36,6 @@
 --------- STRUCTURES Datas --------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-struct str_plan (
-		------------ DEBUG	----------------------------------------------------------------------------------
-		m_debug = true,
-		m_dbgPrefix ="str_plan",
-		fn debug 	_txt  var:	 param:    =(
-			try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
-			catch ()
-		),
-		
-		a,
-		b,
-		c,
-		d,
-		normal ,
-		
-		fn creerFrom_2vecs_et_1Point	_vec1 	_vec2  	_point	=(
-			
--- 			debug "creerFrom_2vecs_et_1Point"
-			---le vec normal du plan-----
-			local norm1 = normalize _vec1
-			local norm2 = normalize _vec2		
-			normal =  cross    norm2 	norm1
-			
-			--- definition equation ---------
-			a = normal.x
-			b = normal.y
-			c = normal.z		
-			d = -( a*_point.x + b*_point.y + c*_point.z )
-			
--- 			debug "a" var:a
--- 			debug "b" var:b
--- 			debug "c" var:c
--- 			debug "d" var:d
-		),
-		fn projeter_point_verticalement 		_pt 	=(
--- 			debug "projeter_point_verticalement"
-			local result = copy _pt
-			result.z =  -( a*_pt.x + b*_pt.y + d ) / c
-			result
-			
-		),
-		
-
-		fn get_intersection_segment	_segPt1		_segPt2			=(
-			
-			local k	= -( a * _segPt1.x 		+	b * _segPt1.y 	+	c * _segPt1.z 	+ d ) 	/	( a * ( _segPt2.x -  _segPt1.x ) + b * ( _segPt2.y -  _segPt1.y )  + c * ( _segPt2.z -  _segPt1.z )  )
-
-			local ptResult 	= [0,0,0]
-			ptResult.x 			=  _segPt1.x + k * ( _segPt2.x 	-  _segPt1.x )
-			ptResult.y 			=  _segPt1.y + k * ( _segPt2.y 	-  _segPt1.y )
-			ptResult.z 			=  _segPt1.z + k * ( _segPt2.z 	-  _segPt1.z )
-			
-			ptResult
-			
-		),
-		fn coupe_segment	_segPt1		_segPt2			=(
-			
-			local pointIntersect = get_intersection_segment 	_segPt1		_segPt2 		
-			-- debug-------
--- 			point pos:pointIntersect isSelected:true
-			
-			local vecSeg 	= _segPt2 - _segPt1
-			local vecInter = pointIntersect - _segPt1
-			
-			if dot vecSeg vecInter >0 and length vecSeg > length vecInter then
-				true
-			else
-				false
-			
-		)
-		
-		
-		
-		
-)
-
 
 struct str_enregistreurDeNode (
 	private
@@ -136,39 +60,48 @@ struct str_enregistreurDeNode (
 		modele_result.hauteur 	=  BB[2].z - BB[1].z
 -- 		delete nodeTemp
 		
-		format "modele_result :%\n" modele_result
+-- 		format "modele_result :%\n" modele_result
 		modele_result
 	),
 
-	fn creer_objet		_modele		ndDest:	=(
+	fn creer_objet		_modele		_this		ndDest:		transf_mtrx:	=(
 		
 		if ndDest == unsupplied do
-			ndDest = delegate
+			ndDest = _this.delegate
+		
+		local verts		
+		if transf_mtrx != unsupplied then 
+			local verts = for  pt in _modele.verts  collect pt *= transf_mtrx
+		else verts = _modele.verts
+		
+			
+		local vrts_avtOp 	= polyop.getNumVerts 		ndDest
+		local faces_avtOp 	= polyop.getNumFaces 	ndDest
 		
 		-- les vertex -- 
-		local pts = _modele.verts
-		for pt in  pts do 
-			polyop.createVert ndDest	pt
+		for vert in  verts do 
+			polyop.createVert ndDest	vert
 			
 		-- les edges -- 
 		local edges = _modele.edges
 		for edge_pts in  edges do 
-			polyop.createEdge ndDest		edge_pts[1] 	edge_pts[2]
+			polyop.createEdge ndDest		(vrts_avtOp + edge_pts[1] )	( vrts_avtOp + edge_pts[2] )
 		
 		-- les faces -- 
 		local faces = _modele.faces
-		for face_pts in  faces do 
+		for face_pts in  faces do (
+			face_pts = for face_pt in face_pts collect ( vrts_avtOp + face_pt )
 			polyop.createPolygon	 ndDest		face_pts
-		
+		)
 		--- les smoothing group ----
 		local SGs = _modele.SMs
 		for i = 1 to  SGs.count do 
-			polyop.setFaceSmoothGroup	 ndDest		i  SGs[i]
+			polyop.setFaceSmoothGroup	 ndDest		( faces_avtOp + i )  SGs[i]
 		
 		--- les material ID ----
 		local matIDs = _modele.matIDs
 		for i = 1 to  matIDs.count do 
-			polyop.setFaceMatID	 ndDest		i  matIDs[i]
+			polyop.setFaceMatID	 ndDest		( faces_avtOp + i )  matIDs[i]
 		
 	)
 	
@@ -340,7 +273,7 @@ struct 	str_facades (
 		
 		
 		fn params_toStructs 	_this	=		(
-			debug "params_toStructs"  
+-- 			debug "params_toStructs"  
 			
 			modeles_total				= #()
 			for modele in _this.facades_modeles 	do (
@@ -348,7 +281,7 @@ struct 	str_facades (
 				datasMgr.set_datas_string		modele		nvModele	_this
 				append modeles_total 	nvModele
 			)
-			debug "params_toStructs 1 "  
+-- 			debug "params_toStructs 1 "  
 			
 			composants_total		= #()
 			for compo in _this.facades_composants 	do (
@@ -356,7 +289,7 @@ struct 	str_facades (
 				datasMgr.set_datas_string		compo		nvCompo	_this
 				append composants_total 		nvCompo
 			)
-			debug "params_toStructs 2 "  
+-- 			debug "params_toStructs 2 "  
 			
 			facades_total				= #()
 			for fac in _this.facades_items 	do (
@@ -365,10 +298,10 @@ struct 	str_facades (
 				append facades_total 		nvfacade
 			)
 			
-			debug "params_toStructs FIN"  
-			debug "		modeles_total"  		var:modeles_total
-			debug "		composants_total"  	var:composants_total
-			debug "		facades_total"  		var:facades_total
+-- 			debug "params_toStructs FIN"  
+-- 			debug "		modeles_total"  		var:modeles_total
+-- 			debug "		composants_total"  	var:composants_total
+-- 			debug "		facades_total"  		var:facades_total
 		),
 		
 	public
@@ -500,7 +433,7 @@ struct 	str_facades (
 		),
 		
 		fn get_facades_param 				_this	=(
-			debug "get_facades_param"
+-- 			debug "get_facades_param"
 			local result =#()
 			for facde in _this.facades_items 	do (
 				debug "facde" var:facde
@@ -508,7 +441,7 @@ struct 	str_facades (
 				datasMgr.set_datas_string		facde		nvlFacade	_this
 				append result nvlFacade
 			)
-			debug "get_facades_param - result" var:result
+-- 			debug "get_facades_param - result" var:result
 			result
 		),
 		
@@ -724,14 +657,15 @@ struct 	str_facades (
 		),
 		
 		fn enregistrer_facade		_facade		_this =(
-			
+			debug "enregistrer_facade" var:_facade
 			local id_compo 		= id_courant
 			local string_compo 	= (datasMgr.get_datas_string  _facade )
-			
+			debug "string_compo" var:string_compo
 			if id_courant != 0 then
 				_this.facades_items[id_courant] = (datasMgr.get_datas_string  _facade)
 			else
 				append	_this.facades_items		(datasMgr.get_datas_string  _facade)
+			debug "_this.facades_items" var:_this.facades_items
 			
 -- 			_this.actualiser_rollouts ()
 		),
@@ -759,10 +693,10 @@ struct 	str_facades (
 		
 		--------- INTERFACE ----------------------
 		fn valider_facade		_this =(
-			debug "valider_facade"	
+-- 			debug "valider_facade"	
 			
 			for compo in facade_courante.sequence do (
-				debug "compo" var: compo
+-- 				debug "compo" var: compo
 				
 				for modele in compo.modeles do (
 					enregistrer_modele	modele	 _this 
@@ -773,7 +707,7 @@ struct 	str_facades (
 			
 			
 			enregistrer_facade		facade_courante		_this 
-			debug "valider_facade FIN OK?!?!,######################################################################################################"	
+-- 			debug "valider_facade FIN OK?!?!,######################################################################################################"	
 			
 			
 			
@@ -866,9 +800,11 @@ struct 	str_facades (
 		
 		--------- FENETRE---------------------		
 		
-		fn est_ouvert =dialog_estOuvert,
+		fn est_ouvert = dialog_estOuvert,
 		fn fermer 						_this		quiet:false	=(
 -- 			debug "Fermer rollout"
+			
+-- 			stack  ()
 			
 			if not quiet do
 				if queryBox "Enregistrer les modifications ?"	title:"Urba | Bâtiment | Façade" 	do 
@@ -1108,17 +1044,17 @@ struct 	str_facades (
 ----------- Creation des geometries poly ----------------
 struct str_geo (
 	
-	fn vider 																			=(
-		if (polyop.getNumFaces delegate) >0 do (
-			local listeDesFaces = #{1..(polyop.getNumFaces delegate)} as array
-			polyop.deleteFaces delegate	listeDesFaces		delIsoVerts:true
-			polyop.deleteIsoVerts delegate
+	fn vider 											_this								=(
+		if (polyop.getNumFaces _this.delegate) >0 do (
+			local listeDesFaces = #{1..(polyop.getNumFaces _this.delegate)} as array
+			polyop.deleteFaces _this.delegate	listeDesFaces		delIsoVerts:true
+			polyop.deleteIsoVerts _this.delegate
 		)
 	),
-	fn creerFace  		_listeDesPoints   nd: 								=(
+	fn creerFace  		_listeDesPoints  	_this	 nd: 								=(
 		
 		
-		local  ndCible 	= if nd != unsupplied then nd else delegate
+		local  ndCible 	= if nd != unsupplied then nd else _this.delegate
 		local verts 	= polyop.getNumVerts ndCible
 		
 		-- les vertex --
@@ -1140,28 +1076,37 @@ struct str_geo (
 		polyop.createPolygon ndCible  listeVertexPrFace 
 		
 	),
-	fn creerFaceVerticale 	pt1 	pt2 	z 	hauteur							=(
+	
+	
+-- 	creerFaceVerticale 	pt1 	pt2 	( z + hauteur_modele )		_this 		ht:hauteurQuiReste	
+-- 	_this.niveaux_hauteur 
+	
+	fn creerFaceVerticale 	pt1 	pt2 	z 	_this				ht:			=(
 		
-		local verts = polyop.getNumVerts delegate		
+		local hauteur 
+		if ht != unsupplied then	hauteur = ht
+			else hauteur 	=	_this.niveaux_hauteur 
+		
+		local verts = polyop.getNumVerts _this.delegate		
 -- 		format "verts avant :%\n" verts
 		
-		polyop.createVert delegate	[pt2.x, pt2.y, z]	
+		polyop.createVert _this.delegate	[pt2.x, pt2.y, z]	
 -- 		format "result :%\n" result
-		polyop.createVert delegate	[pt1.x, pt1.y, z]
-		polyop.createVert delegate	[pt1.x, pt1.y, z + hauteur]
-		polyop.createVert delegate	[pt2.x, pt2.y, z + hauteur]
+		polyop.createVert _this.delegate	[pt1.x, pt1.y, z]
+		polyop.createVert _this.delegate	[pt1.x, pt1.y, z + hauteur]
+		polyop.createVert _this.delegate	[pt2.x, pt2.y, z + hauteur]
 		
 -- 		format "polyop.getNumEdges delegate :%\n" (polyop.getNumEdges delegate)
 		
-		polyop.createEdge delegate (verts+1) (verts+2)
-		polyop.createEdge delegate (verts+2) (verts+3)
-		polyop.createEdge delegate (verts+3) (verts+4)
-		polyop.createEdge delegate (verts+4) (verts+1)
+		polyop.createEdge _this.delegate (verts+1) (verts+2)
+		polyop.createEdge _this.delegate (verts+2) (verts+3)
+		polyop.createEdge _this.delegate (verts+3) (verts+4)
+		polyop.createEdge _this.delegate (verts+4) (verts+1)
 		
-		polyop.createPolygon delegate  #((verts+4),(verts+3),(verts+2),(verts+1))
+		polyop.createPolygon _this.delegate  #((verts+4),(verts+3),(verts+2),(verts+1))
 		
 	),
-	fn creerFacesContour	ptsContours	 altitude 		hauteur 	=(
+	fn creerFacesContour	ptsContours	 altitude 		hauteur 		_this	=(
 		
 		local facesDuContour =#()
 		local listePts = #()
@@ -1178,7 +1123,7 @@ struct str_geo (
 				pt_2 = listePts[1]
 			else pt_2 =  listePts[i_pt + 1 ]
 			
-			local nvlFace = creerFaceVerticale 		pt_1		pt_2 	altitude 	hauteur
+			local nvlFace = creerFaceVerticale 		pt_1		pt_2 	altitude 	_this	ht:hauteur
 			if nvlFace != undefined do
 				appendIfUnique facesDuContour	nvlFace
 		)
@@ -1192,9 +1137,9 @@ struct str_geo (
 struct str_trace (
 		geo_ptr,
 		-----------------  Opérations diverses ----------------------
-		fn surface 							_trace 	=(
+		fn surface 							_trace 	_this =(
 			--- on creer une face sur le tracé ---------
-			local faceTemp = geo_ptr.creerFace 	_trace 	--nd:nvNode
+			local faceTemp = geo_ptr.creerFace 	_trace  _this	--nd:nvNode
 			
 			--- pour utiliser cette fonction : ------
 			local result = polyop.getFaceArea  delegate faceTemp
@@ -1529,7 +1474,7 @@ struct str_trace (
 				_thisNode.a_un_trace 			= true
 				
 				----- calcul de la surface du trace_courant ------
-				_thisNode.surface = surface 		_thisNode.trace_courant
+				_thisNode.surface = surface 		_thisNode.trace_courant	_thisNode
 			)
 			actualiser  _thisNode
 		)

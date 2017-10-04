@@ -37,73 +37,10 @@
 
 
 
-struct str_facade_modele (
-		
-		id				= "#FAC_MOD_",
-		nom 			=	"Modèle",
-		
-		verts 		= #(),
-		edges		= #(),
-		faces			= #(),		
-		SMs			= #(),
-		matIDs		= #(),
-		
-		longueur 	=  0.,
-		hauteur		=	0.,
-		
-		----- events ------------------------------------------
-		on create do (			
-			---- generation de l'id unique -------
-			for i= 1 to 10 do id += ( random 0 9 ) as string	
-		)
-
-)
-
-------------------------------------------------------------------------------------------------------------------------------------
-
-------------------------------------------------------------------------------------------------------------------------------------
-
-struct str_facade_composant (
-		
-		id							= "#FAC_CMP_",
-		nom 						=	"Composant de façade",
-		
-		type						= #Espacement,		--->	#Espacement		#LongueurFixe		#Modele
-		
-		longueur					=	0.,	
-		modeles					=	#(),
-		modeles_probas		=	#(),
-		
-		----- events ------------------------------------------
-		on create do (
-			---- generation de l'id unique -------
-			if type == #Espacement then 
-				id = "#FAC_CMP_ESP"
-			else
-				for i= 1 to 10 do id += ( random 0 9 ) as string	
-		)
-	
-)
-
- 
- 
 
 
-struct str_facade (
-		
-		nom 						=	"Façade",
-		
-		etages_use_min		=	false,
-		etages_nbre_min		= 	0,
-		etages_use_max		=	false,
-		etages_nbre_max		=	0,
-	
-		murs						=	1,			---- (les deux ,gouttereaux, pignons )
-		mode						=	1,			---- (repeter, etrier, centrer)
-		
-		sequence				=	#()
-		
-) 
+
+include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures secondaires.ms"
 
 ---------------presse papier ---------
 global urba_clipboard_batiment = ""
@@ -129,6 +66,8 @@ extends:Editable_poly replaceUI:true version:0
 	--------------- IMPORTS  ----------------------------------------------------------------------------------------------------------------------
 	include "$userScripts\cp - GLOBAL\Enregistreur De Node.ms"
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
+	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
+	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - Construire.ms"
 	
 	--------------- PRé-DéCLARATIONS  ----------------------------------------------------------------------------------------------------------------------
 	----  rollouts ------------------
@@ -147,19 +86,12 @@ extends:Editable_poly replaceUI:true version:0
 													/*  ----	 Facades  	----  */		#facades_composants , #facades_items, #facades_modeles
 											)
 	
-	---- constantes------------------
-	local ep_ssBassement 	= 	100
-	local ep_dalle 				= 20
-	local ep_mur	 			= 20
-	local ep_couvertine	 	= 5
 	
 	
 	local murs_types = #("Gouttereaux", "Pignons", "Gouttereaux + Pignons")
 	
 	--------------- import des STRUCTURES  ----------------------------------------------------------------------------------------------------------------------
 	
-	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
-	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - Construire.ms"
 	
 	local geo 			= 	str_geo 			()
 	local facades		=	str_facades		()
@@ -281,19 +213,19 @@ extends:Editable_poly replaceUI:true version:0
 	)
 	------ Rollouts------------
 	fn actualiser_rollouts =(
-		debug "actualiser_rollouts 0"
+-- 		debug "actualiser_rollouts 0"
 		
 		roll_global.actualiser 	()		
-		debug "actualiser_rollouts 1"
+-- 		debug "actualiser_rollouts 1"
 		
 		roll_facades.actualiser 	()
-		debug "actualiser_rollouts 2"
+-- 		debug "actualiser_rollouts 2"
 		
 		roll_toiture.actualiser	()
-		debug "actualiser_rollouts 3"
+-- 		debug "actualiser_rollouts 3"
 		
 		roll_infos.actualiser 		()
-		debug "actualiser_rollouts : OK"
+-- 		debug "actualiser_rollouts : OK"
 		
 	)
 	
@@ -334,7 +266,7 @@ extends:Editable_poly replaceUI:true version:0
 		debug "creation du plugin"		
 		--- le dessin du logo --------
 		trace_courant = traceLogo
-		geo.creerFace trace_courant
+		geo.creerFace trace_courant		this
 	)
 	
 	on update do	(
@@ -351,7 +283,7 @@ for obj in objects do if superclassof obj == GeometryClass and obj != $'triple00
 bat1 = urba_batiment ()
 clearlistener ()
 bat1.assigner_trace 	$Shape009	bat1
-bat1.facades.creer_facade 	bat1
+-- bat1.facades.creer_facade 	bat1
 -- Sphere radius:143.349 smooth:on segs:32 chop:0 slice:off sliceFrom:0 sliceTo:0 mapcoords:on recenter:off pos:[11188.5,-13914.2,0] isSelected:on
 select bat1
 
@@ -367,7 +299,7 @@ $.facades.get_composants $
 
 $.facades_composants
 
-debug_mode = true
+debug_mode = false
 
 
 

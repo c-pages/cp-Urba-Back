@@ -51,49 +51,49 @@
 		ImgTag 'ui_titre' "" pos:[8,4] width:66 height:18 align:#left
 	 
 		
-		edittext 'edt_nom_facade' "" pos:[7,25] width:200 height:16 align:#left
 		
-		spinner 'spn_etages' "" pos:[103,53] width:64 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-		spinner 'spn_etagesMax' "" pos:[180,53] width:63 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	edittext 'edt_nom_facade' "" pos:[7,25] width:200 height:16 align:#left
 		
-		
-		dropdownList 'ddl_murs' "" pos:[90,68] width:154 height:21 items:#("Gouttereaux + Pignons", "Gouttereaux", "Pignons") selection:3 align:#left
-		label 'lbl_appliquerA' "Murs:" pos:[12,72] width:32 height:15 align:#left
-		
-		checkbutton 'chk_etagesMax' "" pos:[167,53] width:16 height:16 highlightColor:(color 255 255 0) toolTip:"Etage maximum." align:#left
+	spinner 'spn_etages' "" pos:[103,53] width:64 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	spinner 'spn_etagesMax' "" pos:[180,53] width:63 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
 		
 		
+	dropdownList 'ddl_murs' "" pos:[90,68] width:154 height:21 items:#("Gouttereaux + Pignons", "Gouttereaux", "Pignons") selection:3 align:#left
+	label 'lbl_appliquerA' "Murs:" pos:[12,72] width:32 height:15 align:#left
+		
+	checkbutton 'chk_etagesMax' "" pos:[167,53] width:16 height:16 highlightColor:(color 255 255 0) toolTip:"Etage maximum." align:#left
 		
 		
-		ListBox 'lbx_sequence' "" pos:[91,109] width:137 height:9 align:#left
-		
+	listbox 'lbx_sequence' "" pos:[91,109] width:137 height:9 align:#left
 -- 		dotNetControl 'lbx_sequence'	 "System.Windows.Forms.ListView" pos:[91,109] 	width:490 height:190 
 		
+	button 'btn_supprimer_composant' "-" pos:[228,217] width:16 height:16 toolTip:"Supprimer le composant" align:#left
 		
+	label 'lbl23' "Séquence:" pos:[11,90] width:52 height:15 align:#left
 		
+	button 'btn_enregistrer' "S" pos:[224,24] width:19 height:19 toolTip:"Sauvegarder preset." align:#left
+	button 'btn_charger' "O" pos:[206,24] width:19 height:19 toolTip:"Ouvrir preset." align:#left
 		
-		button 'btn_supprimer_composant' "-" pos:[228,217] width:16 height:16 toolTip:"Supprimer le composant" align:#left
-		
-		label 'lbl23' "Séquence:" pos:[11,90] width:52 height:15 align:#left
-		
-		button 'btn_enregistrer' "S" pos:[224,24] width:19 height:19 toolTip:"Sauvegarder preset." align:#left
-		button 'btn_charger' "O" pos:[206,24] width:19 height:19 toolTip:"Ouvrir preset." align:#left
-		
-		button 'btn_monter' "/\\" pos:[-50,108] width:16 height:25 toolTip:"Monter le composant." align:#left
-		button 'btn_descendre' "\/" pos:[228,132] width:16 height:25 toolTip:"Descendre le composant." align:#left
-		dropdownList 'ddl_mode' "" pos:[90,88] width:154 height:21 items:#("Répéter", "Etrirer", "Centrer", "Espacer") selection:3 align:#left
-		checkbutton 'chk_etages' "" pos:[90,53] width:16 height:16 enabled:true highlightColor:(color 255 255 0) toolTip:"Etage minimum." align:#left
+	button 'btn_monter' "/\\" pos:[-50,108] width:16 height:25 toolTip:"Monter le composant." align:#left
+	button 'btn_descendre' "\/" pos:[228,132] width:16 height:25 toolTip:"Descendre le composant." align:#left
+	dropdownList 'ddl_mode' "" pos:[90,88] width:154 height:21 items:#("Répéter", "Etrirer", "Centrer", "Espacer") selection:3 align:#left
+	checkbutton 'chk_etages' "" pos:[90,53] width:16 height:16 enabled:true highlightColor:(color 255 255 0) toolTip:"Etage minimum." align:#left
 	
-		button 'btn_ajouter_espacement' "Espacement" pos:[10,108] width:81 height:16 toolTip:"Ajouter un espacement. Mur plein de longueur varirable, répartis par facade, entre tous les espacement" align:#left
-		button 'btn_ajouter_modele' "Modèle 3D" pos:[10,138] width:81 height:16 toolTip:"Ajouter un modèle 3D." align:#left
+	button 'btn_ajouter_espacement' "Espacement" pos:[10,108] width:81 height:16 toolTip:"Ajouter un espacement. Mur plein de longueur varirable, répartis par facade, entre tous les espacement" align:#left
+	button 'btn_ajouter_modele' "Modèle 3D" pos:[10,204] width:81 height:16 toolTip:"Ajouter un modèle 3D." align:#left
 		
-		button 'btn_annuler' "Annuler" pos:[127,242] width:118 height:21 align:#left
-		button 'btn_valider' "Valider" pos:[10,242] width:118 height:21 align:#left
+	button 'btn_annuler' "Annuler" pos:[127,242] width:118 height:21 align:#left
+	button 'btn_valider' "Valider" pos:[10,242] width:118 height:21 align:#left
 		
-		label 'lbl95' "Etages:" pos:[12,54] width:43 height:15 align:#left
+	label 'lbl95' "Etages:" pos:[12,54] width:43 height:15 align:#left
 		
-		button 'btn_ajouter_longueurFixe' "Longueur fixe" pos:[10,123] width:81 height:16 toolTip:"Ajouter un mur plein de longueur fixe." align:#left
+	button 'btn_ajouter_longueurFixe' "Longueur fixe" pos:[10,123] width:81 height:16 toolTip:"Ajouter un mur plein de longueur fixe." align:#left
 		
+	button 'btn_ajouter_fenetre' "Fenêtre" pos:[10,140] width:81 height:16 toolTip:"Ajouter un modèle 3D." align:#left
+	button 'btn_ajouter_porte' "Porte" pos:[10,155] width:81 height:16 toolTip:"Ajouter un modèle 3D." align:#left
+	button 'btn_ajouter_balcon' "Balcon" pos:[10,172] width:81 height:16 toolTip:"Ajouter un modèle 3D." align:#left
+	button 'btn_ajouter_loggia' "Loggia" pos:[10,187] width:81 height:16 toolTip:"Ajouter un modèle 3D." align:#left
+
 		
 		------------  Fonctions	----------------------------------------------------------------------------------
 		---- Gere l'état du bouton  -----
@@ -249,11 +249,11 @@
 		
 		
 		---- rollout	--------------------------
-		on roll_urba_editeurFacades resized 		_taille do	redimensionnerFenetre 	_taille
-		on roll_urba_editeurFacades lbuttondown _pos 	do	m_drag.demarrer ()
-		on roll_urba_editeurFacades lbuttonup 	_pos 	do	m_drag.arreter ()
-		on roll_urba_editeurFacades mouseMove _pos 	do	m_drag.suivreSouris ()
-		on roll_urba_editeurFacades close 					do	(			
+		on roll_urba_editeurFacades resized 		_taille 	do	redimensionnerFenetre 	_taille
+		on roll_urba_editeurFacades lbuttondown _pos 		do	m_drag.demarrer ()
+		on roll_urba_editeurFacades lbuttonup 	_pos 		do	m_drag.arreter ()
+		on roll_urba_editeurFacades mouseMove _pos 		do	m_drag.suivreSouris ()
+		on roll_urba_editeurFacades close 						do	(			
 					try destroyDialog  dialog_modele 			catch ()
 					try destroyDialog  dialog_longueurFixe 	catch ()
 				)		
@@ -268,7 +268,22 @@
 					m_prt.fermer 	m_cible
 				)
 		
-		
+		on btn_ajouter_fenetre pressed  do
+		(
+					
+					)
+		on btn_ajouter_porte pressed  do
+		(
+					
+					)
+		on btn_ajouter_balcon pressed  do
+		(
+					
+					)
+		on btn_ajouter_loggia pressed  do
+		(
+					
+					)
 		---- Interface	--------------------------
 		on edt_nom_facade entered txt 	do
 		(
