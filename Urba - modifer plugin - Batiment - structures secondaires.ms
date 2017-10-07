@@ -440,12 +440,12 @@ struct	str_facadeParam_baie (
 			menuis_epaisseur				=	3.,			
 			menuis_divisions				=	0,
 	
-			menuis_allege_use			=	true,
+			menuis_allege_use			=	false,
 			menuis_allege_ht				=	100,
 			menuis_trav_use				=	false,
 			menuis_trav_ht				=	210,			
 			menuis_ouvrant_use			=	true,
-			menuis_double_use			=	false,
+			menuis_double_use			=	true,
 			
 			tablette_use					= true,
 			tablette_hauteur 				= 5,
@@ -747,7 +747,7 @@ struct	str_facadeParam_baie (
 					
 					
 					--- creation des points --------------
-					local pts_pos 	= #( 	pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8 , pts_pourOuvrant[1], pts_pourOuvrant[2])
+					local pts_pos 	= #( 	pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8 )
 					local pts_ids 	= m_geo.creer.points 	pts_pos		_this
 					
 					
@@ -757,16 +757,15 @@ struct	str_facadeParam_baie (
 					m_geo.creer.face 		#(	pts_ids[4], 		pts_ids[3], 		pts_ids[7] , 	pts_ids[8] )		 _this
 					
 					-- la face vitre du bas
-					m_geo.creer.face 		#(pts_ids[9], 		pts_ids[10]	, 		pts_ids[7] , 	pts_ids[8] )		 _this
-					
+					local pts_pos 	= #( 	 pts_pourOuvrant[1], pts_pourOuvrant[2] ,pt_6 , pt_5)
+					local pts_ids 	= m_geo.creer.points 	pts_pos		_this
+					m_geo.creer.face 		#(pts_ids[1], 		pts_ids[2]	, 		pts_ids[3] , 	pts_ids[4] )		 _this
 					
 					----- pour plus tard, ... 
 					pts_pourOuvrant[1]		= pt_8
 					pts_pourOuvrant[2]		= pt_7
 					
-					
 				)
-				
 				
 				
 				
@@ -790,6 +789,8 @@ struct	str_facadeParam_baie (
 					local pt_11		= pt_7		+ 	vec_men_ep
 					local pt_12		= pt_8		+ 	vec_men_ep
 					
+					local pts_pourOuvrant	= #( pt_9, pt_10, pt_11, pt_12  )
+					
 					--- creation des points --------------
 					local pts_pos 	= #( 	pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8 , pt_9, pt_10, pt_11, pt_12 )
 					local pts_ids 	= m_geo.creer.points 	pts_pos		_this
@@ -810,6 +811,33 @@ struct	str_facadeParam_baie (
 				)
 				
 				
+				--- DOUBLE  ----------------------------------------------------------------------------------------------------------------	
+				if menuis_double_use do (
+					
+					local largeur_vitre = distance	pts_pourOuvrant[1] 	pts_pourOuvrant[2] 
+					
+					-------	Placement des points 	--------
+					local pt_1		= pts_pourOuvrant[1]  + _normDir * largeur_vitre/2	- vec_men_lrg - vec_men_ep
+					local pt_2		= pt_1 + 2 * vec_men_lrg
+					local pt_3		= pts_pourOuvrant[4]  + _normDir * largeur_vitre/2	+ vec_men_lrg - vec_men_ep
+					local pt_4		= pt_3  - 2 * vec_men_lrg
+					
+					local pt_5		= pt_1		+ 	vec_men_ep
+					local pt_6		= pt_2		+ 	vec_men_ep
+					local pt_7		= pt_3		+ 	vec_men_ep
+					local pt_8		= pt_4		+ 	vec_men_ep
+					
+					--- creation des points --------------
+					local pts_pos 	= #( 	pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8 )
+					local pts_ids 	= m_geo.creer.points 	pts_pos		_this
+					
+					---- faces ------
+					m_geo.creer.face 		#(	pts_ids[2], 		pts_ids[6], 		pts_ids[7],   	pts_ids[3]  )			 _this		
+					m_geo.creer.face 		#(	pts_ids[1], 		pts_ids[2], 		pts_ids[3],   	pts_ids[4]  )			 _this		
+					m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[1], 		pts_ids[4],   	pts_ids[8]  )			 _this		
+-- 										
+					
+				)
 				
 				
 				
