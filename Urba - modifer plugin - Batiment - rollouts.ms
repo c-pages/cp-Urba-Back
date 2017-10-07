@@ -58,6 +58,9 @@ parameters params_global rollout:roll_global			(
 	niveaux_hauteur		type: #float 			default:250.		ui:spn_hauteur
 	niveaux_nbre			type: #integer			default:1			ui:spn_nbres
 	
+	----- 
+-- 	MaJ_auto_actif		type:#boolean			default:true		ui:chk_MaJ_auto
+	
 )
 parameters params_infos rollout:roll_infos			(
 	
@@ -149,7 +152,7 @@ rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 			actualiser()
 		)
 )
-rollout roll_global "Global" width:247 height:172
+rollout roll_global "Global" width:247 height:220	rolledUp:false
 (
 	
 	fn shape_filt 		obj = superclassof obj == shape
@@ -165,12 +168,16 @@ rollout roll_global "Global" width:247 height:172
 	label 'lbl_axeP' "Orientation:" pos:[5,120] width:59 height:15 align:#left
 	button 'btn_rotation' "+90°" pos:[89,134] width:42 height:16 align:#left
 	button 'btn_rotation_inv' "-90°" pos:[130,134] width:42 height:16 align:#left	
+	
 	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:85 align:#left
 	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,90] width:79 height:15 align:#left
 	spinner 'spn_nbres' "" pos:[87,89] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
 	spinner 'spn_hauteur' "" pos:[87,104] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
 	label 'lbl_hauteur' "Htr. des étages:" pos:[5,105] width:76 height:15 align:#left
 	
+	
+-- 	button 'btn_MaJ' "Actualiser" pos:[24,155] width:147 height:21 align:#left
+-- 	checkButton 'chk_MaJ_auto' "" pos:[4,155] width:21 height:21 align:#left
 	
 	
 	
@@ -193,44 +200,19 @@ rollout roll_global "Global" width:247 height:172
 		
 	)
 	
-	on spn_hauteur changed  arg do undo "Urba | Bâtiment : Changer hauteur des étages" on (
-		
-		construire.batiment this
-		
-	)
 
-	on spn_hauteur 	buttonDown 	do 	flagForeground $ 	true
-	on spn_hauteur	 buttonUp 		do 	flagForeground $ 	false
 		
 	
 	
-	on spn_nbres changed  arg do (
-		construire.batiment this
-	)
-	on spn_nbres 	buttonDown 	do 	flagForeground $ 	true
-	on spn_nbres	 buttonUp 		do 	flagForeground $ 	false
 	
 	
-	on btn_rotation_inv  	pressed  do (
-		axeP_orientation -= 90
-		trace.actualiser this
-		
-		construire.batiment this
-	)
-	on btn_rotation 			pressed  do  (
-		axeP_orientation += 90
-		trace.actualiser 			this
-		construire.batiment 	this
-	)
-	on spn_rotation_axeP 	changed  arg do (
-		trace.actualiser this
-		construire.batiment 	this
-	)
-	on btn_pick_trace picked _nvtrace 	do	(
-		trace.definir		_nvtrace	$
-		trace.actualiser	this
-		construire.batiment this
-	)
+	
+	on btn_pick_trace picked _nvtrace 	do
+	(
+			trace.definir		_nvtrace	$
+			trace.actualiser	this
+			construire.batiment this
+		)
 	on chk_optimiser changed state do
 	(
 		trace.actualiser 	this
@@ -243,26 +225,65 @@ rollout roll_global "Global" width:247 height:172
 		construire.batiment this
 		actualiser ()
 	)
-	on spn_optimiser changed val 	do (
-		trace.actualiser this
-		construire.batiment this
-	)
+	on spn_optimiser changed val 	do
+	(
+			trace.actualiser this
+			construire.batiment this
+		)
 	on chk_souder changed state do
 	(		
 		trace.actualiser this
 		construire.batiment this
 		actualiser ()
 	)
-	on spn_souder changed val 	do(
-		trace.actualiser this
-		construire.batiment this
+	on spn_souder changed val 	do
+	(
+			trace.actualiser this
+			construire.batiment this
+		)
+	on spn_ortho changed val 	do
+	(
+			trace.actualiser this
+			construire.batiment this
+		)
+	on spn_rotation_axeP changed arg do
+	(
+			trace.actualiser this
+			construire.batiment 	this
+		)
+	on btn_rotation pressed do
+	(
+			axeP_orientation += 90
+			trace.actualiser 			this
+			construire.batiment 	this
+		)
+	on btn_rotation_inv pressed do
+	(
+			axeP_orientation -= 90
+			trace.actualiser this
+			
+			construire.batiment this
+		)
+	on spn_nbres changed arg do
+	(
+			construire.batiment this
+		)
+	on spn_nbres buttondown do
+		flagForeground $ 	true
+	on spn_nbres buttonup do
+		flagForeground $ 	false
+	on spn_hauteur changed arg do
+(
+				construire.batiment this
+				
 	)
-	on spn_ortho changed val 	do (
-		trace.actualiser this
-		construire.batiment this
+	on spn_hauteur buttondown do
+		flagForeground $ 	true
+	on spn_hauteur buttonup do
+		flagForeground $ 	false
+	on btn_MaJ pressed  do(
+				construire.batiment this
 	)
-	
-	
 )
 rollout roll_facades "Façades" width:510 height:813
 (

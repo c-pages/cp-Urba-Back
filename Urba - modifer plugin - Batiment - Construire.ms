@@ -694,7 +694,7 @@ struct str_construire (
 		
 		
 		
-		fn creer_mur 	_pt_bas		_pt_ht	_pt2 	_this	 ht:	= (
+		fn creer_mur 	_pt_bas		_pt_ht	_pt2 	_this	 ht:	matId:	= (
 			local hauteur
 			
 			if ht != unsupplied then	hauteur = ht
@@ -709,10 +709,14 @@ struct str_construire (
 			append pts_ids_esp 	( _pt_bas )
 			
 			geo_ptr.creer.edges  pts_ids_esp 	_this	--	fermer:true		
-			geo_ptr.creer.face  	 pts_ids_esp 	_this
+			local nvlFace = geo_ptr.creer.face  	 pts_ids_esp 	_this
 			
-			pt_bas 	= pts_ids_esp[1]
-			pt_ht		= pts_ids_esp[2]
+			--- mat ID -----
+			if matId != unsupplied do
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matId
+			
+			local pt_bas 	= pts_ids_esp[1]
+			local pt_ht		= pts_ids_esp[2]
 			
 			#(pt_bas, pt_ht)
 		),
@@ -1133,40 +1137,42 @@ struct str_construire (
 		--------- BATIMENT -----------------
 		fn batiment 	_this =(
 			with redraw OFF (
-				local chrono_debut = timeStamp ()
-				
-				---- creation de la surface de base -------
-				geo_ptr.vider 	_this
-				
-				importer_modeles		_this	
-				
-				local chrono_import = timeStamp ()		--- chrono_debut) / 1000.0
-				
-				
-				local zCourant = -( ep_ssBassement + ep_dalle )
-				
-				ssBassement 	_this	&zCourant
-				local chrono_ssBassement		= timeStamp ()	
-				etages			_this	&zCourant
-				local chrono_etages				= timeStamp ()	
-				toit				_this	&zCourant
-				local chrono_toit					= timeStamp ()	
-				
-				local chrono_retirerImport		= timeStamp ()	
-				retirer_modelesImports ()
-				
-				local chrono_total				= timeStamp ()	
-				
-				debug "Construire bâtiment"
-				debug "			import" var:(	(   (chrono_import - chrono_debut ) / 1000.0)	as string + "s." )
-				debug "			ssBassement" var:( (   ( chrono_ssBassement - chrono_import ) / 1000.0)	as string + "s." )
-				debug "			etages" var:( (   (chrono_etages - chrono_ssBassement ) / 1000.0)	as string + "s." )
-				debug "			toit" var:(  (  (chrono_toit - chrono_etages ) / 1000.0)	as string + "s." )
-				debug "			cleaner import" var:(  (  (chrono_total - chrono_toit ) / 1000.0)	as string + "s." )
-				debug "		-----	TOTAL" var:(  (  (chrono_total - chrono_debut ) / 1000.0)	as string + "s." )
-				debug "		-----	nbre de verts" var:(  _this.mesh.verts.count )
-				
-				
+				undo off (
+					
+					local chrono_debut = timeStamp ()
+					
+					---- creation de la surface de base -------
+					geo_ptr.vider 	_this
+					
+					importer_modeles		_this	
+					
+					local chrono_import = timeStamp ()		--- chrono_debut) / 1000.0
+					
+					
+					local zCourant = -( ep_ssBassement + ep_dalle )
+					
+					ssBassement 	_this	&zCourant
+					local chrono_ssBassement		= timeStamp ()	
+					etages			_this	&zCourant
+					local chrono_etages				= timeStamp ()	
+					toit				_this	&zCourant
+					local chrono_toit					= timeStamp ()	
+					
+					local chrono_retirerImport		= timeStamp ()	
+					retirer_modelesImports ()
+					
+					local chrono_total				= timeStamp ()	
+					
+					debug "Construire bâtiment"
+					debug "			import" var:(	(   (chrono_import - chrono_debut ) / 1000.0)	as string + "s." )
+					debug "			ssBassement" var:( (   ( chrono_ssBassement - chrono_import ) / 1000.0)	as string + "s." )
+					debug "			etages" var:( (   (chrono_etages - chrono_ssBassement ) / 1000.0)	as string + "s." )
+					debug "			toit" var:(  (  (chrono_toit - chrono_etages ) / 1000.0)	as string + "s." )
+					debug "			cleaner import" var:(  (  (chrono_total - chrono_toit ) / 1000.0)	as string + "s." )
+					debug "		-----	TOTAL" var:(  (  (chrono_total - chrono_debut ) / 1000.0)	as string + "s." )
+					debug "		-----	nbre de verts" var:(  _this.mesh.verts.count )
+					
+				)
 				displayTempPrompt ("Bâtiment construit en " +  (  (chrono_total - chrono_debut ) / 1000.0)	as string + "s." ) 10000
 			)
 			redrawViews () 

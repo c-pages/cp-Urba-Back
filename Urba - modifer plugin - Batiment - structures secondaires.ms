@@ -6,7 +6,15 @@ global str_facade_modele
 global str_facadeParam_murPlein, str_facadeParam_baieSimple, str_facadeParam_baie
 global str_facade, str_facade_composant
 
+global	str_prefs_matID 
 
+struct 	str_prefs_matID (
+	mur 				= 	1,
+	menuiserie 		= 	2,
+	vitrage 			= 	3,
+	toiture 			= 	4,
+	metal				=	5
+)
 
 struct str_plan (
 		------------ DEBUG	----------------------------------------------------------------------------------
@@ -119,6 +127,7 @@ struct	str_facadeParam_murPlein (
 	
 			m_construction,
 			m_geo,
+			matID = str_prefs_matID (),
 			
 		public
 			id				= "#FAC_PMP_",		
@@ -180,7 +189,9 @@ struct	str_facadeParam_murPlein (
 				local pt1 =  polyop.getVert 	_this.delegate		_id_pt_bas	
 				local pt2 = pt1 + _normDir * m_compo.longueur
 				
-				m_construction.creer_mur 	_id_pt_bas		_id_pt_ht	pt2 	_this	 
+				local nvlFace = m_construction.creer_mur 	_id_pt_bas		_id_pt_ht	pt2 	_this		matID:matID.mur
+				
+
 				/* 
 				local pt1 =  polyop.getVert 	_this.delegate		_id_pt_bas	
 				local pt2 = pt1 + _normDir * m_compo.longueur
@@ -209,7 +220,6 @@ struct	str_facadeParam_murPlein (
 		
 		
 )
-
 struct	str_facadeParam_baieSimple (
 		
 		private
@@ -217,13 +227,14 @@ struct	str_facadeParam_baieSimple (
 			m_compo,								---- le composant parant	
 			m_construction,
 			m_geo,
+			matID = str_prefs_matID (),
 	
 		public
 	
 			---- membres  spécifiques	----------
-			allege_hauteur 		= 	100,
-			allege_use				=	true,
-			hauteur_use			=	true,
+			baie_allege_hauteur 		= 	100,
+			baie_allege_use				=	true,
+			baie_hauteur_use			=	true,
 			mur_profondeur		= 	20,
 			
 			----- membres communs --------------
@@ -253,8 +264,8 @@ struct	str_facadeParam_baieSimple (
 													spn_longueur.value 			= 	m_compo.longueur
 													edt_nom.text 					=	m_compo.nom
 													spn_profondeur.value 		=	m_param.mur_profondeur	
-													ckb_hauteur.checked		=	m_param.hauteur_use 
-													ckb_allege.checked			=	m_param.allege_use
+													ckb_hauteur.checked		=	m_param.baie_hauteur_use 
+													ckb_allege.checked			=	m_param.baie_allege_use
 													if not ckb_hauteur.checked then (
 														spn_hauteur.enabled 	= true
 														spn_hauteur.value 		=	m_compo.hauteur 
@@ -264,7 +275,7 @@ struct	str_facadeParam_baieSimple (
 													)
 													if not ckb_allege.checked then (
 														spn_allege.enabled 				= true
-														spn_allege.value 					=	m_param.allege_hauteur 
+														spn_allege.value 					=	m_param.baie_allege_hauteur 
 													) else (
 														spn_allege.enabled 				= false
 														spn_allege.indeterminate 		=	true
@@ -277,14 +288,14 @@ struct	str_facadeParam_baieSimple (
 												)
 										on spn_longueur 		changed 	val 	do	m_compo.longueur 					= val	
 										on spn_hauteur 		changed 	val 	do	m_compo.hauteur 					= val	
-										on spn_allege 			changed 	val 	do	m_param.allege_hauteur 	= val
+										on spn_allege 			changed 	val 	do	m_param.baie_allege_hauteur 	= val
 										on spn_profondeur 	changed 	val 	do	m_param.mur_profondeur	= val
 										on ckb_hauteur 		changed 	state do	(
-											m_param.hauteur_use 	= state
+											m_param.baie_hauteur_use 	= state
 											actualiser ()
 										)
 										on ckb_allege 			changed 	state do	(
-											m_param.allege_use 	= state											
+											m_param.baie_allege_use 	= state											
 											actualiser ()
 										)
 									)
@@ -357,11 +368,13 @@ struct	str_facadeParam_baieSimple (
 				
 				---- LA BAIE -----------------------------------------------------------------------
 				-------	Les vecteurs generaux 	--------
-				local vec_allege 		= if allege_use 	then 	[0,0,0] 
-																	else		[0,0,1] *	allege_hauteur
-				local vec_rtmb 		= if hauteur_use 	then 	[0,0,0] 
-																	else		[0,0,1] *	( _this.niveaux_hauteur - (allege_hauteur + m_compo.hauteur ) )
-				local vec_ht 			= [0,0,1] * _this.niveaux_hauteur - ( vec_allege + vec_rtmb ) 
+				local vec_allege 		= if baie_allege_use 	then 	[0,0,0] 
+																			else		[0,0,1] *	baie_allege_hauteur
+-- 				local vec_rtmb 		= if baie_hauteur_use 	then 	[0,0,0] 
+-- 																			else		[0,0,1] *	( _this.niveaux_hauteur - (baie_allege_hauteur + m_compo.hauteur ) )
+				local vec_ht 			= if baie_hauteur_use 	then 	[0,0,1] *	 _this.niveaux_hauteur
+																			else		[0,0,1] * 	m_compo.hauteur
+				
 				local vec_longueur 	= _normDir * m_compo.longueur
 				local norm_prof		= _normDir * rotateZ ( matrix3 1 ) 90
 				local vec_prof			=  norm_prof * mur_profondeur
@@ -370,18 +383,19 @@ struct	str_facadeParam_baieSimple (
 				-------	Creation des points 	--------
 				--- mur d'allege ----
 				local pt_bas 	= polyop.getVert 	_this.delegate		_id_pt_bas	
+				local pt_ht 	= polyop.getVert 	_this.delegate		_id_pt_ht	
+				
 				local pt_1 		= pt_bas	+  vec_longueur
 				local pt_2 		= pt_1		+  vec_allege
 				local pt_3 		= pt_bas	+ 	vec_allege
 				
-				local pt_4 		= pt_3		+ 	vec_ht
-				local pt_5 		= pt_4		+ 	vec_longueur
-				local pt_6 		= pt_5		+ 	vec_rtmb
+				local pt_4 		= pt_bas	+ 	vec_ht
+				local pt_5 		= pt_4		+ 	vec_longueur				
+				local pt_6 		= pt_ht		+ 	vec_longueur
 				local pt_7 		= pt_3		+ 	vec_prof
 				local pt_8 		= pt_2		+ 	vec_prof
 				local pt_9 		= pt_5		+ 	vec_prof
 				local pt_10		= pt_4		+ 	vec_prof
-				local pt_ht 	= polyop.getVert 	_this.delegate		_id_pt_ht	
 				
 				local pts_pos 	= #( pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8, pt_9, pt_10 )
 				local pts_ids 	= m_geo.creer.points 	pts_pos		_this
@@ -420,6 +434,8 @@ struct	str_facadeParam_baieSimple (
 			for i= 1 to 10 do id += ( random 0 9 ) as string	
 		
 )
+
+
 struct	str_facadeParam_baie (
 		
 		private
@@ -427,18 +443,18 @@ struct	str_facadeParam_baie (
 			m_compo,								---- le composant parant	
 			m_construction,
 			m_geo,
-	
+			matID = str_prefs_matID (),
 		public
 	
 			---- membres  spécifiques	----------
-			allege_hauteur 				= 	100,
-			allege_use						=	true,
-			hauteur_use					=	true,
+			baie_allege_hauteur 				= 	100,
+			baie_allege_use						=	true,
+			baie_hauteur_use					=	true,
 			mur_profondeur				= 	20,
 			
 			menuis_largeur				=	7.,
 			menuis_epaisseur				=	3.,			
-			menuis_divisions				=	0,
+-- 			menuis_divisions				=	0,
 	
 			menuis_allege_use			=	false,
 			menuis_allege_ht				=	100,
@@ -458,7 +474,7 @@ struct	str_facadeParam_baie (
 			----- membres communs --------------
 			id				= "#FAC_PBT_",		
 			dialog 		= 		
-									rollout dialog "Baie tablette" width:200 height:360
+									rollout dialog "Baie tablette" width:200 height:377
 									(
 										local m_compo
 										local m_rollPrt
@@ -470,7 +486,7 @@ struct	str_facadeParam_baie (
 										spinner 'spn_longueur' "" pos:[116,36] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
 										label 'lbl21' "Hauteur:" pos:[11,53] width:49 height:13 align:#left
 										spinner 'spn_hauteur' "" pos:[116,52] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
-										GroupBox 'grp1' "Générale" pos:[6,21] width:187 height:85 align:#left
+										GroupBox 'grp1' "Baie" pos:[6,21] width:187 height:85 align:#left
 										label 'lbl24' "Allège:" pos:[11,68] width:49 height:13 align:#left
 										spinner 'spn_allege' "" pos:[116,67] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
 										checkbutton 'ckb_hauteur' "" pos:[96,51] width:17 height:17 toolTip:"Toute hauteur Valeur négative pour descendre depuis plafond" align:#left
@@ -480,36 +496,39 @@ struct	str_facadeParam_baie (
 										
 										
 										
-										GroupBox 'grp_divers' "Divers" pos:[6,239] width:187 height:114 align:#left
-										checkbox 'chk_tablette' "Tablette" pos:[10,254] width:59 height:16 align:#left
-										label 'lbl_tablette_hauteur' "Hauteur:" pos:[11,269] width:49 height:13 align:#left
-										spinner 'spn_tablette_hauteur' "" pos:[116,268] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
-										label 'lbl_tablette_debord' "Débord:" pos:[11,284] width:49 height:13 align:#left
-										spinner 'spn_tablette_debord' "" pos:[116,283] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
-										label 'lbl_tablette_cote' "Cotés:" pos:[11,300] width:59 height:13 align:#left
-										spinner 'spn_tablette_cote' "" pos:[116,299] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
-										checkbox 'chk_volets' "Volets" pos:[10,317] width:47 height:16 align:#left
-										checkbox 'chk_coffreStore' "Coffre store" pos:[10,331] width:81 height:16 align:#left
-										GroupBox 'grp_menuiseries' "Menuiseries" pos:[6,110] width:187 height:127 align:#left
-										label 'lbl_menuis_divisions' "Divisions:" pos:[11,154] width:50 height:13 align:#left
-										spinner 'spn_menuis_divisions' "" pos:[116,153] width:70 height:16 range:[1,100000,0] type:#integer scale:1 align:#left
-										label 'lbl_allege_hauteur' "Hauteur:" pos:[11,184] width:50 height:13 align:#left
-										spinner 'spn_allege_hauteur' "" pos:[116,183] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
-										checkbox 'chk_allege' "Allège" pos:[10,169] width:48 height:16 align:#left
-										label 'lbl_traverse_hauteur' "Hauteur:" pos:[11,215] width:50 height:13 align:#left
-										spinner 'spn_traverse_hauteur' "" pos:[116,214] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
-										checkbox 'chk_traverse' "Traverse" pos:[10,200] width:64 height:16 align:#left
+										GroupBox 'grp_divers' "Divers" pos:[6,254] width:187 height:114 align:#left
+										checkbox 'chk_tablette' "Tablette" pos:[10,269] width:59 height:16 align:#left
+										label 'lbl_tablette_hauteur' "Hauteur:" pos:[11,284] width:49 height:13 align:#left
+										spinner 'spn_tablette_hauteur' "" pos:[116,283] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
+										label 'lbl_tablette_debord' "Débord:" pos:[11,299] width:49 height:13 align:#left
+										spinner 'spn_tablette_debord' "" pos:[116,298] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
+										label 'lbl_tablette_cote' "Cotés:" pos:[11,315] width:59 height:13 align:#left
+										spinner 'spn_tablette_cote' "" pos:[116,314] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
+										checkbox 'chk_volets' "Volets" pos:[10,330] width:47 height:16 align:#left
+										checkbox 'chk_coffreStore' "Coffre store" pos:[10,344] width:81 height:16 align:#left
+										GroupBox 'grp_menuiseries' "Menuiseries" pos:[6,110] width:187 height:141 align:#left
+										
+										label 'lbl_allege_hauteur' "Hauteur:" pos:[11,199] width:50 height:13 align:#left
+										spinner 'spn_allege_hauteur' "" pos:[116,198] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
+										checkbox 'chk_allege' "Allège" pos:[10,184] width:48 height:16 align:#left
+										label 'lbl_traverse_hauteur' "Hauteur:" pos:[11,228] width:50 height:13 align:#left
+										spinner 'spn_traverse_hauteur' "" pos:[116,227] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
+										checkbox 'chk_traverse' "Traverse" pos:[10,213] width:64 height:16 align:#left
 										label 'lbl_menuis_epaisseur' "Epaisseur:" pos:[11,139] width:51 height:13 align:#left
 										spinner 'spn_menuis_epaisseur' "" pos:[116,138] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
 										label 'lbl_menuis_largeur' "Largeur:" pos:[11,124] width:42 height:13 align:#left
 										spinner 'spn_menuis_Largeur' "" pos:[116,123] width:70 height:16 range:[1,100000,0] type:#worldunits scale:1 align:#left
+										checkbox 'chk_double' "Double" pos:[10,169] width:48 height:16 align:#lef
+										checkbox 'chk_ouvrant' "Ouvrant" pos:[10,154] width:57 height:16 align:#leftt
+										
 										
 										fn actualiser =(
 													spn_longueur.value 			= 	m_compo.longueur
 													edt_nom.text 					=	m_compo.nom
 													spn_profondeur.value 		=	m_param.mur_profondeur	
-													ckb_hauteur.checked		=	m_param.hauteur_use 
-													ckb_allege.checked			=	m_param.allege_use
+													ckb_hauteur.checked		=	m_param.baie_hauteur_use 
+													ckb_allege.checked			=	m_param.baie_allege_use
+											
 													if not ckb_hauteur.checked then (
 														spn_hauteur.enabled 	= true
 														spn_hauteur.value 		=	m_compo.hauteur 
@@ -519,7 +538,7 @@ struct	str_facadeParam_baie (
 													)
 													if not ckb_allege.checked then (
 														spn_allege.enabled 				= true
-														spn_allege.value 					=	m_param.allege_hauteur 
+														spn_allege.value 					=	m_param.baie_allege_hauteur 
 													) else (
 														spn_allege.enabled 				= false
 														spn_allege.indeterminate 		=	true
@@ -536,57 +555,108 @@ struct	str_facadeParam_baie (
 													spn_profondeur.value 					=	m_param.mur_profondeur
 													spn_tablette_hauteur.value 			=	m_param.tablette_hauteur
 													spn_tablette_debord.value 			=	m_param.tablette_debord
-													spn_tablette_cote.value 			=	m_param.tablette_cote
+													spn_tablette_cote.value 				=	m_param.tablette_cote
 													
 													spn_tablette_hauteur.indeterminate = not m_param.tablette_use
 													spn_tablette_cote.indeterminate 	= not m_param.tablette_use
 													spn_tablette_debord.indeterminate 	= not m_param.tablette_use
 													
+													
+													
+													spn_menuis_epaisseur.value 				=	m_param.menuis_epaisseur
+													spn_menuis_Largeur.value 				=	m_param.menuis_largeur
+													chk_double.checked 						=	m_param.menuis_double_use
+													chk_ouvrant.checked 						=	m_param.menuis_ouvrant_use
+													
+													spn_allege_hauteur.value 					=	m_param.menuis_allege_ht
+													spn_allege_hauteur.enabled 				=	m_param.menuis_allege_use
+													spn_allege_hauteur.indeterminate 		= not m_param.menuis_allege_use
+													lbl_allege_hauteur.enabled 				=	m_param.menuis_allege_use
+													chk_allege.checked 							=	m_param.menuis_allege_use
+													
+													spn_traverse_hauteur.value 				=	m_param.menuis_trav_ht
+													lbl_traverse_hauteur.enabled 				=	m_param.menuis_trav_use
+													spn_traverse_hauteur.indeterminate 	= not m_param.menuis_trav_use
+													chk_traverse.checked 						=	m_param.menuis_trav_use
+													spn_traverse_hauteur.enabled 			=	m_param.menuis_trav_use
+														
+													
+													
 												)
-										on edt_nom entered txt 	do	(
-														m_compo.nom = txt
-														m_rollPrt.actualiser ()
-													)
+													
+												
+										
+										on edt_nom entered txt 	do
+										(
+																								m_compo.nom = txt
+																								m_rollPrt.actualiser ()
+																							)
 										on spn_longueur changed val 	do
 											m_compo.longueur 					= val
 										on spn_hauteur changed val 	do
 											m_compo.hauteur 					= val
 										on spn_allege changed val 	do
-											m_param.allege_hauteur 	= val
-										on ckb_hauteur changed state do		(
-													m_param.hauteur_use 	= state
-													actualiser ()
-												)
-										on ckb_allege changed state do	(
-													m_param.allege_use 	= state											
-													actualiser ()
-												)
-																				
-										on chk_tablette changed state do (
-													m_param.tablette_use 	= state											
-													actualiser ()
-												)
-												
-										
+											m_param.baie_allege_hauteur 	= val
+										on ckb_hauteur changed state do
+										(
+																							m_param.baie_hauteur_use 	= state
+																							actualiser ()
+																						)
+										on ckb_allege changed state do
+										(
+																							m_param.baie_allege_use 	= state											
+																							actualiser ()
+																						)
 										on spn_profondeur changed val 	do
 											m_param.mur_profondeur	= val
+										on chk_tablette changed state do
+										(
+																							m_param.tablette_use 	= state											
+																							actualiser ()
+																						)
 										on spn_tablette_hauteur changed val 	do
 											m_param.tablette_hauteur 					= val
 										on spn_tablette_debord changed val 	do
 											m_param.tablette_debord 	= val
 										on spn_tablette_cote changed val 	do
 											m_param.tablette_cote	= val
-										on spn_menuis_divisions changed val 	do
-											m_compo.hauteur 					= val
+										
 										on spn_allege_hauteur changed val 	do
-											m_compo.hauteur 					= val
+											m_param.menuis_allege_ht 		= val
+										
 										on spn_traverse_hauteur changed val 	do
-											m_compo.hauteur 					= val
+											m_param.menuis_trav_ht 					= val
+										
 										on spn_menuis_epaisseur changed val 	do
-											m_compo.hauteur 					= val
+											m_param.menuis_epaisseur 					= val
 										on spn_menuis_Largeur changed val 	do
-											m_compo.hauteur 					= val
-									)
+											m_param.menuis_largeur 					= val
+										
+										
+										on chk_double changed state do
+										(
+																							m_param.menuis_double_use 	= state											
+																							actualiser ()
+																						)
+										on chk_ouvrant changed state do
+										(
+																							m_param.menuis_ouvrant_use 	= state											
+																							actualiser ()
+																						)
+										on chk_allege changed state do
+										(
+																							m_param.menuis_allege_use 	= state											
+																							actualiser ()
+																						)
+										on chk_traverse changed state do
+										(
+																							m_param.menuis_trav_use 	= state											
+																							actualiser ()
+																						)
+										
+									)--- fin rollout ----------
+																
+									
 									,
 			
 		------ CONSTRUIRE -------
@@ -594,31 +664,36 @@ struct	str_facadeParam_baie (
 				
 				---- LA BAIE -----------------------------------------------------------------------
 				
-				local vec_allege 		= if allege_use 	then 	[0,0,0] 
-																	else		[0,0,1] *	allege_hauteur
-				local vec_rtmb 		= if hauteur_use 	then 	[0,0,0] 
-																	else		[0,0,1] *	( _this.niveaux_hauteur - (allege_hauteur + m_compo.hauteur ) )				
-				local norm_prof		= _normDir 	* rotateZ ( matrix3 1 ) 90				
-				local vec_prof					=  norm_prof 	* 	mur_profondeur				
-				local vec_ht 					= 	[0,0,1] 		* 	_this.niveaux_hauteur - ( vec_allege + vec_rtmb  ) 
-				local vec_longueur 			= _normDir 	* 	m_compo.longueur		
+				local vec_allege 		= if baie_allege_use 	then 	[0,0,0] 
+																	else		[0,0,1] *	baie_allege_hauteur
+				local vec_rtmb 		= if baie_hauteur_use 	then 	[0,0,0] 
+																	else		[0,0,1] *	( _this.niveaux_hauteur - (baie_allege_hauteur + m_compo.hauteur ) )				
+				local norm_prof		= _normDir 	* rotateZ ( matrix3 1 ) 90
 				
-				-------	Placement des points 	--------
-				local pt_bas 	= polyop.getVert 	_this.delegate		_id_pt_bas		
-				local pt_ht 	= polyop.getVert 	_this.delegate		_id_pt_ht		
+				local vec_ht 			= if baie_hauteur_use 	then 	[0,0,1] *	 _this.niveaux_hauteur
+																			else		[0,0,1] * 	m_compo.hauteur
+				
+				local vec_longueur 	= _normDir * m_compo.longueur
+				local norm_prof		= _normDir * rotateZ ( matrix3 1 ) 90
+				local vec_prof			=  norm_prof * mur_profondeur
+				
+				
+				-------	Creation des points 	--------
+				--- mur d'allege ----
+				local pt_bas 	= polyop.getVert 	_this.delegate		_id_pt_bas	
+				local pt_ht 	= polyop.getVert 	_this.delegate		_id_pt_ht	
 				
 				local pt_1 		= pt_bas	+  vec_longueur
 				local pt_2 		= pt_1		+  vec_allege
 				local pt_3 		= pt_bas	+ 	vec_allege
 				
-				local pt_4		= pt_3		+ 	vec_ht
-				local pt_5		= pt_2		+ 	vec_ht
-				local pt_6		= pt_5		+ 	vec_rtmb
-				
-				local pt_7		= pt_3		+ 	vec_prof
-				local pt_8		= pt_2		+ 	vec_prof
-				local pt_9		= pt_5		+ 	vec_prof
-				local pt_10		= pt_4		+ 	vec_prof	
+				local pt_4 		= pt_bas	+ 	vec_ht
+				local pt_5 		= pt_4		+ 	vec_longueur				
+				local pt_6 		= pt_ht		+ 	vec_longueur
+				local pt_7 		= pt_3		+ 	vec_prof
+				local pt_8 		= pt_2		+ 	vec_prof
+				local pt_9 		= pt_5		+ 	vec_prof
+				local pt_10		= pt_4		+ 	vec_prof
 				
 				--- creation des points --------------
 				local pts_pos 	= #( 	pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8, pt_9, pt_10 )
@@ -629,14 +704,24 @@ struct	str_facadeParam_baie (
 				local ids_pts_racc_menuis =#(pts_ids[7], pts_ids[8], pts_ids[9], pts_ids[10])
 				
 				-------	Creation des faces 	--------
-				m_geo.creer.face 		#(	_id_pt_bas, 	pts_ids[1], 		pts_ids[2], 		pts_ids[3] )		 _this				
-				m_geo.creer.face 		#(	pts_ids[3], 		pts_ids[2], 		pts_ids[8] , 	pts_ids[7] )		 _this				
--- 				m_geo.creer.face 		#(	pts_ids[7], 		pts_ids[8], 		pts_ids[9] , 	pts_ids[10] )		 _this
-				m_geo.creer.face 		#(	pts_ids[10], 	pts_ids[9], 		pts_ids[5], 		pts_ids[4] )		 _this
-				m_geo.creer.face 		#(	pts_ids[4], 		pts_ids[5], 		pts_ids[6], 		_id_pt_ht )			 _this		
+				local nvlFace = m_geo.creer.face 		#(	_id_pt_bas, 	pts_ids[1], 		pts_ids[2], 		pts_ids[3] )		 _this	
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.mur
 				
-				m_geo.creer.face 		#(	pts_ids[3], 		pts_ids[7], 		pts_ids[10],   	pts_ids[4] )		 _this					
-				m_geo.creer.face 		#(	pts_ids[8], 		pts_ids[2], 		pts_ids[5],   	pts_ids[9] )		 _this		
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[3], 		pts_ids[2], 		pts_ids[8] , 	pts_ids[7] )		 _this	
+				if tablette_use 	then	polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie
+										else 	polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.mur
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[10], 	pts_ids[9], 		pts_ids[5], 		pts_ids[4] )		 _this
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.mur
+				
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[4], 		pts_ids[5], 		pts_ids[6], 		_id_pt_ht )			 _this		
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.mur
+				
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[3], 		pts_ids[7], 		pts_ids[10],   	pts_ids[4] )		 _this	
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.mur
+				
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[8], 		pts_ids[2], 		pts_ids[5],   	pts_ids[9] )		 _this		
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.mur
+				
 				
 				
 				
@@ -675,21 +760,28 @@ struct	str_facadeParam_baie (
 				
 				----- pour plus tard, ... 
 				local pts_pourOuvrant	= #( pt_5, pt_6, pt_7, pt_8  )
--- 				local ids_pts_pourOuvrant = #(pts_ids[5], 		pts_ids[6], 		pts_ids[7], 		pts_ids[8])
 				
 				---- cadre ------
-				m_geo.creer.face 		#(	ids_pts_racc_menuis[1]	, 			ids_pts_racc_menuis[2]	, 			ids_pts_racc_menuis[3]	, 			ids_pts_racc_menuis[4]	 ,
+				local nvlFace = m_geo.creer.face 		#(	ids_pts_racc_menuis[1]	, 			ids_pts_racc_menuis[2]	, 			ids_pts_racc_menuis[3]	, 			ids_pts_racc_menuis[4]	 ,
 													pts_ids[4], 		pts_ids[3], 		pts_ids[2], 		pts_ids[1] , 	
-													pts_ids[4], 		ids_pts_racc_menuis[4]	 )		 _this				
+													pts_ids[4], 		ids_pts_racc_menuis[4]	 )		 _this		
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
 				
-				m_geo.creer.face 		#(	pts_ids[1], 	pts_ids[2], 	pts_ids[6],   	pts_ids[5]  )			 _this		
-				m_geo.creer.face 		#(	pts_ids[6], 	pts_ids[2], 	pts_ids[3],   	pts_ids[7]  )			 _this		
-				m_geo.creer.face 		#(	pts_ids[7], 	pts_ids[3], 	pts_ids[4],   	pts_ids[8]  )			 _this		
-				m_geo.creer.face 		#(	pts_ids[1], 	pts_ids[5], 	pts_ids[8],   	pts_ids[4]  )			 _this		
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[1], 	pts_ids[2], 	pts_ids[6],   	pts_ids[5]  )			 _this		
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie	
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[6], 	pts_ids[2], 	pts_ids[3],   	pts_ids[7]  )			 _this		
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie	
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[7], 	pts_ids[3], 	pts_ids[4],   	pts_ids[8]  )			 _this		
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie	
+				local nvlFace = m_geo.creer.face 		#(	pts_ids[1], 	pts_ids[5], 	pts_ids[8],   	pts_ids[4]  )			 _this			
+				polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie
 				
 				--- la face du fond -----------
--- 				m_geo.creer.face 		#(	pts_ids[5], 	pts_ids[6], 	pts_ids[7],   	pts_ids[8]  )			 _this		
+				if not menuis_ouvrant_use do (
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[5], 	pts_ids[6], 	pts_ids[7],   	pts_ids[8]  )			 _this			
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.vitrage
 				
+				)
 				
 				
 													
@@ -720,11 +812,16 @@ struct	str_facadeParam_baie (
 					local pts_ids 	= m_geo.creer.points 	pts_pos		_this
 					
 					-------	Creation des faces 	--------
-					m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[6], 		pts_ids[2], 		pts_ids[1] )		 _this				
-					m_geo.creer.face 		#(	pts_ids[1], 		pts_ids[2], 		pts_ids[3] , 	pts_ids[4] )		 _this				
-					m_geo.creer.face 		#(	pts_ids[4], 		pts_ids[3], 		pts_ids[7] , 	pts_ids[8] )		 _this
-					m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[1], 		pts_ids[4], 		pts_ids[8] )		 _this
-					m_geo.creer.face 		#(	pts_ids[2], 		pts_ids[6], 		pts_ids[7], 		pts_ids[3] )		 _this		
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[6], 		pts_ids[2], 		pts_ids[1] )		 _this			
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[1], 		pts_ids[2], 		pts_ids[3] , 	pts_ids[4] )		 _this				
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie					
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[4], 		pts_ids[3], 		pts_ids[7] , 	pts_ids[8] )		 _this		
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[1], 		pts_ids[4], 		pts_ids[8] )		 _this		
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[2], 		pts_ids[6], 		pts_ids[7], 		pts_ids[3] )		 _this				
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
 					
 				)
 				
@@ -733,12 +830,12 @@ struct	str_facadeParam_baie (
 				
 				---  ALLEGE  ----------------------------------------------------------------------------------------------------------------	
 				if menuis_allege_use do (
-					
+					local vec_allege_ht = vec_men_ht * 1.5
 					-------	Placement des points 	--------
-					local pt_1 		= pt_bas	+ 	[0,0,1] * menuis_allege_ht	- 	2 * vec_men_ht	 + vec_men_lrg + vec_prof
+					local pt_1 		= pt_bas	+ 	[0,0,1] * menuis_allege_ht	- 	 vec_allege_ht	 + vec_men_lrg + vec_prof
 					local pt_2 		= pt_1		+	vec_longueur 			- 2 * vec_men_lrg 
-					local pt_3 		= pt_2		+  2 * vec_men_ht	
-					local pt_4		= pt_1		+ 	2 * vec_men_ht
+					local pt_3 		= pt_2		+   vec_allege_ht	
+					local pt_4		= pt_1		+ 	 vec_allege_ht
 					
 					local pt_5		= pt_1		+	vec_men_ep
 					local pt_6		= pt_2		+	vec_men_ep			
@@ -752,14 +849,18 @@ struct	str_facadeParam_baie (
 					
 					
 					-------	Creation des faces 	--------
-					m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[6], 		pts_ids[2], 		pts_ids[1] )		 _this				
-					m_geo.creer.face 		#(	pts_ids[1], 		pts_ids[2], 		pts_ids[3] , 	pts_ids[4] )		 _this				
-					m_geo.creer.face 		#(	pts_ids[4], 		pts_ids[3], 		pts_ids[7] , 	pts_ids[8] )		 _this
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[6], 		pts_ids[2], 		pts_ids[1] )		 _this			
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie						
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[1], 		pts_ids[2], 		pts_ids[3] , 	pts_ids[4] )		 _this				
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie					
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[4], 		pts_ids[3], 		pts_ids[7] , 	pts_ids[8] )		 _this		
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
 					
 					-- la face vitre du bas
 					local pts_pos 	= #( 	 pts_pourOuvrant[1], pts_pourOuvrant[2] ,pt_6 , pt_5)
 					local pts_ids 	= m_geo.creer.points 	pts_pos		_this
-					m_geo.creer.face 		#(pts_ids[1], 		pts_ids[2]	, 		pts_ids[3] , 	pts_ids[4] )		 _this
+					local nvlFace = m_geo.creer.face 		#(pts_ids[1], 		pts_ids[2]	, 		pts_ids[3] , 	pts_ids[4] )		 _this		
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.vitrage			
 					
 					----- pour plus tard, ... 
 					pts_pourOuvrant[1]		= pt_8
@@ -771,7 +872,6 @@ struct	str_facadeParam_baie (
 				
 				--- OUVRANT  ----------------------------------------------------------------------------------------------------------------	
 				if menuis_ouvrant_use do (
-					
 					
 					-------	Placement des points 	--------
 					local pt_1		= pts_pourOuvrant[1]
@@ -797,16 +897,21 @@ struct	str_facadeParam_baie (
 					
 					---- cadre ------
 					
-					m_geo.creer.face 		#(	pts_ids[1]	, pts_ids[2], pts_ids[3], pts_ids[4], pts_ids[8], pts_ids[7], pts_ids[6], pts_ids[5], pts_ids[8], pts_ids[4] )		 _this				
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[1]	, pts_ids[2], pts_ids[3], pts_ids[4], pts_ids[8], pts_ids[7], pts_ids[6], pts_ids[5], pts_ids[8], pts_ids[4] )		 _this				
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie					
 					
-					m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[6], 		pts_ids[10],   	pts_ids[9]  )			 _this		
-					m_geo.creer.face 		#(	pts_ids[10], 	pts_ids[6], 		pts_ids[7],   	pts_ids[11]  )			 _this		
-					m_geo.creer.face 		#(	pts_ids[12], 	pts_ids[11], 	pts_ids[7],   	pts_ids[8]  )			 _this		
-					m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[9], 		pts_ids[12],   	pts_ids[8]  )			 _this		
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[6], 		pts_ids[10],   	pts_ids[9]  )			 _this			
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[10], 	pts_ids[6], 		pts_ids[7],   	pts_ids[11]  )			 _this			
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[12], 	pts_ids[11], 	pts_ids[7],   	pts_ids[8]  )			 _this			
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[9], 		pts_ids[12],   	pts_ids[8]  )			 _this			
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
 -- 					
 -- 					----vitrage
-					m_geo.creer.face 		#(	pts_ids[9], 		pts_ids[10], 		pts_ids[11],   	pts_ids[12]  )			 _this		
-					
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[9], 		pts_ids[10], 		pts_ids[11],   	pts_ids[12]  )			 _this			
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.vitrage			
 					
 				)
 				
@@ -828,15 +933,50 @@ struct	str_facadeParam_baie (
 					local pt_8		= pt_4		+ 	vec_men_ep
 					
 					--- creation des points --------------
-					local pts_pos 	= #( 	pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8 )
+					local pts_pos 	= #( pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8 )
 					local pts_ids 	= m_geo.creer.points 	pts_pos		_this
 					
 					---- faces ------
-					m_geo.creer.face 		#(	pts_ids[2], 		pts_ids[6], 		pts_ids[7],   	pts_ids[3]  )			 _this		
-					m_geo.creer.face 		#(	pts_ids[1], 		pts_ids[2], 		pts_ids[3],   	pts_ids[4]  )			 _this		
-					m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[1], 		pts_ids[4],   	pts_ids[8]  )			 _this		
--- 										
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[2], 		pts_ids[6], 		pts_ids[7],   	pts_ids[3]  )			 _this					
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[1], 		pts_ids[2], 		pts_ids[3],   	pts_ids[4]  )			 _this					
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+					local nvlFace = m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[1], 		pts_ids[4],   	pts_ids[8]  )			 _this					
+					polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
 					
+					if menuis_ouvrant_use do (
+						
+						local pt_1_men = pt_1
+						local pt_2_men = pt_2
+						local pt_3_men = pt_3
+						local pt_4_men = pt_4
+						
+						local vec_bandeau_ep = vec_men_ep/2
+						
+						-------	Placement des points 	--------
+						local pt_1		= pt_1_men	+ vec_men_lrg * 3/4	-  	vec_bandeau_ep 	-  	vec_men_ht
+						local pt_2		= pt_2_men 	- vec_men_lrg * 3/4	-  	vec_bandeau_ep 	-  	vec_men_ht
+						local pt_3		= pt_3_men	- vec_men_lrg * 3/4	-  	vec_bandeau_ep 	+  vec_men_ht
+						local pt_4		= pt_4_men  	+ vec_men_lrg * 3/4	-  	vec_bandeau_ep 	+  vec_men_ht
+						
+						local pt_5		= pt_1		+ 	vec_bandeau_ep
+						local pt_6		= pt_2		+ 	vec_bandeau_ep
+						local pt_7		= pt_3		+ 	vec_bandeau_ep
+						local pt_8		= pt_4		+ 	vec_bandeau_ep
+						
+						--- creation des points --------------
+						local pts_pos 	= #( 	pt_1, pt_2, pt_3, pt_4, pt_5, pt_6, pt_7, pt_8 )
+						local pts_ids 	= m_geo.creer.points 	pts_pos		_this
+						
+						---- faces ------
+						local nvlFace = 	m_geo.creer.face 		#(	pts_ids[2], 		pts_ids[6], 		pts_ids[7],   	pts_ids[3]  )			 _this						
+						polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+						local nvlFace = 	m_geo.creer.face 		#(	pts_ids[1], 		pts_ids[2], 		pts_ids[3],   	pts_ids[4]  )			 _this						
+						polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+						local nvlFace = 	m_geo.creer.face 		#(	pts_ids[5], 		pts_ids[1], 		pts_ids[4],   	pts_ids[8]  )			 _this					
+						polyop.setFaceMatID	 _this.delegate		nvlFace	  matID.menuiserie			
+						
+					)
 				)
 				
 				
@@ -857,9 +997,9 @@ struct	str_facadeParam_baie (
 				
 				actualiser 			_compo		_construc	
 				
-				m_compo.nom 		= "Baie tablette"
+				m_compo.nom 		= "Baie"
 				m_compo.longueur 	= 100
-				m_compo.hauteur 	= 100
+				m_compo.hauteur 	= 210
 			),
 			
 			fn initialiser_dialog 	roll_prt 	=(
