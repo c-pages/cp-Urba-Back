@@ -40,12 +40,13 @@
 
 
 
-include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures secondaires.ms"
-
 ---------------presse papier ---------
 global urba_clipboard_batiment = ""
 
 
+(
+include	 "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures secondaires.ms"
+)
 
 	
 plugin geometry 	urba_batiment
@@ -64,10 +65,13 @@ extends:Editable_poly replaceUI:true version:0
 	)
 	
 	--------------- IMPORTS  ----------------------------------------------------------------------------------------------------------------------
-	include "$userScripts\cp - GLOBAL\Enregistreur De Node.ms"
+	include "$userScripts\cp - GLOBAL\Enregistreur De Node.ms"	
+
+	
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - Construire.ms"
+	
 	
 	--------------- PRé-DéCLARATIONS  ----------------------------------------------------------------------------------------------------------------------
 	----  rollouts ------------------
@@ -83,7 +87,7 @@ extends:Editable_poly replaceUI:true version:0
 	local params_aEnregistrer = 	#(		/*  ----	Global  	----  */		#niveaux_hauteur, #niveaux_nbre, #axeP_orientation,
 													/*  ----	Toiture 	----  */		#toit_pente, #toit_type, #toit_hauteur ,
 													/*  ----	Tracé  	----  */		#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho ,
-													/*  ----	 Facades  	----  */		#facades_composants , #facades_items, #facades_modeles
+													/*  ----	 Facades  	----  */		#facades_composants , #facades_items, #facades_modeles, #facades_parametriques
 											)
 	
 	
@@ -94,9 +98,9 @@ extends:Editable_poly replaceUI:true version:0
 	
 	
 	local geo 			= 	str_geo 			()
-	local facades		=	str_facades		()
-	local trace		=	str_trace 			geo_ptr:geo
 	local construire	=	str_construire	geo_ptr:geo
+	local facades		=	str_facades	constr_ptr:construire
+	local trace			=	str_trace 		geo_ptr:geo
 	
 	local presets 	= str_presets_batiment 	fichier_dossier:			( getDir #userScripts	 + "\\cp-Urba\\lib\\batiments\\"		)	\
 																fichier_categorie:		"Urba - Bâtiment"	\
@@ -257,9 +261,11 @@ extends:Editable_poly replaceUI:true version:0
 	on load 						do 	(
 		debug "load du plugin" 
 		VP_toggle ()
+-- 		facades.params_toStructs		this
 	)
 	on clone 	_original 	do (
 		debug "clone du plugin" 
+		facades.params_toStructs		this
 -- 		initialiser ()
 	)
 	on create do (
@@ -271,6 +277,7 @@ extends:Editable_poly replaceUI:true version:0
 	
 	on update do	(
 		debug "update du plugin"	
+-- 		facades.params_toStructs		this
 -- 		if version == 0 then 		format "maj de le version 0->1\n"	
 	)
 	
@@ -279,13 +286,33 @@ extends:Editable_poly replaceUI:true version:0
 /* 
 
 
+-- debug_mode =false
+debug_mode =true
+
 for obj in objects do if superclassof obj == GeometryClass and obj != $'triple002'  and obj != $'Porte002'  and obj != $'Porte003' do delete obj
 bat1 = urba_batiment ()
 clearlistener ()
-bat1.assigner_trace 	$Shape009	bat1
+bat1.assigner_trace 	$Shape002	bat1
 -- bat1.facades.creer_facade 	bat1
 -- Sphere radius:143.349 smooth:on segs:32 chop:0 slice:off sliceFrom:0 sliceTo:0 mapcoords:on recenter:off pos:[11188.5,-13914.2,0] isSelected:on
 select bat1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$.construire.batiment $
 
 
 
@@ -297,13 +324,10 @@ $.facades.composants_total
 
 $.facades.get_composants $
 
-$.facades_composants
-
-debug_mode = false
+$.facades.composants_total
 
 
-
-
+$.facades_parametriques[1]
 
 
 

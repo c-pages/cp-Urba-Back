@@ -77,7 +77,10 @@ parameters params_facades 	rollout:roll_facades			(
 	facades_items					type:#stringTab 		tabSize:0 			tabSizeVariable:true
 	facades_composants		type:#stringTab 		tabSize:0 			tabSizeVariable:true
 	facades_modeles				type:#stringTab 		tabSize:0 			tabSizeVariable:true
-	materiaux						type:#materialTab		tabSize:0 			tabSizeVariable:true
+	facades_parametriques		type:#stringTab 		tabSize:0 			tabSizeVariable:true
+	
+	materiaux						type:#materialTab	tabSize:0 			tabSizeVariable:true
+	
 )
 parameters params_toiture rollout:roll_toiture			(
 	
@@ -289,13 +292,14 @@ rollout roll_facades "Façades" width:510 height:813
 		
 		if a_un_trace do (
 -- 			debug "a_un_trace" var:a_un_trace
-			local listTmp = for comp in facades.get_facades_param this collect comp.nom
+-- 			local listTmp = for comp in facades.get_facades_param this collect comp.nom
+			local listTmp = for comp in facades.facades_total  collect comp.nom
 -- 			debug "listTmp" var:listTmp
 			lbx_facades.items = listTmp
 		)
 		
 	)
-	
+	 
 	
 	on roll_facades open do (
 		facades.params_toStructs		this
@@ -304,9 +308,9 @@ rollout roll_facades "Façades" width:510 height:813
 	)
 	on roll_facades close	do (
 -- 			format "FERMER FENETRE\n"
--- 		try  destroydialog facades.dialog catch ()
-		if facades.est_ouvert () do
-			facades.fermer  this		
+		try  destroydialog facades.dialog catch ()
+-- 		if facades.est_ouvert () do
+-- 			facades.fermer  this		
 		
 	)
 	on lbx_facades doubleClicked  arg do facades.ouvrir 	lbx_facades.selection 	this

@@ -28,19 +28,6 @@ struct str_constr_outils (
 		),
 		
 		
-		---- tester la selection pour la mise a jour du rollout	----
-		fn estValide	=	(
-			
-			if (selection as array).count != 1  				do return false
-			_node = ( selection as array )[1]
-			if classOf _node != Editable_Poly  				do return false
-			if subobjectLevel != 4 								do return false
-			_faces = (  polyop.getFaceSelection  _node  ) as array 
-			if _faces.count == 0									do return false
-			
-			return true
-			
-		),
 		
 		
 		
@@ -162,7 +149,7 @@ struct str_constr_outils (
 				
 			) -- fin for do --
 			
-			return 	arretePlusPetite
+			arretePlusPetite
 			
 		),
 		fn arretesLesPlusPetites		_node		_listeArretes	 nbre: = (
@@ -237,7 +224,7 @@ struct str_constr_outils (
 				if  ( polyop.getFaceCenter 	_node 	faceID ).z  > ( polyop.getFaceCenter 	_node	faceHaute ).z do
 					 faceHaute = faceID
 			)
-			return faceHaute
+			faceHaute
 		),		
 		fn faceLaPlusBasse 	_node 	_faces = (
 			local  faceHaute 
@@ -246,7 +233,7 @@ struct str_constr_outils (
 				if  ( polyop.getFaceCenter 	_node 	faceID ).z  < ( polyop.getFaceCenter 	_node	faceHaute ).z do
 					 faceHaute = faceID
 			)
-			return faceHaute
+			 faceHaute
 		),
 		
 		
@@ -263,7 +250,7 @@ struct str_constr_outils (
 					if pointLePlusBas > pt.position.z do pointLePlusBas = pt.position.z
 				)
 			)			
-			return 	pointLePlusBas			
+			 	pointLePlusBas			
 		),
 		fn largeurFace 	_node _face = (
 			local listePoints = polyop.getFaceVerts  	_node	_face
@@ -277,7 +264,7 @@ struct str_constr_outils (
 						do result = dist
 				)
 			)
-			return result
+			 result
 		),
 		fn hauteurFace 	_node 	_face = (
 			local _listePoints = polyop.getFaceVerts  	_node	_face
@@ -384,6 +371,10 @@ struct str_construire (
 			try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
 			catch ()
 		),
+		fn logout 	_txt  var:	 param:    =(
+			::ecrire 	_txt  	var:var	 param:param	prefix:m_dbgPrefix	script:"URBA"
+			
+		),
 		
 		
 		
@@ -434,521 +425,13 @@ struct str_construire (
 		
 		
 		
-		---- OUVERTURES ----
-		fn baies 		_faces	ht_fenetre		_this	= (
+		---- Composant parametrique	 ----
+		fn baie_simple 		_params	 	_pt1 		_norm	_this		= (
+			local longueur = _params.m_composant.longueur
+			local pt2 = 
 			
-			undo "construction : bais" on (
-				with redraw off (
-					
-					---- Selection des faces (deja selectionnées dans la version de base)	----
-					polyop.setFaceSelection  _node 	_faces
-					
-					--- declarations	----
-					local _facesBais			= #()
-					local _facesSelection 	= _faces
-					
-					---- MatID mur	----
-					_node.EditablePoly.setMaterialIndex 		matID.mur	 	1
-					
-					---- DECOUPES HORIZONTALES	----
-					polyop.setEdgeSelection  _node #()					
-					for face in  _facesSelection do (
-						
-						local hauteurFace 		= outils.hauteurFace 	_node	face
-						local largeurFace			= outils.largeurFace		_node	face
-						local hauteurFaceMin	= prefs.ht_fenetre
-						local largeurFaceMin	= prefs.larg_Fenetre + prefs.ep_mur
-						local Zmin 					= outils.ZMinFace 		_node 	#(face)						
-						local hauteurLinteau 	= if prefs.ht_fenetre > hauteurFace then hauteurFace else prefs.ht_fenetre
-						
-						-- Selection de la face a tailler --
-						polyop.setFaceSelection  	_node 	#(face)
-						
-						---- Découpe de l'allège	----
-						_node.slice [0,0,1] [0,0,Zmin + prefs.ht_allege ] 	flaggedFacesOnly:true
-						
-						if hauteurLinteau != hauteurFace then (
-							---- Découpe du linteau	----
-							_node.slice [0,0,1] [0,0,Zmin + hauteurLinteau ] 	flaggedFacesOnly:true
-							
-							---- DECOUPES VERTICALES	----
-							-- Selection de la face à découper --
-							facesTmp 		= 	polyop.getEdgeFaces		_node	( _node.GetNumEdges	() )
-							nouvelleFace 	=	outils.faceLaPlusBasse 	_node 	facesTmp							
-							polyop.setFaceSelection  _node		#( nouvelleFace  )
-						) 
-						
-						local centreFace 		= 		outils.centreDeLaFace		_node	face							
-						local normalFace 		= ( polyop.getFaceNormal _node face ) 
-						local normalFaceRotZ	= normalFace * rotateZMatrix 90 
-						local largeurFace 		= outils.largeurFace 		_node 	face
-						local origine				= centreFace + normalFaceRotZ * ( -largeurFace/2 + prefs.ep_mur )
-						local origineSlice 		= origine - _node.pos
-						local transl_fenetre		= normalFaceRotZ * prefs.larg_Fenetre
-						local transl_plein			= normalFaceRotZ * prefs.esp_fenetre
-						local translation			= [0,0,0]
-						local nbr_fenetre 		= 0
-						local nbr_fenetreMax	=	if prefs.nbr_fenetre == 0 then 1 else prefs.nbr_fenetre
-						local dimensionMin 		= transl_fenetre  + normalFaceRotZ *	prefs.ep_mur
-						
-						
-						while  length ( translation +  dimensionMin ) < largeurFace and nbr_fenetre < nbr_fenetreMax 	do (
-							
-							---- Slice debut fenetre ----
-							_node.slice 	normalFaceRotZ 	( origineSlice + translation )  	flaggedFacesOnly:true
-							
-							---- Actualiser translation	----
-							translation += transl_fenetre	
-							
-							---- Slice fin fenetre ----
-							polyop.setEdgeSelection  _node		#()
-							_node.slice 	normalFaceRotZ 	( origineSlice + translation ) 	flaggedFacesOnly:true
-							
-							----	Ajout de la face de la fenetre dans la liste pour extrusion epaisseur du mur	----
-							derniereArrete 	=	(( polyop.getEdgeSelection  	_node ) as array )[1]
-							if derniereArrete != undefined do (
-								facesTmp 			= 	polyop.getEdgeFaces			_node		derniereArrete
-								faceAAjouter 		= outils.faceLaPlusProche		_node 	facesTmp	origine
-								append 	_facesBais		faceAAjouter 
-							)
-							---- Actualiser nombre de fenetre créées	----
-							if prefs.nbr_fenetre != 0 do  nbr_fenetre += 1
-							
-							---- Actualiser translation	----
-							translation += transl_plein
-							
-						)	-- fin du while --	
-						
-					)	-- fin du for
-					
-					---- Extrusion epaisseur du mur ----
-					polyop.setFaceSelection  _node		_facesBais
-					_node.faceExtrudeHeight 	= -prefs.ep_mur
-					_node.extrusionType 			= 1
-					_node.EditablePoly.buttonOp #Extrude
-					
-					---- le nom de la selection des faces ----
-					outils.grouperFaces	_node		(( polyop.getFaceSelection  _node ) as array) 		"const_baies" 	
-					
-					---- retirer de groupe "facades"	----
-					outils.degrouperFaces 	_node 	_facesSelection 	"const_facades" 
-					
-					---- MatID verre	----
-					_node.EditablePoly.setMaterialIndex 		matID.verre	 	1
-					
-				) -- fin redraw off
-				
-				redrawViews() 
-				
-			)	-- fin undo
-			
-		),
-	
-		
-		
-		------------ FACADES-------------------------
-		fn ssBassement  	_this		&z	=(
-			
-			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_ssBassement	_this
-			z += ep_ssBassement
-			
-			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_dalle	_this
-			z += ep_dalle
-			
-		),
-		fn RdC 					_this		&z	=(
-			
-			geo_ptr.creerFacesContour	 _this.trace_courant		z 	_this.niveaux_hauteur			_this	
-			z += _this.niveaux_hauteur	
-			
-		),
-		fn creer_sequence		_pt1		_pt2			&z 		_facade		_this			=(
--- 			debug "creer sequence()"
-			
-			local longueurFacade 		= distance _pt1 _pt2
-			local normDir					=	normalize ( _pt2 - _pt1)
-			local rot 						= get_angle_vecteur		normDir
-			local longueur_sequence 	= 0
-			local sequence 				= _facade.sequence 		
-			local nbr_espacemts 		= 0
-			
-			for composant 	in sequence do	(
-				longueur_sequence += composant.longueur
-				if composant.type == #Espacement do
-					nbr_espacemts += 1
-			)
-			
-			
-			---- si la sequence est vide on fait une grosse facette ----
-			if longueur_sequence == 0 or longueurFacade < longueur_sequence then (	
-				
-				geo_ptr.creerFaceVerticale 		_pt1		_pt2 	z 	_this
-				
-			) else (
-			
-				
-
-				local pt1 			= 	_pt1
-				local pt2		
-				local nbrRepetitions 		
-				local longueur_restant 			
-				local longueur_espacement 	
-				
-				
-				local b_espacer = false
-				case _facade.mode of (
-					1:  	(	--- Repeter ----
-						nbrRepetitions				= floor ( longueurFacade / longueur_sequence )
-						longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )	
-						longueur_espacement 	= longueur_restant / ( 2	+ nbr_espacemts )
-					)
-					2: 	(	--- Etirer ----
-						nbrRepetitions				= 1						
-						longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
-						longueur_espacement 	= longueur_restant / ( 2	+ nbr_espacemts )
-
-					)
-					3: 	(	--- Centrer ----					
-						nbrRepetitions				= 1		
-						longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
-						longueur_espacement 	= longueur_restant / 2
-						
-					)
-					4:	(	--- Espacer ----	
-						nbrRepetitions				= floor ( longueurFacade / longueur_sequence )
-						longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
-						longueur_espacement 	= longueur_restant / ( nbrRepetitions +1 + nbr_espacemts )
-						b_espacer = true
-					)						
-				)
-			
-				
-				
-				--- le premier espacement --------
-				pt2		=	pt1 + normDir * longueur_espacement						
-				geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this
-				pt1 = pt2
-				
-				for i = 1 to nbrRepetitions do (
-					
-					--- la sequence --------
-					for composant in sequence do (
-						
-						case composant.type    of (
-							#Espacement:		(
-								pt2		=	pt1 + normDir * longueur_espacement					
-								geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this
-								pt1 = pt2
-							)
-							#LongueurFixe:	(
-								pt2		=	pt1 + normDir * composant.longueur	
-								if composant.longueur>distance _pt2	pt1   do		pt2	=	_pt2							
-								geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this
-								pt1 = pt2
-							)
-							#Modele:			(
-								
-								
-								---- on tire au hasare le modele  ------------
-								local probaTotal = 0
-								for proba in composant.modeles_probas do 
-									probaTotal += proba
-								local tirage = random  1.  probaTotal
-								local modele
-								local trouve = false
-								local id = 1
-								local probacourant = 0
-								while not trouve and probacourant <= probaTotal	do (
-									probacourant += composant.modeles_probas[id]
-									if tirage < probacourant do (
-										trouve = true
-										modele = composant.modeles[id]
-									)
-									id += 1
-								)
-								
-								if modele != undefined then	(
-									
-									-- si le modele est trop long on met un mur plein ----------
-									pt2 = pt1 + normDir * modele.longueur	
-									if composant.longueur>distance _pt2	pt1   then (	
-										
-										pt2	=	_pt2							
-										geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this
-										pt1 = pt2
-									) else (
-									---- sinon, pose du modele -----
-										local modeleTmp_id				=	_this.facades.get_modele_idParam		modele.id		_this
-										local modele_node 				= modeles_import[modeleTmp_id]
-										
-										local nv_modele 		= copy modele_node
-										
-										rotate nv_modele (angleaxis rot [0,0,1])
-										nv_modele.pos 				= pt1
-										nv_modele.pos.z 				= z
-										
-										_this.delegate.attach	nv_modele		modele_node
-										
-										
-										-----	facette du dessus -----
-										pt2 = pt1 + normDir * modele.longueur								
-										local hauteurQuiReste = 	_this.niveaux_hauteur 	- modele.hauteur								
-										local nvlFace = geo_ptr.creerFaceVerticale 	pt1 	pt2 	( z + modele.hauteur	 )		_this 		ht:hauteurQuiReste	
-										pt1 = pt2
-									)
-								) -- fin if modele undeinde
-								
-								
-							) -- fin modele
-						) -- fin case ---------------
-						
-						
-					
-					) --- fin de la sequence -----
-				
-					if b_espacer do (
-						pt2		=	pt1 + normDir * longueur_espacement						
-						geo_ptr.creerFaceVerticale 		pt1		pt2 	z 		_this 
-						pt1 = pt2
-		
-					)
-					
-				)  --- fin de la repetition
-				
-				--- le dernier espacement --------
-				pt2		=	pt1 + normDir * longueur_espacement						
-				geo_ptr.creerFaceVerticale 		pt1		_pt2 	z 		_this 
-						
-						
-			)
-						
-						
-				/* 
-				local version_creationPoly = false
-										if version_creationPoly then (
-											
-											---- Version  creation du poly -----
-											
-											local transf_mtrx =  matrix3 1
-											rotateZ 		transf_mtrx		rot
-											translate	transf_mtrx		pt1
-											translate	transf_mtrx		[0,0,z]
-											
-											local facesDuNodeAvant 	= polyop.getNumFaces _this.delegate
-											_this.facades.scan.creer_objet		modele	_this		transf_mtrx:transf_mtrx
-											
-										) */
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-						/* 
-						
-						--- choix du model ----
-						local ids_modelsTmp = #()
-						for i = 1 to composant.modeles.count do
-							append ids_modelsTmp 	i
-						
-						local longueurAvantFin = distance _pt2	pt1
-						
-						---- si on a pas de model -----
-						if ids_modelsTmp.count == 0  then (
-							pt2		=	pt1 + normDir * composant.longueur						
-							geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this
-							pt1 = pt2
-							
-						) else if longueurAvantFin <  composant.longueur then (
-							pt2		=	_pt2					
-							geo_ptr.creerFaceVerticale 		pt1		pt2 	z 	_this 
-							pt1 = pt2
-						
-						
-						) else (
-							
-							
-							---- on tire au hasare le modele parmis ceux qui restent ------------
-							local probaTotal = 0
-							for id in ids_modelsTmp do 
-								probaTotal += composant.modeles_probas[id]
-							local tirage = random  1.  probaTotal
-							local modele
-							local trouve = false
-							local id = 1
-							local probacourant = 0
-							while not trouve and probacourant <= probaTotal	do (
-								probacourant += composant.modeles_probas[id]
-								if tirage < probacourant do (
-									trouve = true
-									modele = composant.modeles[id]
-								)
-								id += 1
-							)					
-							 */
--- 							debug "tirage" var:tirage
--- 							debug "probaTotal" var:probaTotal
--- 							debug "modeleTmp_idUnique" var:modeleTmp_idUnique
-							
-							
--- 							local modeleTmp_idUnique  	= modelsTmp[1]
--- 							local modeleTmp_id				=	_this.facades.get_modele_idParam		modeleTmp_idUnique		_this
--- 							local modele_node 				= modeles_import[modeleTmp_id]
-							
-							/* 
-							local nv_modele 		= copy modele_node
-							
-							rotate nv_modele (angleaxis rot [0,0,1])
-							nv_modele.pos 				= pt1
-							nv_modele.pos.z 				= z
-							 */
-							/* 
-							
-							local hauteur_modele 			= modele.hauteur
-							local largeur_modele 			= modele.longueur
-							
-							local version_creationPoly = false
-							if version_creationPoly then (
-								local transf_mtrx =  matrix3 1
-								rotateZ 		transf_mtrx		rot
-								translate	transf_mtrx		pt1
-								translate	transf_mtrx		[0,0,z]
-								
-								
-								local facesDuNodeAvant 	= polyop.getNumFaces _this.delegate
-								_this.facades.scan.creer_objet		modele	_this		transf_mtrx:transf_mtrx
-							) else (
-								
-								local modeleTmp_id				=	_this.facades.get_modele_idParam		modele.id		_this
-								local modele_node 				= modeles_import[modeleTmp_id]
-								
-								local nv_modele 		= copy modele_node
-								
-								rotate nv_modele (angleaxis rot [0,0,1])
-								nv_modele.pos 				= pt1
-								nv_modele.pos.z 				= z
-								
-								_this.delegate.attach	nv_modele		modele_node
-							
-								
-								
-								
-							)
-							
-							
-							
-							
-							-----	facette du dessus -----
-							pt2 = pt1 + normDir * largeur_modele
-							
-							local hauteurQuiReste = 	_this.niveaux_hauteur 	- hauteur_modele
-							
-							local nvlFace = geo_ptr.creerFaceVerticale 	pt1 	pt2 	( z + hauteur_modele )		_this 		ht:hauteurQuiReste	
-							
-							pt1 = pt2
-							
-							 */
-				
--- 			) else 
--- 				geo_ptr.creerFaceVerticale 		_pt1		_pt2 	z 		_this.niveaux_hauteur 
-	
-			
-		),
-		fn etages 				_this				&z	=(
-			
-			
-			local facesDunEtage =#()
-			
-			
-			
-			for n_etage = 0 to _this.niveaux_nbre  do (
-				
-				local facades_possibles =#()
-				
-				--- on filtre par etages ---------------
-				for fcade in _this.facades.facades_total 		do (					
-					if fcade.etages_use_min then (
-						if n_etage	>= fcade.etages_nbre_min  do (
-							if fcade.etages_use_max then (
-								if n_etage <= fcade.etages_nbre_max   do 	
-									append facades_possibles fcade
-							)	else (
-								append facades_possibles fcade
-							)
-						)
-					) else (
-						append facades_possibles fcade
-					)
-				)
-			
-				
--- 					debug "facades_possibles" var:facades_possibles
-				---- si on  a pas de facades ------
-				if 	facades_possibles.count == 0 then (
-					---- on remplis avec murs pleins ------------
-					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	_this.niveaux_hauteur 	_this
-					facesDunEtage  += nvlsFaces		
-					z += _this.niveaux_hauteur
-					
-					
-				---- sinon on a des facades -----------
-				) else (
-					
-					
-					local listePts = _this.trace_courant
-					
-					for i_pt = 1 to listePts.count do	 (
-						
-						local facadesTmp =  facades_possibles
-												
-						--- on chope les deux points du segment de la facade ---
-						local pt_1 = listePts[i_pt]
-						local pt_2 
-						if i_pt == listePts.count then
-							pt_2 = listePts[1]
-						else pt_2 =  listePts[i_pt + 1 ]
-						
-						--- si c'est un pignon -----
-						if _this.trace.est_pignon	i_pt	_this then (							
-							facadesTmp = for facde in facades_possibles where facde.murs != 2	collect  facde
-						---  c'est un gouttereau -----
-						) else (
-							facadesTmp = for facde in facades_possibles where facde.murs != 3	collect  facde							
-						)
-						
-						if facadesTmp.count >0 then (
--- 							debug "on a une facade"
-							local facadeTmp = facadesTmp[1]
-							if facadeTmp.sequence.count > 0 then
-								creer_sequence		pt_1		pt_2			&z 	facadeTmp		_this	
-							else 	geo_ptr.creerFaceVerticale 		pt_1		pt_2 	z 	_this
-						) else 	geo_ptr.creerFaceVerticale 		pt_1		pt_2 	z 	_this
-						
-						
-						
-					)
-					z += _this.niveaux_hauteur
-				)
-				
-				
-				
-				
-				--- dalle plancher ---
-				if ep_dalle  != 0 do (
-					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	ep_dalle	_this
-					facesDunEtage  += nvlsFaces
-					z += ep_dalle
-				) 
-				
-			) --- fin boucle etages -------------
-				
-				
-			
-			
+			---- creation de l'allege ---------
+			geo_ptr.creerFaceVerticale	_pt1		pt2 	z 	_this
 		),
 		
 		
@@ -1144,7 +627,7 @@ struct str_construire (
 				)
 			)
 		),		
-		fn acrotere		_this		_face		= (
+		fn acrotere			_this		_face		= (
 			
 			--- les murs -----
 			polyop.bevelFaces _this.delegate 	#(_face) 	0 	-ep_mur
@@ -1191,6 +674,443 @@ struct str_construire (
 		
 		
 		
+		------------ FACADES-------------------------
+		fn ssBassement  	_this		&z	=(
+			
+			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_ssBassement	_this
+			z += ep_ssBassement
+			
+			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_dalle	_this
+			z += ep_dalle
+			
+		),
+		fn RdC 					_this		&z	=(
+			
+			geo_ptr.creerFacesContour	 _this.trace_courant		z 	_this.niveaux_hauteur			_this	
+			z += _this.niveaux_hauteur	
+			
+		),
+		
+		
+		
+		
+		fn creer_mur 	_pt_bas		_pt_ht	_pt2 	_this	 ht:	= (
+			local hauteur
+			
+			if ht != unsupplied then	hauteur = ht
+				else hauteur 	=	_this.niveaux_hauteur 
+			
+			local pts_pos_esp = 	#()		
+			append pts_pos_esp 	( _pt2 )
+			append pts_pos_esp 	( _pt2 + [0,0,hauteur] )
+			
+			local pts_ids_esp = geo_ptr.creer.points  pts_pos_esp 	_this
+			append pts_ids_esp 	( _pt_ht )
+			append pts_ids_esp 	( _pt_bas )
+			
+			geo_ptr.creer.edges  pts_ids_esp 	_this	--	fermer:true		
+			geo_ptr.creer.face  	 pts_ids_esp 	_this
+			
+			pt_bas 	= pts_ids_esp[1]
+			pt_ht		= pts_ids_esp[2]
+			
+			#(pt_bas, pt_ht)
+		),
+		
+		
+		
+		fn creer_sequence		_pt1		_pt2		_facade		_this			=(
+			
+			
+-- 			-------- DEBUG----------------------
+-- 			local chrono_debut = timeStamp ()
+-- 			-------- DEBUG----------------------
+			
+			
+			------------ ANALYSE ------------------------
+			local pt_bas, pt_ht	 
+			
+			local longueurFacade 		= distance _pt1 _pt2
+			local normDir					=	normalize ( _pt2 - _pt1)
+			local rot 						= get_angle_vecteur		normDir
+			local longueur_sequence 	= _facade.sequence_longueur
+			local sequence 				= _facade.sequence 		
+			local b_espacer 				= _facade.mode == 4
+			
+			
+			local nbr_espacemts 		= 0
+			for compo in sequence do
+				if compo.type == #Espacement do
+					nbr_espacemts += 1
+				
+			local nbrRepetitions 		
+			local longueur_restant 			
+			local longueur_espacement 			
+			case _facade.mode of (
+				1:  	(	--- Repeter ----
+					nbrRepetitions				= floor ( longueurFacade / longueur_sequence )
+					longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )	
+					longueur_espacement 	= longueur_restant / ( 2	+ nbr_espacemts )
+					b_espacer = false
+				)
+				2: 	(	--- Etirer ----
+					nbrRepetitions				= 1						
+					longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
+					longueur_espacement 	= longueur_restant / ( 2	+ nbr_espacemts )
+
+				)
+				3: 	(	--- Centrer ----					
+					nbrRepetitions				= 1		
+					longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
+					longueur_espacement 	= longueur_restant / 2
+					
+				)
+				4:		(	--- Espacer ----	
+					nbrRepetitions				= floor ( longueurFacade / longueur_sequence )
+					longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
+					longueur_espacement 	= longueur_restant / ( nbrRepetitions + 1 + nbr_espacemts )
+				)						
+			)
+			
+			
+			
+			------------ CONSTRUCTION ------------------------
+			
+			--- les 2 premiers points --------				
+			local pt1 						= 	_pt1
+			local pt2						=	pt1 + normDir * longueur_espacement	
+			
+			pt_bas 	= ( geo_ptr.creer.points  #(pt1)	 _this	)[1]
+			pt_ht		= (geo_ptr.creer.points   #(pt1 + [0,0,_this.niveaux_hauteur] )	 _this	)[1]
+			pt2		=	pt1 + normDir * longueur_espacement	
+			
+			----- le premier espacement ------------
+			local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
+			pt_bas 	= pts_accroche[1]
+			pt_ht		= pts_accroche[2]
+			
+			pt1 = pt2
+			
+			----- les repetitions de sequence ------------------
+			for i = 1 to nbrRepetitions do (
+				
+				--- la sequence --------
+				for composant in sequence do (
+					
+					-------- DEBUG----------------------
+					local chrono_debut_compo = timeStamp ()
+					-------- DEBUG----------------------
+					
+					case composant.type    of (
+						#Espacement:		(
+							pt2		=	pt1 + normDir * longueur_espacement	
+							local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
+							pt_bas 	= pts_accroche[1]
+							pt_ht		= pts_accroche[2]
+							
+							pt1 = pt2
+						)
+						#LongueurFixe:	(
+							pt2		=	pt1 + normDir * composant.longueur	
+							if composant.longueur>distance _pt2	pt1   do		pt2	=	_pt2							
+							
+							local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
+							pt_bas 	= pts_accroche[1]
+							pt_ht		= pts_accroche[2]
+							
+							pt1 = pt2
+						)
+						#Modele:			(
+							
+							---- on tire au hasare le modele  ------------
+							local probaTotal = 0
+							for proba in composant.modeles_probas do 
+								probaTotal += proba
+							local tirage = random  1.  probaTotal
+							local modele
+							local trouve = false
+							local id = 1
+							local probacourant = 0
+							while not trouve and probacourant <= probaTotal	do (
+								probacourant += composant.modeles_probas[id]
+								if tirage < probacourant do (
+									trouve = true
+									modele = composant.modeles[id]
+								)
+								id += 1
+							)
+							
+-- 								_pt_bas		_pt_ht	 	_normDir		_this 
+							
+							if modele != undefined then	(
+								
+								-- si le modele est trop long on met un mur plein ----------
+								pt2 = pt1 + normDir * modele.longueur	
+								if composant.longueur>distance _pt2	pt1   then (	
+									
+									pt2	=	_pt2							
+									local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
+									pt_bas 	= pts_accroche[1]
+									pt_ht		= pts_accroche[2]
+									
+									pt1 = pt2
+								) else (
+								---- sinon, pose du modele -----
+									local modeleTmp_id				=	_this.facades.get_modele_idParam		modele.id		_this
+									local modele_node 				= modeles_import[modeleTmp_id]
+									
+									local nv_modele 		= copy modele_node
+									
+									rotate nv_modele (angleaxis rot [0,0,1])
+									nv_modele.pos 				= pt1
+									nv_modele.pos.z 				= z
+									
+									_this.delegate.attach	nv_modele		modele_node
+									
+									
+									-----	facette du dessus -----
+									pt2 = pt1 + normDir * modele.longueur								
+									local hauteurQuiReste = 	_this.niveaux_hauteur 	- modele.hauteur	
+									
+									local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		ht:hauteurQuiReste	
+									pt_bas 	= pts_accroche[1]
+									pt_ht		= pts_accroche[2]	
+									
+-- 										local nvlFace = geo_ptr.creerFaceVerticale 	pt1 	pt2 	( z + modele.hauteur	 )		_this 		ht:hauteurQuiReste	
+									pt1 = pt2
+								)
+							) -- fin if modele undeinde
+							
+							
+						) -- fin modele
+						#Parametrique: 	(
+							
+							local pts_accroche = composant.param[1].construire	 pt_bas		pt_ht	 	normDir		_this 
+							pt_bas 	= pts_accroche[1]
+							pt_ht		= pts_accroche[2]	
+							
+							pt2 	= pt1 + normDir * composant.longueur
+							pt1 	= pt2
+							
+						)
+						
+					) -- fin case ---------------
+					
+					
+					-------- DEBUG----------------------
+					local chrono_fin_compo = timeStamp ()
+-- 						debug "creer_sequence		compo" var:composant.nom
+-- 						debug "creer_sequence		durée compo" var:(   (chrono_fin_compo - chrono_debut_compo ) / 1000.0)
+					-------- DEBUG----------------------
+				
+					
+					
+				) --- fin de la sequence -----
+		
+				if b_espacer do (
+					
+					pt2		=	pt1 + normDir * longueur_espacement				
+
+					local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
+					pt_bas 	= pts_accroche[1]
+					pt_ht		= pts_accroche[2]
+					
+					pt1 = pt2
+	
+				)
+				
+			)  --- fin de la repetition
+			
+			
+			if not b_espacer do (
+				--- le dernier espacement --------
+				pt2		=	pt1 + normDir * longueur_espacement
+				local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
+				pt_bas 	= pts_accroche[1]
+				pt_ht		= pts_accroche[2]
+				pt1 = pt2
+			)
+			
+			
+-- 			-------- DEBUG----------------------
+-- 			local chrono_fin = timeStamp ()
+-- 			debug "creer_sequence		durée TOTAL" var:(   (chrono_fin - chrono_debut ) / 1000.0)
+-- 			-------- DEBUG----------------------
+			
+		),
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		fn filtrer_facades_parEtages   	_facades 		_etageCourant	 =(
+			
+			local facades_result =#()
+			
+			--- on filtre par etages ---------------
+			for fcade in _facades 		do (					
+				if fcade.etages_use_min then (
+					if _etageCourant	>= fcade.etages_nbre_min  do (
+						if fcade.etages_use_max then (
+							if _etageCourant <= fcade.etages_nbre_max   do 	
+								append facades_result fcade
+						)	else (
+							append facades_result fcade
+						)
+					)
+				) else (
+					append facades_result fcade
+				)
+			)
+			
+-- 			debug "...............................filtrer_facades_parEtages" 
+-- 			debug "...............................facades_result" var:facades_result
+			facades_result
+		),
+		
+		fn filtrer_facades_parMurs		_facades	_mur_longueur		_id_pt		_this		=(
+			
+			local facades_result 		= #()			
+			local est_pignon				= _this.trace.est_pignon	_id_pt	_this
+			
+			---- si la sequence peut rentrer sur le segment de facade ------------
+			for fcde in _facades where fcde.sequence_longueur != 0 and fcde.sequence_longueur < _mur_longueur do (
+				---- si la facade est limité en longueur min -----
+				if not fcde.longueur_use_min or fcde.longueur_use_min	 and 	fcde.longueur_nbre_min < _mur_longueur do
+					---- si la facade est limité en longueur max -----
+					if not fcde.longueur_use_max or fcde.longueur_use_max	 and 	fcde.longueur_nbre_max > _mur_longueur do (
+						---- si la facade est sur le bon type de mur -----
+						case  fcde.murs of (
+							1: append facades_result fcde
+							2: if not est_pignon do append facades_result fcde
+							3: if est_pignon do append facades_result fcde
+						)
+					)
+			)
+	
+			facades_result
+			
+		),
+		
+		
+		
+		fn choisir_parProbas		_liste	 = (
+			local result 	
+			
+			local probaTotal = 0
+			for elem in _liste do 
+				probaTotal += elem.probabilite
+			local tirage = random  1.  probaTotal
+			local trouve = false
+			local id = 1
+			local probacourant = 0
+			if _liste.count > 0 do (
+				while not trouve and probacourant <= probaTotal	do (
+					probacourant += _liste[id].probabilite
+					if tirage < probacourant do (
+						trouve = true
+						result = _liste[id]
+					)
+					id += 1
+				)
+			)
+-- 			debug ".........................................choisir_parProbas" 
+-- 			debug ".........................................result" var:result
+-- 			debug ".........................................trouve" var:trouve
+-- 			debug ".........................................tirage" var:tirage
+-- 			debug ".........................................probaTotal" var:probaTotal
+			result
+		),
+		
+		
+		fn etages 				_this				&z	=(
+			
+			local facesDunEtage =#()
+			
+			---- boucle étages ---------------------
+			for n_etage = 0 to _this.niveaux_nbre  do (
+				
+				--- filtre par etages ---------------
+				local facades_etages = 	filtrer_facades_parEtages		_this.facades.facades_total 	n_etage
+-- 				debug "facades_etages" var:facades_etages
+				local on_a_une_facade_etage = facades_etages.count > 0
+				
+				
+				local listePts = _this.trace_courant
+				
+				---- boucle  murs ---------------------
+				for id_pt = 1 to listePts.count do	 (
+					
+					local on_a_une_facade_mur = false
+					
+					--- les 2 points du mur ----------
+					local pt_mur_1 = listePts[ id_pt ]
+					local pt_mur_2						
+					if id_pt == listePts.count 	then	pt_mur_2 = listePts[ 1 ]
+														else	pt_mur_2 = listePts[ id_pt + 1 ]
+					pt_mur_1.z = pt_mur_2.z = z
+					
+					local	mur_longueur 		= distance pt_mur_1 	pt_mur_2
+					
+					---- si on  a des facades ------
+					if 	on_a_une_facade_etage  do (
+					
+						---  filtre par  murs  ---------------
+						local facades_mur		=	filtrer_facades_parMurs		facades_etages	mur_longueur	id_pt		_this	
+-- 				debug "facades_mur" var:facades_mur
+						---  filtre par probabilités  ---------------						
+						local facade_choisi 		= choisir_parProbas		facades_mur	
+-- 				debug "facade_choisi" var:facade_choisi
+						
+						---- on lance les construction ----------------
+						if facade_choisi != undefined and facade_choisi.sequence.count > 0 then (
+						--- si on a une facade, on construit la sequence --------------
+							creer_sequence		pt_mur_1		pt_mur_2	 facade_choisi		_this	
+							on_a_une_facade_mur = true
+						)  
+						
+					) 
+					
+					if not  on_a_une_facade_mur do (
+					--- sinon un mur plein --------------
+						
+						--- les 2 premiers points --------				
+						pt_bas 	= ( geo_ptr.creer.points  #(pt_mur_1)	 _this	)[1]
+						pt_ht		= (geo_ptr.creer.points   #(pt_mur_1 + [0,0,_this.niveaux_hauteur] )	 _this	)[1]
+						
+						----- le premier espacement ------------
+						local pts_accroche = creer_mur 	pt_bas		pt_ht		pt_mur_2 		_this		
+					)
+					
+				)
+				
+				z += _this.niveaux_hauteur
+				
+				--- dalle plancher ---
+				if ep_dalle  != 0 do (
+					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	ep_dalle	_this
+					facesDunEtage  += nvlsFaces
+					z += ep_dalle
+				) 
+				
+			) --- fin boucle etages -------------
+				
+				
+			
+			
+		),
+		
+		
+		
 		--------- MODELES -----------------
 		fn importer_modeles		_this		=(
 			modeles_import =#()
@@ -1212,39 +1132,43 @@ struct str_construire (
 		
 		--------- BATIMENT -----------------
 		fn batiment 	_this =(
-			
-			local chrono_debut = timeStamp ()
-			
-			---- creation de la surface de base -------
-			geo_ptr.vider 	_this
-			
-			importer_modeles		_this	
-			
-			local chrono_import = timeStamp ()		--- chrono_debut) / 1000.0
-			
-			
-			local zCourant = -( ep_ssBassement + ep_dalle )
-			
-			ssBassement 	_this	&zCourant
-			local chrono_ssBassement		= timeStamp ()	
-			etages			_this	&zCourant
-			local chrono_etages				= timeStamp ()	
-			toit				_this	&zCourant
-			local chrono_toit					= timeStamp ()	
-			
-			local chrono_retirerImport		= timeStamp ()	
-			retirer_modelesImports ()
-			
-			local chrono_total				= timeStamp ()	
-			
-			debug "Construire bâtiment"
-			debug "			import" var:(   (chrono_import - chrono_debut ) / 1000.0)
-			debug "			ssBassement" var:(   ( chrono_ssBassement - chrono_import ) / 1000.0)
-			debug "			etages" var:(   (chrono_etages - chrono_ssBassement ) / 1000.0)
-			debug "			toit" var:(   (chrono_toit - chrono_etages ) / 1000.0)
-			debug "			cleaner import" var:(   (chrono_total - chrono_toit ) / 1000.0)
-			debug "		-----	TOTAL" var:(   (chrono_total - chrono_debut ) / 1000.0)
-			
+			with redraw OFF (
+				local chrono_debut = timeStamp ()
+				
+				---- creation de la surface de base -------
+				geo_ptr.vider 	_this
+				
+				importer_modeles		_this	
+				
+				local chrono_import = timeStamp ()		--- chrono_debut) / 1000.0
+				
+				
+				local zCourant = -( ep_ssBassement + ep_dalle )
+				
+				ssBassement 	_this	&zCourant
+				local chrono_ssBassement		= timeStamp ()	
+				etages			_this	&zCourant
+				local chrono_etages				= timeStamp ()	
+				toit				_this	&zCourant
+				local chrono_toit					= timeStamp ()	
+				
+				local chrono_retirerImport		= timeStamp ()	
+				retirer_modelesImports ()
+				
+				local chrono_total				= timeStamp ()	
+				
+				debug "Construire bâtiment"
+				debug "			import" var:(	(   (chrono_import - chrono_debut ) / 1000.0)	as string + "s." )
+				debug "			ssBassement" var:( (   ( chrono_ssBassement - chrono_import ) / 1000.0)	as string + "s." )
+				debug "			etages" var:( (   (chrono_etages - chrono_ssBassement ) / 1000.0)	as string + "s." )
+				debug "			toit" var:(  (  (chrono_toit - chrono_etages ) / 1000.0)	as string + "s." )
+				debug "			cleaner import" var:(  (  (chrono_total - chrono_toit ) / 1000.0)	as string + "s." )
+				debug "		-----	TOTAL" var:(  (  (chrono_total - chrono_debut ) / 1000.0)	as string + "s." )
+				debug "		-----	nbre de verts" var:(  _this.mesh.verts.count )
+				
+				
+				displayTempPrompt ("Bâtiment construit en " +  (  (chrono_total - chrono_debut ) / 1000.0)	as string + "s." ) 10000
+			)
 			redrawViews () 
 		)
 	
