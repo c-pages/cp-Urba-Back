@@ -252,7 +252,7 @@
 		
 		
 		----  interface ----------
-		fn ajouter_composant	type		param_type: 	=(
+		fn ajouter_composant	type		param_type:#sans 	=(
 			format "rollout ---->ajouter_composant\n"
 			m_composant_courant = m_prt.creer_composant		lbx_sequence.selection	 type		m_cible 	param_type:param_type
 			actualiser()
@@ -433,7 +433,7 @@
 							actualiser ()
 						)
 		on btn_ajouter_espacement pressed do
-			ajouter_composant	#Espacement
+			ajouter_composant	#Parametrique		param_type:#Espacement
 		on btn_ajouter_modele pressed do
 			ajouter_composant	#Modele
 		on btn_annuler pressed do

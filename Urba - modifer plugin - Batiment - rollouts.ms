@@ -46,10 +46,12 @@ parameters params_global rollout:roll_global			(
 	trace_optimiser		type:#boolean			default:true		ui:chk_optimiser
 	trace_souder			type:#boolean			default:true		ui:chk_souder
 	trace_ortho			type:#boolean			default:true		ui:chk_ortho
+	trace_aligner			type:#boolean			default:true		ui:chk_aligner
 	
 	seuil_optimiser			type:#float				default:20.			ui:spn_optimiser
 	seuil_souder			type:#float				default:30.			ui:spn_souder
 	seuil_ortho				type:#float				default:100.		ui:spn_ortho
+	seuil_aligner			type:#float				default:20.			ui:spn_aligner
 	
 	-------  	murs		------------------
 	idtrace_pignons		type:#intTab 			tabSize:0 			tabSizeVariable:true
@@ -68,7 +70,7 @@ parameters params_infos rollout:roll_infos			(
 	
 	------- AFFICHAGE 		 ------------------
 	affiche_axe					type:#boolean			default:false	ui:ckb_axe
-	affiche_trace				type:#boolean			default:false	ui:ckb_trace
+	affiche_trace				type:#boolean			default:true	ui:ckb_trace
 	affiche_gouttereaux		type:#boolean			default:false	ui:ckb_gouttereaux
 	affiche_pignons			type:#boolean			default:false	ui:ckb_pignons
 -- 		affiche_longueurSegts	type:#boolean			default:false	ui:ckb_longueurSegts
@@ -152,7 +154,7 @@ rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 			actualiser()
 		)
 )
-rollout roll_global "Global" width:247 height:220	rolledUp:false
+rollout roll_global "Global" width:247 height:220
 (
 	
 	fn shape_filt 		obj = superclassof obj == shape
@@ -164,16 +166,17 @@ rollout roll_global "Global" width:247 height:220	rolledUp:false
 	checkbox 'chk_souder' "Souder" pos:[10,49] width:55 height:13 align:#left
 	spinner 'spn_souder' "" pos:[87,48] width:80 height:16 range:[0,100,0] type:#worldunits align:#left
 	spinner 'spn_ortho' "" pos:[87,33] width:80 height:16 range:[0,100,0] type:#float align:#left
-	spinner 'spn_rotation_axeP' "" pos:[87,119] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
-	label 'lbl_axeP' "Orientation:" pos:[5,120] width:59 height:15 align:#left
-	button 'btn_rotation' "+90°" pos:[89,134] width:42 height:16 align:#left
-	button 'btn_rotation_inv' "-90°" pos:[130,134] width:42 height:16 align:#left	
+	spinner 'spn_rotation_axeP' "" pos:[87,134] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
+	label 'lbl_axeP' "Orientation:" pos:[5,135] width:59 height:15 align:#left
+	button 'btn_rotation' "+90°" pos:[89,149] width:42 height:16 align:#left
+	button 'btn_rotation_inv' "-90°" pos:[130,149] width:42 height:16 align:#left	
 	
-	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:85 align:#left
-	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,90] width:79 height:15 align:#left
-	spinner 'spn_nbres' "" pos:[87,89] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	spinner 'spn_hauteur' "" pos:[87,104] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl_hauteur' "Htr. des étages:" pos:[5,105] width:76 height:15 align:#left
+	
+	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:100 align:#left
+	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,105] width:79 height:15 align:#left
+	spinner 'spn_nbres' "" pos:[87,104] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	spinner 'spn_hauteur' "" pos:[87,119] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl_hauteur' "Htr. des étages:" pos:[5,120] width:76 height:15 align:#left
 	
 	
 -- 	button 'btn_MaJ' "Actualiser" pos:[24,155] width:147 height:21 align:#left
@@ -207,6 +210,8 @@ rollout roll_global "Global" width:247 height:220	rolledUp:false
 	
 	
 	
+	checkbox 'chk_aligner' "Aligner" pos:[10,79] width:50 height:13 align:#left
+	spinner 'spn_aligner' "" pos:[87,78] width:80 height:16 range:[0,40,0] align:#left
 	on btn_pick_trace picked _nvtrace 	do
 	(
 			trace.definir		_nvtrace	$
@@ -273,17 +278,25 @@ rollout roll_global "Global" width:247 height:220	rolledUp:false
 	on spn_nbres buttonup do
 		flagForeground $ 	false
 	on spn_hauteur changed arg do
-(
-				construire.batiment this
-				
-	)
+	(
+					construire.batiment this
+					
+		)
 	on spn_hauteur buttondown do
 		flagForeground $ 	true
 	on spn_hauteur buttonup do
 		flagForeground $ 	false
-	on btn_MaJ pressed  do(
-				construire.batiment this
+	on chk_aligner changed state do
+	(
+		trace.actualiser 	this
+		construire.batiment this
+		actualiser ()
 	)
+	on spn_aligner changed val 	do
+	(
+			trace.actualiser this
+			construire.batiment this
+		)
 )
 rollout roll_facades "Façades" width:510 height:813
 (

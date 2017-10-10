@@ -3,7 +3,7 @@
 global str_plan
 global str_facade_modele
 
-global str_facadeParam_murPlein, str_facadeParam_baieSimple, str_facadeParam_baie
+global str_facadeParam_murPlein, str_facadeParam_baie , str_facadeParam_espacement			/* str_facadeParam_baieSimple,  */
 global str_facade, str_facade_composant
 
 global	str_prefs_matID 
@@ -120,6 +120,71 @@ struct str_facade_modele (
 
 
 -----------------------	PARAMETRIQUES	-------------------------------------------------------------------------------------------------------------
+struct	str_facadeParam_espacement (
+private
+	----- membres communs --------------
+	m_compo,								---- le composant parant	
+
+	m_construction,
+	m_geo,
+	matID = str_prefs_matID (),
+	
+public
+	id				= "#FAC_PES_",		
+	
+	dialog 		= 		rollout dialog "Espacement" width:180 height:70	(
+								local m_compo
+								local m_rollPrt
+								local m_param
+								fn actualiser =(
+-- 									spn_longueur.value 	= 	m_compo.longueur
+-- 									edt_nom.text 			=	m_compo.nom
+								)
+
+								
+							),
+					
+---- membres  spécifiques	----------
+
+------ fonctions -------
+	fn actualiser 			_compo		_construc	= (
+		m_construction 		= _construc
+		m_geo					=	m_construction.geo_ptr
+		m_compo 				= _compo
+	),
+	
+	fn initialiser 			_compo		_construc	= (
+		
+		actualiser 			_compo		_construc	
+		
+		m_compo.nom 		= "Espacement réparti"
+		m_compo.longueur 	= 0
+		m_compo.hauteur 	= 0
+	),
+	fn initialiser_dialog 	roll_prt 	=(
+		dialog.m_compo 	= m_compo
+		dialog.m_rollPrt	= roll_prt
+		dialog.m_param	=	this
+		dialog.actualiser()
+	),
+	
+	
+------ CONSTRUIRE -------
+	fn construire	 _id_pt_bas		_id_pt_ht		_normDir		_this 		= (
+-- 		format "CONSTRUIRE : lg = %\n" m_compo.longueur
+		local pt1 =  polyop.getVert 	_this.delegate		_id_pt_bas	
+		local pt2 = pt1 + _normDir * m_compo.longueur
+		
+		m_construction.creer_mur 	_id_pt_bas		_id_pt_ht	pt2 	_this		matID:matID.mur
+		
+	),
+	
+----- events ------------------------------------------
+on create do 	
+	for i= 1 to 10 do id += ( random 0 9 ) as string	
+
+
+)
 struct	str_facadeParam_murPlein (
 		private
 			----- membres communs --------------
@@ -189,29 +254,8 @@ struct	str_facadeParam_murPlein (
 				local pt1 =  polyop.getVert 	_this.delegate		_id_pt_bas	
 				local pt2 = pt1 + _normDir * m_compo.longueur
 				
-				local nvlFace = m_construction.creer_mur 	_id_pt_bas		_id_pt_ht	pt2 	_this		matID:matID.mur
+				m_construction.creer_mur 	_id_pt_bas		_id_pt_ht	pt2 	_this		matID:matID.mur
 				
-
-				/* 
-				local pt1 =  polyop.getVert 	_this.delegate		_id_pt_bas	
-				local pt2 = pt1 + _normDir * m_compo.longueur
-				local hauteur	=	_this.niveaux_hauteur 
-				
-				local pts_pos_esp = 	#()		
-				append pts_pos_esp 	( pt2 )
-				append pts_pos_esp 	( pt2 + [0,0,hauteur] )
-				
-				local pts_ids_esp = m_geo.creer.points  pts_pos_esp 	_this
-				append pts_ids_esp 	( _id_pt_ht )
-				append pts_ids_esp 	( _id_pt_bas )
-				
-				m_geo.creer.edges  	pts_ids_esp 	_this	--	fermer:true		
-				m_geo.creer.face  	pts_ids_esp 	_this
-				
-				pt_bas 	= pts_ids_esp[1]
-				pt_ht		= pts_ids_esp[2]
-				
-				#(pt_bas, pt_ht) */
 			),
 			
 		----- events ------------------------------------------
@@ -434,8 +478,6 @@ struct	str_facadeParam_baieSimple (
 			for i= 1 to 10 do id += ( random 0 9 ) as string	
 		
 )
-
-
 struct	str_facadeParam_baie (
 		
 		private

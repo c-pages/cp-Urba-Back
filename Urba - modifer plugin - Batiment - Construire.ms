@@ -696,7 +696,10 @@ struct str_construire (
 		
 		fn creer_mur 	_pt_bas		_pt_ht	_pt2 	_this	 ht:	matId:	= (
 			local hauteur
-			
+-- 			debug "creer_mur"
+-- 			debug "_pt_bas" var:_pt_bas
+-- 			debug "_pt2" var:_pt2
+-- 			debug "(distance _pt2 _pt_bas )" var:(distance _pt2 	(polyop.getvert _this.delegate _pt_bas ) )
 			if ht != unsupplied then	hauteur = ht
 				else hauteur 	=	_this.niveaux_hauteur 
 			
@@ -744,39 +747,43 @@ struct str_construire (
 			
 			local nbr_espacemts 		= 0
 			for compo in sequence do
-				if compo.type == #Espacement do
-					nbr_espacemts += 1
+				if compo.type == #Parametrique do
+					if findString compo.param[1].id "#FAC_PES" != undefined do
+						nbr_espacemts += 1
 				
+-- 			debug "nbr_espacemts" var:nbr_espacemts
+					
 			local nbrRepetitions 		
 			local longueur_restant 			
 			local longueur_espacement 			
 			case _facade.mode of (
 				1:  	(	--- Repeter ----
 					nbrRepetitions				= floor ( longueurFacade / longueur_sequence )
-					longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )	
-					longueur_espacement 	= longueur_restant / ( 2	+ nbr_espacemts )
+					longueur_restant 			= longueurFacade - longueur_sequence * nbrRepetitions
+					longueur_espacement 	= longueur_restant / ( 2	+ nbr_espacemts * nbrRepetitions )
 					b_espacer = false
 				)
 				2: 	(	--- Etirer ----
 					nbrRepetitions				= 1						
-					longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
-					longueur_espacement 	= longueur_restant / ( 2	+ nbr_espacemts )
+					longueur_restant 			= longueurFacade - longueur_sequence * nbrRepetitions 	
+					longueur_espacement 	= longueur_restant / ( 2	+ nbr_espacemts * nbrRepetitions )
 
 				)
 				3: 	(	--- Centrer ----					
 					nbrRepetitions				= 1		
-					longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
+					longueur_restant 			= longueurFacade - longueur_sequence * nbrRepetitions 	
 					longueur_espacement 	= longueur_restant / 2
 					
 				)
 				4:		(	--- Espacer ----	
 					nbrRepetitions				= floor ( longueurFacade / longueur_sequence )
 					longueur_restant 			= longueurFacade - longueur_sequence * (nbrRepetitions )		
-					longueur_espacement 	= longueur_restant / ( nbrRepetitions + 1 + nbr_espacemts )
+					longueur_espacement 	= longueur_restant / ( 1 + nbr_espacemts * nbrRepetitions)
 				)						
 			)
 			
-			
+-- 			
+			debug "longueur_espacement" var:longueur_espacement
 			
 			------------ CONSTRUCTION ------------------------
 			
@@ -806,7 +813,7 @@ struct str_construire (
 					-------- DEBUG----------------------
 					
 					case composant.type    of (
-						#Espacement:		(
+						/* #Espacement:		(
 							pt2		=	pt1 + normDir * longueur_espacement	
 							local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
 							pt_bas 	= pts_accroche[1]
@@ -823,7 +830,7 @@ struct str_construire (
 							pt_ht		= pts_accroche[2]
 							
 							pt1 = pt2
-						)
+						) */
 						#Modele:			(
 							
 							---- on tire au hasare le modele  ------------
@@ -889,13 +896,22 @@ struct str_construire (
 						) -- fin modele
 						#Parametrique: 	(
 							
+							local est_espacement = findString composant.param[1].id "#FAC_PES" != undefined
+							
+							--- si c'est un espacement on lui dit de combien ----------
+							if 	est_espacement do 	composant.longueur = longueur_espacement
+								
 							local pts_accroche = composant.param[1].construire	 pt_bas		pt_ht	 	normDir		_this 
+							
+							
 							pt_bas 	= pts_accroche[1]
 							pt_ht		= pts_accroche[2]	
 							
 							pt2 	= pt1 + normDir * composant.longueur
 							pt1 	= pt2
 							
+							--- si c'est un espacement on lui dit 0 pour pas qu'il compte dans les mesures des analyses ----------
+							if 	est_espacement  do 	composant.longueur = 0
 						)
 						
 					) -- fin case ---------------

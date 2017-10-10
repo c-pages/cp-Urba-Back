@@ -292,12 +292,16 @@ debug_mode =true
 for obj in objects do if superclassof obj == GeometryClass and obj != $'triple002'  and obj != $'Porte002'  and obj != $'Porte003' do delete obj
 bat1 = urba_batiment ()
 clearlistener ()
+for obj in helpers do delete obj
+
 bat1.assigner_trace 	$Shape002	bat1
+-- bat1.assigner_trace 	$Shape009	bat1
+
 -- bat1.facades.creer_facade 	bat1
--- Sphere radius:143.349 smooth:on segs:32 chop:0 slice:off sliceFrom:0 sliceTo:0 mapcoords:on recenter:off pos:[11188.5,-13914.2,0] isSelected:on
+
 select bat1
 
-
+bat1.pos = [0,0,0]
 
 
 
