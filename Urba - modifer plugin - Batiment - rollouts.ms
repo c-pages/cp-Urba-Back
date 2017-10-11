@@ -47,6 +47,7 @@ parameters params_global rollout:roll_global			(
 	trace_souder			type:#boolean			default:true		ui:chk_souder
 	trace_ortho			type:#boolean			default:true		ui:chk_ortho
 	trace_aligner			type:#boolean			default:true		ui:chk_aligner
+	trace_decouper		type:#boolean			default:true		ui:chk_decouper
 	
 	seuil_optimiser			type:#float				default:20.			ui:spn_optimiser
 	seuil_souder			type:#float				default:30.			ui:spn_souder
@@ -54,8 +55,8 @@ parameters params_global rollout:roll_global			(
 	seuil_aligner			type:#float				default:20.			ui:spn_aligner
 	
 	-------  	murs		------------------
-	idtrace_pignons		type:#intTab 			tabSize:0 			tabSizeVariable:true
-	idtrace_gouttereaux	type:#intTab	 		tabSize:0 			tabSizeVariable:true
+-- 	idtrace_pignons		type:#intTab 			tabSize:0 			tabSizeVariable:true
+-- 	idtrace_gouttereaux	type:#intTab	 		tabSize:0 			tabSizeVariable:true
 	
 	niveaux_hauteur		type: #float 			default:250.		ui:spn_hauteur
 	niveaux_nbre			type: #integer			default:1			ui:spn_nbres
@@ -166,18 +167,23 @@ rollout roll_global "Global" width:247 height:220
 	checkbox 'chk_souder' "Souder" pos:[10,49] width:55 height:13 align:#left
 	spinner 'spn_souder' "" pos:[87,48] width:80 height:16 range:[0,100,0] type:#worldunits align:#left
 	spinner 'spn_ortho' "" pos:[87,33] width:80 height:16 range:[0,100,0] type:#float align:#left
-	spinner 'spn_rotation_axeP' "" pos:[87,134] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
-	label 'lbl_axeP' "Orientation:" pos:[5,135] width:59 height:15 align:#left
-	button 'btn_rotation' "+90°" pos:[89,149] width:42 height:16 align:#left
-	button 'btn_rotation_inv' "-90°" pos:[130,149] width:42 height:16 align:#left	
+	spinner 'spn_rotation_axeP' "" pos:[87,151] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
+	label 'lbl_axeP' "Orientation:" pos:[5,152] width:59 height:15 align:#left
+	button 'btn_rotation' "+90°" pos:[89,166] width:42 height:16 align:#left
+	button 'btn_rotation_inv' "-90°" pos:[130,166] width:42 height:16 align:#left	
 	
 	
-	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:100 align:#left
-	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,105] width:79 height:15 align:#left
-	spinner 'spn_nbres' "" pos:[87,104] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	spinner 'spn_hauteur' "" pos:[87,119] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl_hauteur' "Htr. des étages:" pos:[5,120] width:76 height:15 align:#left
 	
+	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:116 align:#left
+	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,122] width:79 height:15 align:#left
+	spinner 'spn_nbres' "" pos:[87,121] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	spinner 'spn_hauteur' "" pos:[87,136] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl_hauteur' "Htr. des étages:" pos:[5,137] width:76 height:15 align:#left
+	
+	checkbox 'chk_aligner' "Aligner" pos:[10,79] width:50 height:13 align:#left
+	spinner 'spn_aligner' "" pos:[87,78] width:80 height:16 range:[0,40,0] align:#left
+	checkbox 'chk_decouper' "Découper" pos:[10,94] width:69 height:13 align:#left
+-- 	spinner 'spn_decouper' "" pos:[87,93] width:80 height:16 range:[0,40,0] align:#left
 	
 -- 	button 'btn_MaJ' "Actualiser" pos:[24,155] width:147 height:21 align:#left
 -- 	checkButton 'chk_MaJ_auto' "" pos:[4,155] width:21 height:21 align:#left
@@ -210,8 +216,6 @@ rollout roll_global "Global" width:247 height:220
 	
 	
 	
-	checkbox 'chk_aligner' "Aligner" pos:[10,79] width:50 height:13 align:#left
-	spinner 'spn_aligner' "" pos:[87,78] width:80 height:16 range:[0,40,0] align:#left
 	on btn_pick_trace picked _nvtrace 	do
 	(
 			trace.definir		_nvtrace	$
@@ -293,6 +297,20 @@ rollout roll_global "Global" width:247 height:220
 		actualiser ()
 	)
 	on spn_aligner changed val 	do
+	(
+			trace.actualiser this
+			construire.batiment this
+		)
+	on chk_decouper changed state do
+	(
+-- 		
+-- 		geo.vider 	_this
+-- 		
+		trace.actualiser 	this
+		construire.batiment this
+		actualiser ()
+	)
+	on spn_decouper changed val 	do
 	(
 			trace.actualiser this
 			construire.batiment this

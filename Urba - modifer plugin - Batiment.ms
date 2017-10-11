@@ -70,6 +70,7 @@ extends:Editable_poly replaceUI:true version:0
 	
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
+	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - tracé.ms"
 	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - Construire.ms"
 	
 	
@@ -170,7 +171,7 @@ extends:Editable_poly replaceUI:true version:0
 				
 				---- les pignons et gouttereaux -----
 				local col = red
-				local estPignon = findItem o.idtrace_pignons i != 0 
+				local estPignon = o.trace.est_pignon i o
 				if estPignon then (
 					if o.affiche_pignons do (
 						gw.setColor	#line	blue
@@ -306,6 +307,13 @@ bat1.pos = [0,0,0]
 
 
 
+
+
+
+
+
+ray <pos_point3> <dir_point3>
+intersectRay 
 
 
 
