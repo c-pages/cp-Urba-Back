@@ -86,24 +86,24 @@
 		checkbutton 'chk_etages' "" pos:[90,53] width:16 height:16 enabled:true highlightColor:(color 255 255 0) toolTip:"Etage minimum." align:#left
 		
 		button 'btn_ajouter_espacement' "Espacement" pos:[10,123] width:75 height:16 toolTip:"Ajouter un espacement. Mur plein de longueur varirable, répartis par facade, entre tous les espacement" align:#left
-		button 'btn_ajouter_modele' "Modèle 3D" pos:[10,204] width:75 height:16 toolTip:"Ajouter un modèle 3D." align:#left
+-- 		button 'btn_ajouter_modele' "Modèle 3D" pos:[10,193] width:75 height:16 toolTip:"Ajouter un modèle 3D." align:#left
 		
 		button 'btn_annuler' "Annuler" pos:[127,257] width:118 height:21 align:#left
 		button 'btn_valider' "Valider" pos:[10,257] width:118 height:21 align:#left
 		
 		label 'lbl95' "Etages:" pos:[12,54] width:43 height:15 align:#left
 		
-		button 'btn_ajouter_murPlein' "Mur plein" pos:[10,141] width:75 height:16 toolTip:"Ajouter un mur plein de longueur fixe." align:#left
+		button 'btn_ajouter_murPlein' "Mur" pos:[10,138] width:75 height:16 toolTip:"Ajouter un mur plein de longueur fixe." align:#left
 		
 -- 		button 'btn_ajouter_baie' "Baie simple" pos:[10,156] width:75 height:16 toolTip:"Ajouter une baie." align:#left
-		button 'btn_ajouter_porte' "Balcon" pos:[10,186] width:75 height:16 toolTip:"Ajouter un modèle 3D." align:#left
+		button 'btn_ajouter_balcon' "Balcon" pos:[10,168] width:75 height:16 toolTip:"Ajouter un modèle 3D." align:#left
 
 		subRollout 'subroll_parametres' "Parametres" pos:[267,43] width:210 height:208 align:#left
 		
 -- 		checkbutton 'btn_parametres' "" pos:[228,215] width:16 height:16 toolTip:"Ouvrir les paramètres du composant." align:#left
 		GroupBox 'grp_prop' "Propriétés" pos:[255,25] width:225 height:238 align:#left
 		
-		button 'btn_ajouter_baieTablette' "Baie tablette" pos:[10,171] width:75 height:16 toolTip:"Ajouter une baie." align:#left
+		button 'btn_ajouter_baieTablette' "Baie" pos:[10,153] width:75 height:16 toolTip:"Ajouter une baie." align:#left
 		
 		
 		------------  Fonctions	----------------------------------------------------------------------------------
@@ -152,14 +152,47 @@
 			ddl_mode.selection 				= m_facade.mode
 			
 			local itemsTmp = #()
+			local est_dansBalcon = false
 			for comp in m_facade.sequence		do	(
+				local affichage = ""
+				local suffix		= ""
 				
-				case comp.type of (
+-- 				format "comp.type : %\n" comp.type
+				
+				if comp.type == #Parametrique do (
+					
+					
+				if classof comp.param[1] == str_facadeParam_balconFin do est_dansBalcon = false
+					
+-- 				format "classof comp.param[1] : %\n" ( classof comp.param[1] )
+					case classof comp.param[1] of (
+						str_facadeParam_balcon:			suffix = "|-----   Balcon  " + comp.param[1].largeur as string  + " cm"
+						str_facadeParam_balconFin:		suffix = "|-----   Balcon"
+						str_facadeParam_espacement:	suffix = "<--->"
+						str_facadeParam_murPlein:		suffix = "|-----|  " + comp.longueur as string  + " cm"
+						str_facadeParam_baie:				suffix = "|  #  |  Baie  " + comp.longueur as string  + " cm"
+					)
+				)
+				if est_dansBalcon do affichage += "           "
+				affichage += suffix --comp.nom
+				append itemsTmp affichage
+				
+				if classof comp.param[1] == str_facadeParam_balcon do est_dansBalcon = true
+					
+					/* 
+					str_facadeParam_balcon, str_facadeParam_balconFin
+					case comp.type of (
+						#Parametrique:	append itemsTmp "<--->"
+						#LongueurFixe:	append itemsTmp ("|-----|    "	 )
+						#Modele:			append itemsTmp ("|  #  |    "	+ comp.nom )
+						default:				append itemsTmp comp.nom
+					) */
+				/* case comp.type of (
 					#Espacement:		append itemsTmp "<--->"
 					#LongueurFixe:	append itemsTmp ("|-----|    "	+ comp.longueur as string  + "cm" )
 					#Modele:			append itemsTmp ("|  #  |    "	+ comp.nom )
 					default:				append itemsTmp comp.nom
-				)
+				) */
 				
 			)
 			lbx_sequence.items =  itemsTmp
@@ -447,10 +480,9 @@
 				)
 		on btn_ajouter_murPlein pressed do
 			ajouter_composant	#Parametrique		param_type:#MurPlein
-		on btn_ajouter_baie pressed do
-			ajouter_composant	#Parametrique		param_type:#BaieSimple
-		on btn_ajouter_porte pressed do
-			()
+		on btn_ajouter_balcon pressed do
+			ajouter_composant	#Parametrique		param_type:#Balcon
+			
 		on btn_ajouter_baieTablette pressed do
 			ajouter_composant	#Parametrique		param_type:#BaieTablette
 	)

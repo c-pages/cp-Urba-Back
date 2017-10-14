@@ -680,8 +680,8 @@ struct str_construire (
 			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_ssBassement	_this
 			z += ep_ssBassement
 			
-			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_dalle	_this
-			z += ep_dalle
+-- 			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	ep_dalle	_this
+-- 			z += ep_dalle
 			
 		),
 		fn RdC 					_this		&z	=(
@@ -733,6 +733,9 @@ struct str_construire (
 -- 			local chrono_debut = timeStamp ()
 -- 			-------- DEBUG----------------------
 			
+			--- passerelle ----------
+			local get_murPlein = _this.facades.get_murPlein
+			
 			
 			------------ ANALYSE ------------------------
 			local pt_bas, pt_ht	 
@@ -744,14 +747,11 @@ struct str_construire (
 			local sequence 				= _facade.sequence 		
 			local b_espacer 				= _facade.mode == 4
 			
-			
 			local nbr_espacemts 		= 0
 			for compo in sequence do
 				if compo.type == #Parametrique do
 					if findString compo.param[1].id "#FAC_PES" != undefined do
 						nbr_espacemts += 1
-				
--- 			debug "nbr_espacemts" var:nbr_espacemts
 					
 			local nbrRepetitions 		
 			local longueur_restant 			
@@ -772,7 +772,7 @@ struct str_construire (
 				3: 	(	--- Centrer ----					
 					nbrRepetitions				= 1		
 					longueur_restant 			= longueurFacade - longueur_sequence * nbrRepetitions 	
-					longueur_espacement 	= longueur_restant / 2
+					longueur_espacement 	= longueur_restant / (  nbr_espacemts * nbrRepetitions )
 					
 				)
 				4:		(	--- Espacer ----	
@@ -782,25 +782,29 @@ struct str_construire (
 				)						
 			)
 			
--- 			
-			debug "longueur_espacement" var:longueur_espacement
-			
 			------------ CONSTRUCTION ------------------------
 			
-			--- les 2 premiers points --------				
-			local pt1 						= 	_pt1
-			local pt2						=	pt1 + normDir * longueur_espacement	
+			---- pour les balcons --------
+			local 	balcon_aConstruire = undefined
+			local 	balcon_pt_debut 	, balcon_ptID_debut
 			
-			pt_bas 	= ( geo_ptr.creer.points  #(pt1)	 _this	)[1]
-			pt_ht		= (geo_ptr.creer.points   #(pt1 + [0,0,_this.niveaux_hauteur] )	 _this	)[1]
-			pt2		=	pt1 + normDir * longueur_espacement	
+			--- les 3 premiers points --------				
+			local pt_accroche_1 	= 	_pt1
+			local pt_accroche_2 	= 	pt_accroche_1 + [0,0,_this.ep_dalle]
+			local pt_accroche_3 	= 	pt_accroche_2 + [0,0,_this.niveaux_hauteur]
 			
+			local ptsIDs_accroche 		= ( geo_ptr.creer.points   #( pt_accroche_1 , pt_accroche_2 , pt_accroche_3 )	 _this	)
+			
+			
+			--- si c'est pas en mode centrer ...
 			----- le premier espacement ------------
-			local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
-			pt_bas 	= pts_accroche[1]
-			pt_ht		= pts_accroche[2]
-			
-			pt1 = pt2
+			if _facade.mode != 3 do (
+				
+				--- Composant 'Mur plein' temporaire	------
+				local compoTmp = get_murPlein		longueur_espacement 		_this
+				ptsIDs_accroche = compoTmp.param[1].construire	 ptsIDs_accroche		normDir		_this 
+				
+			)
 			
 			----- les repetitions de sequence ------------------
 			for i = 1 to nbrRepetitions do (
@@ -813,25 +817,7 @@ struct str_construire (
 					-------- DEBUG----------------------
 					
 					case composant.type    of (
-						/* #Espacement:		(
-							pt2		=	pt1 + normDir * longueur_espacement	
-							local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
-							pt_bas 	= pts_accroche[1]
-							pt_ht		= pts_accroche[2]
-							
-							pt1 = pt2
-						)
-						#LongueurFixe:	(
-							pt2		=	pt1 + normDir * composant.longueur	
-							if composant.longueur>distance _pt2	pt1   do		pt2	=	_pt2							
-							
-							local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
-							pt_bas 	= pts_accroche[1]
-							pt_ht		= pts_accroche[2]
-							
-							pt1 = pt2
-						) */
-						#Modele:			(
+						 #Modele:			(
 							
 							---- on tire au hasare le modele  ------------
 							local probaTotal = 0
@@ -851,26 +837,24 @@ struct str_construire (
 								id += 1
 							)
 							
--- 								_pt_bas		_pt_ht	 	_normDir		_this 
-							
 							if modele != undefined then	(
 								
 								-- si le modele est trop long on met un mur plein ----------
 								pt2 = pt1 + normDir * modele.longueur	
 								if composant.longueur>distance _pt2	pt1   then (	
 									
-									pt2	=	_pt2							
+									pt2		=	_pt2							
 									local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
 									pt_bas 	= pts_accroche[1]
 									pt_ht		= pts_accroche[2]
 									
 									pt1 = pt2
+									
 								) else (
 								---- sinon, pose du modele -----
-									local modeleTmp_id				=	_this.facades.get_modele_idParam		modele.id		_this
-									local modele_node 				= modeles_import[modeleTmp_id]
-									
-									local nv_modele 		= copy modele_node
+									local modeleTmp_id		=	_this.facades.get_modele_idParam		modele.id		_this
+									local modele_node 		= modeles_import[modeleTmp_id]
+									local nv_modele 			= copy modele_node
 									
 									rotate nv_modele (angleaxis rot [0,0,1])
 									nv_modele.pos 				= pt1
@@ -887,32 +871,42 @@ struct str_construire (
 									pt_bas 	= pts_accroche[1]
 									pt_ht		= pts_accroche[2]	
 									
--- 										local nvlFace = geo_ptr.creerFaceVerticale 	pt1 	pt2 	( z + modele.hauteur	 )		_this 		ht:hauteurQuiReste	
 									pt1 = pt2
 								)
 							) -- fin if modele undeinde
 							
 							
-						) -- fin modele
+						) -- fin modele 
 						#Parametrique: 	(
+							local pts_accroche 
+							local est_espacement 	= findString composant.param[1].id "#FAC_PES" != undefined
+							local est_Balcon_deb 	= findString composant.param[1].id "#FAC_PBD" != undefined
+							local est_Balcon_fin 	= findString composant.param[1].id "#FAC_PBF" != undefined
 							
-							local est_espacement = findString composant.param[1].id "#FAC_PES" != undefined
-							
-							--- si c'est un espacement on lui dit de combien ----------
-							if 	est_espacement do 	composant.longueur = longueur_espacement
+							---  ESPACEMENT  ----------
+							if 	est_espacement 	then (
 								
-							local pts_accroche = composant.param[1].construire	 pt_bas		pt_ht	 	normDir		_this 
-							
-							
-							pt_bas 	= pts_accroche[1]
-							pt_ht		= pts_accroche[2]	
-							
-							pt2 	= pt1 + normDir * composant.longueur
-							pt1 	= pt2
-							
-							--- si c'est un espacement on lui dit 0 pour pas qu'il compte dans les mesures des analyses ----------
-							if 	est_espacement  do 	composant.longueur = 0
-						)
+								--- Composant 'Mur plein' temporaire	------
+								local compoTmp = get_murPlein		longueur_espacement 		_this
+								ptsIDs_accroche = compoTmp.param[1].construire	 ptsIDs_accroche		normDir		_this 
+								
+							---  BALCON  ----------
+							) else 	if est_Balcon_deb then  (
+								balcon_ptID_debut 	= ptsIDs_accroche[1]	
+								balcon_pt_debut 		= polyop.getVert 	_this.delegate		ptsIDs_accroche[1]	
+								balcon_aConstruire 	= composant
+							) else if 	est_Balcon_fin 	then (
+								balcon_aConstruire.longueur 			= distance	(polyop.getVert 	_this.delegate		ptsIDs_accroche[1]	) 	balcon_pt_debut
+								balcon_aConstruire.param[1].construire	 #(balcon_ptID_debut, ptsIDs_accroche[2], ptsIDs_accroche[3])		normDir		_this 
+								balcon_aConstruire.longueur 			= 0
+								balcon_aConstruire = undefined
+							---  DEFAULT  ----------
+							) else (
+								
+								ptsIDs_accroche = composant.param[1].construire	 ptsIDs_accroche		normDir		_this 		est_DansBalcon:(balcon_aConstruire != undefined )
+								
+							)
+						) -- fin 	#Parametrique
 						
 					) -- fin case ---------------
 					
@@ -929,28 +923,25 @@ struct str_construire (
 		
 				if b_espacer do (
 					
-					pt2		=	pt1 + normDir * longueur_espacement				
-
-					local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
-					pt_bas 	= pts_accroche[1]
-					pt_ht		= pts_accroche[2]
+					--- Composant 'Mur plein' temporaire	------
+					local compoTmp = get_murPlein		longueur_espacement 		_this
+					ptsIDs_accroche = compoTmp.param[1].construire	 ptsIDs_accroche		normDir		_this 
 					
-					pt1 = pt2
 	
 				)
 				
 			)  --- fin de la repetition
 			
 			
-			if not b_espacer do (
-				--- le dernier espacement --------
-				pt2		=	pt1 + normDir * longueur_espacement
-				local pts_accroche = creer_mur 	pt_bas		pt_ht		pt2 		_this		
-				pt_bas 	= pts_accroche[1]
-				pt_ht		= pts_accroche[2]
-				pt1 = pt2
+			if not b_espacer and  _facade.mode != 3 do (
+				
+				
+				--- le dernier espacement --------				
+				--- Composant 'Mur plein' temporaire	------
+				local compoTmp = get_murPlein		longueur_espacement 		_this
+				ptsIDs_accroche = compoTmp.param[1].construire	 ptsIDs_accroche		normDir		_this 
+				
 			)
-			
 			
 -- 			-------- DEBUG----------------------
 -- 			local chrono_fin = timeStamp ()
@@ -1043,16 +1034,15 @@ struct str_construire (
 					id += 1
 				)
 			)
--- 			debug ".........................................choisir_parProbas" 
--- 			debug ".........................................result" var:result
--- 			debug ".........................................trouve" var:trouve
--- 			debug ".........................................tirage" var:tirage
--- 			debug ".........................................probaTotal" var:probaTotal
 			result
 		),
 		
 		
 		fn etages 				_this				&z	=(
+			
+			--- passerelle ----------
+			local get_murPlein = _this.facades.get_murPlein
+			
 			
 			local facesDunEtage =#()
 			
@@ -1060,12 +1050,9 @@ struct str_construire (
 			for n_etage = 0 to _this.niveaux_nbre  do (
 				
 				--- filtre par etages ---------------
-				local facades_etages = 	filtrer_facades_parEtages		_this.facades.facades_total 	n_etage
--- 				debug "facades_etages" var:facades_etages
-				local on_a_une_facade_etage = facades_etages.count > 0
-				
-				
-				local listePts = _this.trace_courant
+				local facades_etages 				= 	filtrer_facades_parEtages		_this.facades.facades_total 	n_etage
+				local on_a_une_facade_etage 	= facades_etages.count > 0
+				local listePts 							= _this.trace_courant
 				
 				---- boucle  murs ---------------------
 				for id_pt = 1 to listePts.count do	 (
@@ -1080,16 +1067,16 @@ struct str_construire (
 					pt_mur_1.z = pt_mur_2.z = z
 					
 					local	mur_longueur 		= distance pt_mur_1 	pt_mur_2
+					local	norm_mur 			= normalize ( pt_mur_2 -	pt_mur_1 )
 					
 					---- si on  a des facades ------
 					if 	on_a_une_facade_etage  do (
 					
 						---  filtre par  murs  ---------------
 						local facades_mur		=	filtrer_facades_parMurs		facades_etages	mur_longueur	id_pt		_this	
--- 				debug "facades_mur" var:facades_mur
+						
 						---  filtre par probabilités  ---------------						
 						local facade_choisi 		= choisir_parProbas		facades_mur	
--- 				debug "facade_choisi" var:facade_choisi
 						
 						---- on lance les construction ----------------
 						if facade_choisi != undefined and facade_choisi.sequence.count > 0 then (
@@ -1103,29 +1090,35 @@ struct str_construire (
 					if not  on_a_une_facade_mur do (
 					--- sinon un mur plein --------------
 						
-						--- les 2 premiers points --------				
-						pt_bas 	= ( geo_ptr.creer.points  #(pt_mur_1)	 _this	)[1]
-						pt_ht		= (geo_ptr.creer.points   #(pt_mur_1 + [0,0,_this.niveaux_hauteur] )	 _this	)[1]
+						--- Composant 'Mur plein' temporaire	------
+						local pt_accroche_1 	= 	pt_mur_1 
+						local pt_accroche_2 	= 	pt_mur_1 + [0,0,_this.ep_dalle]
+						local pt_accroche_3 	= 	pt_accroche_2 + [0,0,_this.niveaux_hauteur]	
 						
-						----- le premier espacement ------------
-						local pts_accroche = creer_mur 	pt_bas		pt_ht		pt_mur_2 		_this		
+						local ptsIDs_accroche 	= ( geo_ptr.creer.points   #( pt_accroche_1 , pt_accroche_2 , pt_accroche_3 )	 _this	)
+						
+						local compoTmp = get_murPlein		mur_longueur 		_this
+						ptsIDs_accroche 	= compoTmp.param[1].construire	 ptsIDs_accroche		norm_mur		_this 
+						
 					)
 					
 				)
 				
-				z += _this.niveaux_hauteur
+				z += _this.niveaux_hauteur + _this.ep_dalle
 				
-				--- dalle plancher ---
+				/* --- dalle plancher ---
 				if ep_dalle  != 0 do (
 					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	ep_dalle	_this
 					facesDunEtage  += nvlsFaces
 					z += ep_dalle
-				) 
+				)  */
 				
 			) --- fin boucle etages -------------
 				
 				
 			
+			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	_this.ep_dalle	_this
+			z += ep_dalle
 			
 		),
 		

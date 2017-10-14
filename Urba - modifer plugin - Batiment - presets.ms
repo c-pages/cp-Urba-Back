@@ -19,7 +19,7 @@
 struct str_presets_batiment (
 		
 		------------ DEBUG	----------------------------------------------------------------------------------
-		m_debug = true,
+		m_debug = false,
 		m_dbgPrefix ="presetsMGR",
 		fn debug 	_txt  var:	 param:    =(
 			try if m_debug do ::debuger 	_txt  	var:var	 param:param	prefix:m_dbgPrefix
@@ -97,9 +97,12 @@ struct str_presets_batiment (
 						debug "----> string" var:param[2]
 					)
 					ArrayParameter: (
-						local paramTab = filterString 	param[2]		separateur_items
-						debug "----> ArrayParameter" var:paramTab
-						setproperty 	_this 	nomProp	paramTab
+						if param[2] != undefined then (
+							local paramTab = filterString 	param[2]		separateur_items
+							debug "----> ArrayParameter" var:paramTab
+							setproperty 	_this 	nomProp		paramTab
+						) else 
+							setproperty 	_this 	nomProp		#()
 					)
 					default:						(
 						setproperty 	_this 	nomProp	(execute param[2])

@@ -570,7 +570,7 @@ struct str_trace (
 			
 			local seuil = 1
 			
-			format "chercher_pt_a90degGauche: %\n" _id_pt
+-- 			format "chercher_pt_a90degGauche: %\n" _id_pt
 			local vertexSurLigne = #()
 			local mtrx_AP 		= _this.axeP_mtrx
 			
@@ -646,7 +646,7 @@ struct str_trace (
 				)
 			)
 			
-			format "->	result: %\n" result
+-- 			format "->	result: %\n" result
 			result
 			
 		),
@@ -667,7 +667,7 @@ struct str_trace (
 			geo_ptr.creerFace	_this.trace_courant	_this	nd:node_surface
 			
 			for i = 1 to  trace.count 	do (
-				format "------------------------- i: % ----------------------------\n" i
+-- 				format "------------------------- i: % ----------------------------\n" i
 				local est_trouve 		=false 
 				local pt_orig			= 	trace[ i ]	* 	inverse  	mtrx_AP  	
 
@@ -679,19 +679,19 @@ struct str_trace (
 				id_pt_1	= chercher_pt_a90degGauche	i 	vec_pt	_this 
 				if id_pt_1 != undefined then (
 					
-					format "->	id_pt_1: %\n"	id_pt_1
+-- 					format "->	id_pt_1: %\n"	id_pt_1
 					local norm 		= vec_pt * (rotateY	(matrix3 1)	90 )
 					id_pt_2				= chercher_pt_a90degGauche	id_pt_1 	norm	_this 
 				)  
 				
 				if id_pt_2 != undefined then (
-					format "->	id_pt_2: %\n"	id_pt_2
+-- 					format "->	id_pt_2: %\n"	id_pt_2
 					local norm	 	= vec_pt * (rotateY	(matrix3 1)	180 )
 					id_pt_3 				= chercher_pt_a90degGauche	id_pt_2 	norm	_this 
 				)  
 				
 				if id_pt_3 != undefined then (
-					format "->	id_pt_3: %\n"	id_pt_3
+-- 					format "->	id_pt_3: %\n"	id_pt_3
 					local norm	 	= vec_pt * (rotateY	(matrix3 1)	270 )
 					id_pt_4 				= chercher_pt_a90degGauche	id_pt_3 	norm	_this 
 				)  
@@ -700,7 +700,7 @@ struct str_trace (
 					
 				if est_trouve do (
 					
-					format "------------->  RECTANGLE : %, %, %, %\n"	id_pt_1 id_pt_2 id_pt_3 id_pt_4
+-- 					format "------------->  RECTANGLE : %, %, %, %\n"	id_pt_1 id_pt_2 id_pt_3 id_pt_4
 					/* 
 					--- on verifie si le rectangle est dans le tracé -------------
 					local bary = ( (pt_orig + pt_rect_1 + pt_rect_2 + pt_dernCoin ) / 4 ) * 	 	mtrx_AP  

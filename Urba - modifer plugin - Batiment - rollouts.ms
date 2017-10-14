@@ -29,7 +29,6 @@
 
 
 
-
 parameters params_global rollout:roll_global			(
 	
 	------- AXE PRINCIPAL	------------------
@@ -60,6 +59,7 @@ parameters params_global rollout:roll_global			(
 	
 	niveaux_hauteur		type: #float 			default:250.		ui:spn_hauteur
 	niveaux_nbre			type: #integer			default:1			ui:spn_nbres
+	ep_dalle					type: #float 			default:20.			--ui:spn_ep_dalle
 	
 	----- 
 -- 	MaJ_auto_actif		type:#boolean			default:true		ui:chk_MaJ_auto
@@ -142,7 +142,7 @@ rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 	on btn_coller pressed do
 	(
 			presets.coller 	this 
-			params_toStructs 	this
+			facades.params_toStructs 	this
 		
 			trace.actualiser this
 			construire.batiment this
@@ -181,7 +181,7 @@ rollout roll_global "Global" width:247 height:220
 	label 'lbl_hauteur' "Htr. des étages:" pos:[5,137] width:76 height:15 align:#left
 	
 	checkbox 'chk_aligner' "Aligner" pos:[10,79] width:50 height:13 align:#left
-	spinner 'spn_aligner' "" pos:[87,78] width:80 height:16 range:[0,40,0] align:#left
+	spinner 'spn_aligner' "" pos:[87,78] width:80 height:16 range:[0,100,0] align:#left
 	checkbox 'chk_decouper' "Découper" pos:[10,94] width:69 height:13 align:#left
 -- 	spinner 'spn_decouper' "" pos:[87,93] width:80 height:16 range:[0,40,0] align:#left
 	

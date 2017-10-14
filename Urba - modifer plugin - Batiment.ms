@@ -87,9 +87,10 @@ extends:Editable_poly replaceUI:true version:0
 
 	local params_aEnregistrer = 	#(		/*  ----	Global  	----  */		#niveaux_hauteur, #niveaux_nbre, #axeP_orientation,
 													/*  ----	Toiture 	----  */		#toit_pente, #toit_type, #toit_hauteur ,
-													/*  ----	Tracé  	----  */		#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho ,
+													/*  ----	Tracé  	----  */		#trace_optimiser, #trace_souder, #trace_ortho, #seuil_optimiser, #seuil_souder, #seuil_ortho , #trace_aligner, #trace_decouper, #seuil_aligner ,
 													/*  ----	 Facades  	----  */		#facades_composants , #facades_items, #facades_modeles, #facades_parametriques
 											)
+
 	
 	
 	
@@ -295,12 +296,21 @@ bat1 = urba_batiment ()
 clearlistener ()
 for obj in helpers do delete obj
 
-bat1.assigner_trace 	$Shape002	bat1
+bat1.assigner_trace 	$Shape014	bat1
 -- bat1.assigner_trace 	$Shape009	bat1
 
 -- bat1.facades.creer_facade 	bat1
 
+
 select bat1
+
+
+
+
+
+
+
+
 
 bat1.pos = [0,0,0]
 

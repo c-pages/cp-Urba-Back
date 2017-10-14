@@ -214,7 +214,7 @@ struct str_datasMgr (
 							setProperty _element propNom data
 					)
 					array: (
- format  "set_datas_string	--->	ARRAY		propNom :%\n" propNom
+--  format  "set_datas_string	--->	ARRAY		propNom :%\n" propNom
 						if dataTab.count >1 do (
 							local datas_liste  = filterString	dataTab[2] 	separateur_items
 							local tabResult =#()
@@ -461,6 +461,8 @@ struct 	str_facades (
 					"BS":		nvParam = str_facadeParam_baieSimple ()
 					"BT":		nvParam = str_facadeParam_baie ()
 					"ES":		nvParam = str_facadeParam_espacement ()
+					"BD":		nvParam = str_facadeParam_balcon ()
+					"BF":		nvParam = str_facadeParam_balconFin ()
 				)
 				datasMgr.set_datas_string			strg_param		nvParam		_this
 				append parametriques_total 		nvParam
@@ -618,7 +620,6 @@ struct 	str_facades (
 			
 			facade_courante.sequence_longueur = sequence_longueur
 			enregistrer_facade		facade_courante		_this 
--- 			debug "valider_facade FIN OK?!?!,######################################################################################################"	
 			
 			
 			
@@ -670,6 +671,15 @@ struct 	str_facades (
 			
 		),
 		
+		fn get_murPlein	_longueur	_this	 =(
+			local 	nvComposant 	= 	str_facade_composant 	type:#Parametrique
+			local 	nvParam 		= 	str_facadeParam_murPlein			()
+			nvComposant.param 					= #( nvParam )
+			nvComposant.param[1].initialiser 	nvComposant		_this.construire	
+			nvComposant.longueur = _longueur
+			nvComposant
+		),	
+		
 		fn creer_composant		_pos	 _type	_this 		param_type:		=(	--- param_type: pour creation composant parametrique	--->	#MurPlein	, 	#BaieSimple, 
 			debug "creer_composant"
 			
@@ -677,17 +687,38 @@ struct 	str_facades (
 			local nvParam
 			
 			case param_type as name of (
-				#MurPlein:			nvParam 	= 	str_facadeParam_murPlein		()		
-				#BaieSimple:		nvParam 	= 	str_facadeParam_baieSimple	() 
-				#BaieTablette:	nvParam 	= 	str_facadeParam_baie	() 
+				#MurPlein:			nvParam 	= 	str_facadeParam_murPlein			()		
+				#BaieSimple:		nvParam 	= 	str_facadeParam_baieSimple		() 
+				#BaieTablette:	nvParam 	= 	str_facadeParam_baie				() 
 				#Espacement:		nvParam 	= 	str_facadeParam_espacement	() 
+				#Balcon:			nvParam 	= 	str_facadeParam_balcon			() 
 				default:				()
 			)
+			
+			--- exceptions -------------
 			if nvParam != undefined do (
 				nvComposant.param = #( nvParam )
 				nvComposant.param[1].initialiser 	nvComposant		_this.construire	
 				append 		parametriques_total		nvComposant.param[1]
 			)
+			
+			if param_type as name == #Balcon do (
+				
+				local nvCompo_balconFin 	= str_facade_composant 	type:_type
+				nvCompo_balconFin.param = #( str_facadeParam_balconFin 	() )
+				nvCompo_balconFin.param[1].initialiser 	nvCompo_balconFin		_this.construire	
+-- 				nvParam.balcon_fin	=	#( nvCompo_balconFin.param[1] )
+-- 				nvCompo_balconFin.param[1].balcon_debut	=	#(  nvParam.id )
+				
+				append 		parametriques_total		nvCompo_balconFin.param[1]
+				
+				insertItem 	nvCompo_balconFin 			facade_courante.sequence 	( _pos + 1 )			
+				append 		composants_total	nvCompo_balconFin
+				
+			)
+			
+			
+			
 			
 			
 			insertItem 	nvComposant 			facade_courante.sequence 	( _pos + 1 )			
