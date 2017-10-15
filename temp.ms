@@ -26,110 +26,108 @@ fn unir 	_listeTraces =(
 	
 	local traces = for trace in _listeTraces collect trace
 	
--- 	local continu = true
+	local continu = true
+	local suivant = false
+	local idTrace1 = 1
+	local idTrace2 = 1
+	local trace1, trace2
+-- 	local result 	= #()
 	
-	while traces.count > 1 do (
-		local result 	= #()
-		local trace1 	= traces[1]
-		local trace2 	= traces[2]
-		format "trace1 : %	" trace1
-		format "trace2 : %\n" trace2
+	while traces.count > 1 and	continu do (
+		trace1 	= traces[idTrace1]
+		suivant 	= false
+		for idTrace2 = 1 to traces.count where idTrace1 != idTrace2 and  not suivant 	do (
+			
+			trace2 	= traces[ idTrace2 ]
+			
+			format "trace1 : %	" trace1
+			format "trace2 : %\n" trace2
+			
+			
+			local ptsCommuns			= #()
+			local ptsCommuns_trouve = false
+			local idCommun_rect1 		= 0
+			
+			for i = 1 to  trace1.count  where not  ptsCommuns_trouve   do (
+				local id1 = trace1[i]
+				local id2 =	finditem 	trace2	 id1
+	-- 			append result id1
+				if  id2 != 0 then (
+					format "	-> id2 : %\n" id2
+					append ptsCommuns id1
+					if ptsCommuns.count == 2 do 
+						ptsCommuns_trouve = true
+				)
+			)
 		
+			
+			if ptsCommuns.count > 1 then (
+				local idPt1_communTrace2 = findItem	trace2  ptsCommuns[1]
+				local idPt2_communTrace2 = boucler	trace2  ( idPt1_communTrace2 + 1 )
+				
+				if trace2[ idPt2_communTrace2 ] != ptsCommuns[2] then (
+					local id_Pt1_trace2 = boucler trace2 (idPt1_communTrace2 + 1)
+					local id_Pt2_trace2 = boucler trace2 (idPt1_communTrace2 + 2)
+					
+					local idPt1_communTrace1 = findItem	trace1  ptsCommuns[1]
+					local idPt2_communTrace1 = boucler trace1 ( idPt1_communTrace1 + 1 )
+					if trace1[ idPt2_communTrace1 ] != ptsCommuns[2] then (
+						local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[2] ) + 1 )
+						insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+						insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+						
+					) else (
+						local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[1] ) + 1 )
+						insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+						insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+					)
+					
+					
+					
+				) else (
+					local id_Pt1_trace2 = boucler trace2 (idPt2_communTrace2 +1)
+					local id_Pt2_trace2 = boucler trace2 (idPt2_communTrace2 +2)
+					format "		-> - B - on insert a partir de %\n" trace2[ id_Pt1_trace2 ]
+					
+					local idPt1_communTrace1 = findItem	trace1  ptsCommuns[1]
+					local idPt2_communTrace1 = boucler trace1 ( idPt1_communTrace1 + 1 )
+					if trace1[ idPt2_communTrace1 ] != ptsCommuns[2] then (
+						local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[2] ) + 1 )
+						insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+						insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+						
+					) else (
+						local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[1] ) + 1 )
+						insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+						insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+					)
+					
+					
+				)
+				
+				traces[idTrace1] = ordonner_Points trace1
+				deleteItem  traces 	idTrace2
+				idTrace1 = 1
+				
+				suivant = true
+			)
 		
-		local ptsCommuns			= #()
-		local ptsCommuns_trouve = false
-		local idCommun_rect1 		= 0
-		
-		for i = 1 to  trace1.count  where not  ptsCommuns_trouve   do (
-			local id1 = trace1[i]
-			local id2 =	finditem 	trace2	 id1
-			append result id1
-			if  id2 != 0 then (
-				format "	-> id2 : %\n" id2
-				append ptsCommuns id1
-				if ptsCommuns.count == 2 do 
-					ptsCommuns_trouve = true
+		)
+		if suivant = false do (
+			idTrace1 += 1
+			if idTrace1 > traces.count - 1 do (
+				continu = false
+-- 				append result trace1
 			)
 		)
-		
-		local idPt1_communTrace2 = findItem	trace2  ptsCommuns[1]
-		local idPt2_communTrace2 = boucler	trace2  ( idPt1_communTrace2 + 1 )
-		
-		if trace2[ idPt2_communTrace2 ] != ptsCommuns[2] then (
-			local id_Pt1_trace2 = boucler trace2 (idPt1_communTrace2 + 1)
-			local id_Pt2_trace2 = boucler trace2 (idPt1_communTrace2 + 2)
-			
-			local idPt1_communTrace1 = findItem	trace1  ptsCommuns[1]
-			local idPt2_communTrace1 = boucler trace1 ( idPt1_communTrace1 + 1 )
-			if trace1[ idPt2_communTrace1 ] != ptsCommuns[2] then (
-				local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[2] ) + 1 )
-				insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
-				insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
-				
-			) else (
-				local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[1] ) + 1 )
-				insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
-				insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
-			)
-			
-			
-			
-		) else (
-			local id_Pt1_trace2 = boucler trace2 (idPt2_communTrace2 +1)
-			local id_Pt2_trace2 = boucler trace2 (idPt2_communTrace2 +2)
-			format "		-> - B - on insert a partir de %\n" trace2[ id_Pt1_trace2 ]
-			
-			local idPt1_communTrace1 = findItem	trace1  ptsCommuns[1]
-			local idPt2_communTrace1 = boucler trace1 ( idPt1_communTrace1 + 1 )
-			if trace1[ idPt2_communTrace1 ] != ptsCommuns[2] then (
-				local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[2] ) + 1 )
-				insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
-				insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
-				
-			) else (
-				local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[1] ) + 1 )
-				insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
-				insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
-			)
-			
-				
-		)
-		
-		traces[1] = ordonner_Points trace1
-		deleteItem  traces 2
-		format "traces : %\n" traces
-		
-	)
+	) -- fin du while --------
+	
+	
+	format "traces : %\n" traces
+	traces
 	
 	
 	
-/* 	local ptsCommuns_trouve = false
-	local idCommun_rect1 = 0
-	
-	--- on cherche  pt commun 1 -------
-	local ptsCommuns =#()
-	for i = 1 to  _rect1.count  where not  ptsCommuns_trouve  do (
-		local id1 = _rect1[i]
-		local id2 =	finditem 	_rect2	 id1
-		append result id1
-		if  id2 != 0 then (
--- 			append ptsCommuns id1
-			
-			ptsCommuns_trouve = true
-			idCommun_rect1 = i
-			local id_pt1 = boucler  _rect2  (  id2 + 1 )
-			local id_pt2 = boucler  _rect2  (  id2 + 2 )
-			append result 	_rect2[ id_pt1 ]
-			append result 	_rect2[ id_pt2 ] 
-		)  
-	)
-	format "ptsCommuns : %\n" ptsCommuns
-	for i = idCommun_rect1 + 1 to _rect1.count  do (
-		append result 	_rect1[i]
-	)
-	
-	result
-	 */
 )
 
 
@@ -139,7 +137,7 @@ rect3 =  #(4, 5, 6, 7)
 rect2 = #(1, 8, 9, 10)
 
 
-rects = #(rect1, rect2, rect3)
+rects = #( rect2, rect3, rect1, rect4)
 
 rect4 =  #(1, 2, 3, 4)
 

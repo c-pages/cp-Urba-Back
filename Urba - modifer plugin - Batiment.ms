@@ -158,37 +158,73 @@ extends:Editable_poly replaceUI:true version:0
 			
 			--- sous tracés -------------
 			if o.affiche_ssTraces do (
-				local sousTraces = o.sousTraces
-				local barycentre = [0,0,0]
-				for i = 1 to sousTraces.count do (
+				
+				
+				local rectangles = o.trace.rectangles_traces
+				
+				for i = 1 to rectangles.count do (
 -- 					format "o.sousTraces.count :%\n"	o.sousTraces.count
-					local sousTrace = o.trace.datasMgr.get_string_to_array	 	sousTraces[i]
+					local rect = rectangles[i]
 					
-					for id_pt = 1 to sousTrace.count do (
+					local barycentre = [0,0,0]
+					for id_pt = 1 to rect.count do (
 						local id_ptSuiv = id_pt + 1
-						if id_ptSuiv > sousTrace.count do id_ptSuiv = 1
-						local id_ssTrace 				= sousTrace[ id_pt ]
-						local id_ssTrace_suivant 	= sousTrace[ id_ptSuiv ]
+						if id_ptSuiv > rect.count do id_ptSuiv = 1
+						local id_rect 				= rect[ id_pt ]
+						local id_rect_suivant 	= rect[ id_ptSuiv ]
 						
-						local pt 			= o.trace_courant[ id_ssTrace  ] 		*  o.transform 
-						local pt_suivant 	= o.trace_courant[ id_ssTrace_suivant  ]  	*  o.transform 
+						local pt 			= o.trace_courant[ id_rect  ] 				*  o.transform 
+						local pt_suivant 	= o.trace_courant[ id_rect_suivant  ]  	*  o.transform 
 						gw.setColor	#line	gray
 						gw.polyline #( pt, pt_suivant )	false
 						barycentre += pt
 					)
 						
-					local pt_0 = o.trace_courant[ sousTrace[ 1 ] ]
-					local pt_1 = o.trace_courant[ sousTrace[ 2 ] ]
-					local pt_2 = o.trace_courant[ sousTrace[ 4 ] ]
+					local pt_0 = o.trace_courant[ rect[ 1 ] ]
+					local pt_1 = o.trace_courant[ rect[ 2 ] ]
+					local pt_2 = o.trace_courant[ rect[ 4 ] ]
 					
-					barycentre /= sousTraces.count
+					barycentre /= rect.count
 					
 					local surf = ( distance pt_1 pt_0 ) * ( distance pt_2 pt_0 ) / 10000
 					gw.text 		barycentre	( surf as string + " m²" )  	color:gray
-					
-					
-					
 				)
+				
+				
+				local sousTraces = o.sousTraces
+-- 				local barycentre = [0,0,0]
+				for i = 1 to sousTraces.count do (
+-- 					format "o.sousTraces.count :%\n"	o.sousTraces.count
+					
+					local nvSsTrace = str_ssTrace ()
+					local sousTrace = o.trace.datasMgr.set_datas_string 		sousTraces[i] 		nvSsTrace 	_this
+					
+					for id_pt = 1 to sousTrace.trace.count do (
+						local id_ptSuiv = id_pt + 1
+						if id_ptSuiv > sousTrace.trace.count do id_ptSuiv = 1
+						local id_ssTrace 				= sousTrace.trace[ id_pt ]
+						local id_ssTrace_suivant 	= sousTrace.trace[ id_ptSuiv ]
+						
+						local pt 			= o.trace_courant[ id_ssTrace  ] 		*  o.transform 
+						local pt_suivant 	= o.trace_courant[ id_ssTrace_suivant  ]  	*  o.transform 
+						gw.setColor	#line	yellow
+						gw.polyline #( pt, pt_suivant )	false
+-- 						barycentre += pt
+					)
+						
+-- 					local pt_0 = o.trace_courant[ sousTrace[ 1 ] ]
+-- 					local pt_1 = o.trace_courant[ sousTrace[ 2 ] ]
+-- 					local pt_2 = o.trace_courant[ sousTrace[ 4 ] ]
+					
+-- 					barycentre /= sousTraces.count
+					
+-- 					local surf = ( distance pt_1 pt_0 ) * ( distance pt_2 pt_0 ) / 10000
+-- 					gw.text 		barycentre	( surf as string + " m²" )  	color:gray
+				)
+				
+				
+				
+				
 			)
 				
 				
@@ -241,7 +277,7 @@ extends:Editable_poly replaceUI:true version:0
 	)
 	fn VP_toggle	=(
 		unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
-		if 	 this.affiche_axe or  this.affiche_trace or  this.affiche_pignons or  this.affiche_gouttereaux   do
+		if 	 this.affiche_axe or  this.affiche_trace or  this.affiche_pignons or  this.affiche_gouttereaux   or  this.affiche_ssTraces do
 			registerRedrawViewsCallback 		fn_VP_afficher_axePrincipal 	
 	)
 	fn actualiser_cacherGeo =(
@@ -297,12 +333,13 @@ extends:Editable_poly replaceUI:true version:0
 	on load 						do 	(
 		debug "load du plugin" 
 		VP_toggle ()
--- 		trace.params_toStructs 	this	 
+		trace.actualiser 	this	 
 -- 		facades.params_toStructs		this
 	)
 	on clone 	_original 	do (
 		debug "clone du plugin" 
 		facades.params_toStructs		this
+		trace.actualiser 	this	 
 -- 		trace.params_toStructs 	this	
 -- 		initialiser ()
 	)
@@ -342,8 +379,8 @@ select bat1
 
 
 bat1.pos = [0,0,0]
+bat1.trace.rectangles_traces
 bat1.sousTraces
-
 
 try unregisterRedrawViewsCallback 		bat1.fn_VP_afficher_axePrincipal 	
 catch ()

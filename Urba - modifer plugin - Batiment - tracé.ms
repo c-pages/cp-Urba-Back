@@ -3,8 +3,9 @@ struct str_trace (
 	
 		geo_ptr,
 		
-		regles_ssTrace 	= #(),
-		sousTraces 		= #(),
+		regles_ssTrace 		= #(),
+		sousTraces 			= #(),
+		rectangles_traces 	= #(),
 		
 		datasMgr = str_datasMgr 	m_prt:this,
 		
@@ -712,7 +713,14 @@ struct str_trace (
 		fn unir 	_listeTraces =(
 			
 -- 			format "unir 	_listeTraces : %\n" _listeTraces
-			local traces = for trace in _listeTraces collect trace
+			local traces = #() --for trace in _listeTraces collect trace
+			
+			for trace in _listeTraces do (
+				local traceTmp = for _pt  in trace collect _pt
+					append traces traceTmp
+			)
+				
+			
 			
 			local continu = true
 			local suivant = false
@@ -728,19 +736,6 @@ struct str_trace (
 					
 					trace2 	= traces[ idTrace2 ]
 					
--- 					if trace1.count == 0 then (
--- 						traces[idTrace1] = trace2
--- 						deleteItem  traces 	idTrace1
--- 						idTrace1 = 1
--- 						suivant = true
--- 					) else (
--- 					
-						
--- 						
--- 						format "idTrace1 : %	" idTrace1
--- 						format "idTrace2 : %\n" idTrace2
--- 						format "trace1 : %	" trace1
--- 						format "trace2 : %\n" trace2
 						
 						
 						local ptsCommuns			= #()
@@ -831,18 +826,25 @@ struct str_trace (
 		),
 		fn subdiviser		_this 		=(
 			
+			--- on  les points projetés au tracé --------
+			projeter_trace 		_this
+			
+			
+			
 			local result = #()
 			local result_reste =#()
+			
+			rectangles_traces 		= #()
+			
 			
 			local seuil 					= 1
 			local mtrx_AP 			= _this.axeP_mtrx
 			local trace 				= _this.trace_courant
-			local trace_restant 		= for i = 1 to trace.count collect i
 			
--- 			--- creer la face tracé pour tester intersection ------------
 			
 			for i = 1 to  trace.count 	do (
--- 				format "------------------------- i: % ----------------------------\n" i
+			format "	->	subdiviser, i: %\n" i
+				
 				local pt_orig			= 	trace[ i ]	* 	inverse  	mtrx_AP 
 				local id_pt_preced 	= boucler 	trace	( i - 1)
 				local pt_preced 		= trace[ id_pt_preced ] * 	inverse  	mtrx_AP	
@@ -850,6 +852,7 @@ struct str_trace (
 				local id_pt_1, id_pt_2, id_pt_3, id_pt_4
 				
 				id_pt_1	= chercher_pt_a90degGauche	i 	vec_pt	_this 
+				
 				if id_pt_1 != undefined then (
 					local norm 		= vec_pt * (rotateY	(matrix3 1)	90 )
 					id_pt_2				= chercher_pt_a90degGauche	id_pt_1 	norm		_this 
@@ -866,61 +869,99 @@ struct str_trace (
 				---- si on a les quatre points -------
 				if id_pt_4 == i do (
 					
-					local estValide = true
-					
 					local pt_rect_1 = trace[ id_pt_1 ]	* 	inverse  	mtrx_AP 
 					local pt_rect_2 = trace[ id_pt_2 ]	* 	inverse  	mtrx_AP 
 					local pt_rect_3 = trace[ id_pt_3 ]	* 	inverse  	mtrx_AP 
 					
+					format "	->	subdiviser, id_pt_1: %\n" id_pt_1
+					format "	->	subdiviser, id_pt_2: %\n" id_pt_2
+					format "	->	subdiviser, id_pt_3: %\n" id_pt_3
+					
 					local surf = ( distance pt_orig pt_rect_1 ) * ( distance pt_orig pt_rect_3 )  / 10000
 					
--- 					format "surface : %\n" 	surf
+					local rect =  #( i, id_pt_1, id_pt_2, id_pt_3 )
+					format "	->	subdiviser, rect: %\n" rect
 					
-					if _this.sousTraces_surf_min_use do
-						if surf < _this.sousTraces_surf_min do estValide = false
-					if _this.sousTraces_surf_max_use do
-						if surf > _this.sousTraces_surf_max do estValide = false
+					local rect_ordo = ordonner_Points 	rect
+					format "	->	subdiviser, rect_ordo: %\n" rect_ordo
+					append rectangles_traces 		rect_ordo
+					format "->	subdiviser, rectangles_traces: %\n" ( rectangles_traces )
+					virerDoublonsDansTableau 	rectangles_traces
 					
-					
-					local rect = ordonner_Points #( i, id_pt_1, id_pt_2, id_pt_3 )
-					
--- 					format "surf: %\n" ( surf )
-					if estValide then (
-					
-						append result  ( rect )
-						
-					) else (
-						
-						append result_reste 	rect
-						virerDoublonsDansTableau 	result
-						
-					)
+				format "->	subdiviser, rectangles_traces: %\n" ( rectangles_traces )
 				)
--- 			format "découpage, result_reste: %\n" ( result_reste )
 			) -- fin while i  --
 			
--- 			delete node_surface
+			format "	->	subdiviser, rectangles_traces: %\n" ( rectangles_traces )
 			
-			virerDoublonsDansTableau 	result_reste
-			result_reste = unir  result_reste
-			
-			virerDoublonsDansTableau 	result
-			if result_reste.count >0 do join  result  result_reste
-				
--- 			format "découpage, result: %\n" ( result )
--- 			_this.sousTraces = result
-			
-			sousTraces = result
--- 			_this.soustraces = sousTraces
-			result
 		),
 		fn decouper 		_this 		=(
 			
-			--- on  les points projetés au tracé --------
-			projeter_trace 		_this
 			
 			--  points concaves -----------------
-			subdiviser	_this
+			
+			
+			local result = #()
+			local result_reste =#()
+			
+			
+			
+			local seuil 					= 1
+			local mtrx_AP 			= _this.axeP_mtrx
+			local trace 				= _this.trace_courant
+			local trace_restant 		= for i = 1 to trace.count collect i
+			
+-- 			--- creer la face tracé pour tester intersection ------------
+			
+			for sstrace in   rectangles_traces 	do (
+				
+				local estValide = true
+				
+				local pt_rect_1 = trace[ sstrace[ 1 ] ]	* 	inverse  	mtrx_AP 
+				local pt_rect_2 = trace[ sstrace[ 2 ] ]	* 	inverse  	mtrx_AP 
+				local pt_rect_3 = trace[ sstrace[ 3 ] ]	* 	inverse  	mtrx_AP 
+				local pt_rect_4 = trace[ sstrace[ 4 ] ]	* 	inverse  	mtrx_AP 
+				
+				local surf = ( distance pt_rect_2 	pt_rect_1 ) * ( distance pt_rect_1 pt_rect_4 )  / 10000
+				
+				
+				if _this.sousTraces_surf_min_use do
+					if surf < _this.sousTraces_surf_min do estValide = false
+				if _this.sousTraces_surf_max_use do
+					if surf > _this.sousTraces_surf_max do estValide = false
+									
+				if estValide then (
+					local nvTrace = str_ssTrace 		trace:sstrace		etages:_this.sousTraces_etages
+					appendIfUnique result  nvTrace
+					
+				) else (
+					
+					append result_reste 		sstrace
+					virerDoublonsDansTableau 		result_reste
+					
+				)
+			
+-- 			format "découpage, result_reste: %\n" ( result_reste )
+			) -- fin while i  --
+			
+			format "découpage, result_reste: %\n" ( result_reste )
+			result_reste = unir  result_reste
+-- 			
+			format "découpage, result_reste: %\n" ( result_reste )
+			if result_reste.count >0 do (
+				for traceResultRest in result_reste do (
+					local nvTrace = str_ssTrace 	trace:traceResultRest	etages:_this.niveaux_nbre
+					append  result  nvTrace
+				)
+			)
+			
+-- 			virerDoublonsDansTableau 	result
+			format "découpage, sousTraces: %\n" ( result )			
+			format "			-> rectangles_traces: %\n" ( rectangles_traces )
+			
+			sousTraces = result
+			
+		
 			
 		
 		),
@@ -1013,7 +1054,7 @@ struct str_trace (
 				if not est_sensPositif 	trace_absolu 	 do
 					trace_absolu = reverse		trace_absolu
 			)
-			
+-- 			
 			--- suppression de tracée temp -------------
 			delete nvtraceTMP
 			
@@ -1022,10 +1063,7 @@ struct str_trace (
 	
 		 
 		fn actualiser 	_this 	=(
-			
-			-- ? ! ? ! ? ! ---------
-			geo_ptr.vider 	_this		
-			-- ? ! ? ! ? ! ---------
+-- 			
 			
 			_this.trace_courant = _this.trace_original as array
 			actualiser_axeP 	_this
@@ -1035,10 +1073,19 @@ struct str_trace (
 			if _this.trace_souder		do	souder			_this
 			if _this.trace_optimiser 	do	optimiser		_this
 			if _this.trace_aligner 		do	aligner 			_this 	
-				
-			if _this.sousTraces_use 	do 	decouper 		_this 		
+			subdiviser		_this 	
+			if _this.sousTraces_use 	then	decouper 		_this 		
+			else (
+				local nvTrace = str_ssTrace 	trace:(for i = 1 to _this.trace_courant.count collect i ) 	etages:_this.niveaux_nbre
+				_this.trace.sousTraces = #(nvTrace)
+			)
+		 
+		 
+		 
+-- get_datas_string 		_element
+-- set_datas_string 		_datas_string 		_element 	_this
 			
-			_this.soustraces = for ssTrace in sousTraces collect datasMgr.get_array_to_string	 ssTrace
+			_this.soustraces = for ssTrace in sousTraces collect datasMgr.get_datas_string  ssTrace
 		),
 		
 		fn definir	 	_shapeNvtrace  		_thisNode		=(

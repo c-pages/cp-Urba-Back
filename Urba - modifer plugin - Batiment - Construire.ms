@@ -1040,82 +1040,90 @@ struct str_construire (
 		
 		fn etages 				_this				&z	=(
 			
+			local z_initial = copy z
+			
 			--- passerelle ----------
 			local get_murPlein = _this.facades.get_murPlein
 			
-			
-			local facesDunEtage =#()
-			
-			---- boucle étages ---------------------
-			for n_etage = 0 to _this.niveaux_nbre  do (
+			for ssTrace_string in _this.sousTraces do (
+					z  = z_initial
 				
-				--- filtre par etages ---------------
-				local facades_etages 				= 	filtrer_facades_parEtages		_this.facades.facades_total 	n_etage
-				local on_a_une_facade_etage 	= facades_etages.count > 0
-				local listePts 							= _this.trace_courant
+					local sousTrace = str_ssTrace ()
+					_this.trace.datasMgr.set_datas_string 		ssTrace_string 		sousTrace 		_this
+-- 				set_datas_string 		_datas_string 		_element 	
 				
-				---- boucle  murs ---------------------
-				for id_pt = 1 to listePts.count do	 (
+			
+				---- boucle étages ---------------------
+				for n_etage = 0 to sousTrace.etages  do (
 					
-					local on_a_une_facade_mur = false
+					--- filtre par etages ---------------
+					local facades_etages 				= 	filtrer_facades_parEtages		_this.facades.facades_total 	n_etage
+					local on_a_une_facade_etage 	= facades_etages.count > 0
+					local listePts 							= for idPt in sousTrace.trace collect _this.trace_courant[idPt]
 					
-					--- les 2 points du mur ----------
-					local pt_mur_1 = listePts[ id_pt ]
-					local pt_mur_2						
-					if id_pt == listePts.count 	then	pt_mur_2 = listePts[ 1 ]
-														else	pt_mur_2 = listePts[ id_pt + 1 ]
-					pt_mur_1.z = pt_mur_2.z = z
-					
-					local	mur_longueur 		= distance pt_mur_1 	pt_mur_2
-					local	norm_mur 			= normalize ( pt_mur_2 -	pt_mur_1 )
-					
-					---- si on  a des facades ------
-					if 	on_a_une_facade_etage  do (
-					
-						---  filtre par  murs  ---------------
-						local facades_mur		=	filtrer_facades_parMurs		facades_etages	mur_longueur	id_pt		_this	
+					---- boucle  murs ---------------------
+					for id_pt = 1 to listePts.count do	 (
 						
-						---  filtre par probabilités  ---------------						
-						local facade_choisi 		= choisir_parProbas		facades_mur	
+						local on_a_une_facade_mur = false
 						
-						---- on lance les construction ----------------
-						if facade_choisi != undefined and facade_choisi.sequence.count > 0 then (
-						--- si on a une facade, on construit la sequence --------------
-							creer_sequence		pt_mur_1		pt_mur_2	 facade_choisi		_this	
-							on_a_une_facade_mur = true
-						)  
+						--- les 2 points du mur ----------
+						local pt_mur_1 = listePts[ id_pt ]
+						local pt_mur_2						
+						if id_pt == listePts.count 	then	pt_mur_2 = listePts[ 1 ]
+															else	pt_mur_2 = listePts[ id_pt + 1 ]
+						pt_mur_1.z = pt_mur_2.z = z
 						
-					) 
-					
-					if not  on_a_une_facade_mur do (
-					--- sinon un mur plein --------------
+						local	mur_longueur 		= distance pt_mur_1 	pt_mur_2
+						local	norm_mur 			= normalize ( pt_mur_2 -	pt_mur_1 )
 						
-						--- Composant 'Mur plein' temporaire	------
-						local pt_accroche_1 	= 	pt_mur_1 
-						local pt_accroche_2 	= 	pt_mur_1 + [0,0,_this.ep_dalle]
-						local pt_accroche_3 	= 	pt_accroche_2 + [0,0,_this.niveaux_hauteur]	
+						---- si on  a des facades ------
+						if 	on_a_une_facade_etage  do (
 						
-						local ptsIDs_accroche 	= ( geo_ptr.creer.points   #( pt_accroche_1 , pt_accroche_2 , pt_accroche_3 )	 _this	)
+							---  filtre par  murs  ---------------
+							local facades_mur		=	filtrer_facades_parMurs		facades_etages	mur_longueur	id_pt		_this	
+							
+							---  filtre par probabilités  ---------------						
+							local facade_choisi 		= choisir_parProbas		facades_mur	
+							
+							---- on lance les construction ----------------
+							if facade_choisi != undefined and facade_choisi.sequence.count > 0 then (
+							--- si on a une facade, on construit la sequence --------------
+								creer_sequence		pt_mur_1		pt_mur_2	 facade_choisi		_this	
+								on_a_une_facade_mur = true
+							)  
+							
+						) 
 						
-						local compoTmp = get_murPlein		mur_longueur 		_this
-						ptsIDs_accroche 	= compoTmp.param[1].construire	 ptsIDs_accroche		norm_mur		_this 
+						if not  on_a_une_facade_mur do (
+						--- sinon un mur plein --------------
+							
+							--- Composant 'Mur plein' temporaire	------
+							local pt_accroche_1 	= 	pt_mur_1 
+							local pt_accroche_2 	= 	pt_mur_1 + [0,0,_this.ep_dalle]
+							local pt_accroche_3 	= 	pt_accroche_2 + [0,0,_this.niveaux_hauteur]	
+							
+							local ptsIDs_accroche 	= ( geo_ptr.creer.points   #( pt_accroche_1 , pt_accroche_2 , pt_accroche_3 )	 _this	)
+							
+							local compoTmp = get_murPlein		mur_longueur 		_this
+							ptsIDs_accroche 	= compoTmp.param[1].construire	 ptsIDs_accroche		norm_mur		_this 
+							
+						)
 						
 					)
 					
-				)
+					z += _this.niveaux_hauteur + _this.ep_dalle
+					
+					/* --- dalle plancher ---
+					if ep_dalle  != 0 do (
+						local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	ep_dalle	_this
+						facesDunEtage  += nvlsFaces
+						z += ep_dalle
+					)  */
+					
+				) --- fin boucle etages -------------
+					
 				
-				z += _this.niveaux_hauteur + _this.ep_dalle
-				
-				/* --- dalle plancher ---
-				if ep_dalle  != 0 do (
-					local nvlsFaces = geo_ptr.creerFacesContour	_this.trace_courant	z 	ep_dalle	_this
-					facesDunEtage  += nvlsFaces
-					z += ep_dalle
-				)  */
-				
-			) --- fin boucle etages -------------
-				
-				
+			)
 			
 			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	_this.ep_dalle	_this
 			z += ep_dalle
@@ -1188,6 +1196,87 @@ struct str_construire (
 		)
 	
 	
+		/* ****************  BACK -****************************************
+		fn etagesBACK 				_this				&z	=(
+			
+			--- passerelle ----------
+			local get_murPlein = _this.facades.get_murPlein
+			
+			
+			local facesDunEtage =#()
+			
+			---- boucle étages ---------------------
+			for n_etage = 0 to _this.niveaux_nbre  do (
+				
+				--- filtre par etages ---------------
+				local facades_etages 				= 	filtrer_facades_parEtages		_this.facades.facades_total 	n_etage
+				local on_a_une_facade_etage 	= facades_etages.count > 0
+				local listePts 							= _this.trace_courant
+				
+				---- boucle  murs ---------------------
+				for id_pt = 1 to listePts.count do	 (
+					
+					local on_a_une_facade_mur = false
+					
+					--- les 2 points du mur ----------
+					local pt_mur_1 = listePts[ id_pt ]
+					local pt_mur_2						
+					if id_pt == listePts.count 	then	pt_mur_2 = listePts[ 1 ]
+														else	pt_mur_2 = listePts[ id_pt + 1 ]
+					pt_mur_1.z = pt_mur_2.z = z
+					
+					local	mur_longueur 		= distance pt_mur_1 	pt_mur_2
+					local	norm_mur 			= normalize ( pt_mur_2 -	pt_mur_1 )
+					
+					---- si on  a des facades ------
+					if 	on_a_une_facade_etage  do (
+					
+						---  filtre par  murs  ---------------
+						local facades_mur		=	filtrer_facades_parMurs		facades_etages	mur_longueur	id_pt		_this	
+						
+						---  filtre par probabilités  ---------------						
+						local facade_choisi 		= choisir_parProbas		facades_mur	
+						
+						---- on lance les construction ----------------
+						if facade_choisi != undefined and facade_choisi.sequence.count > 0 then (
+						--- si on a une facade, on construit la sequence --------------
+							creer_sequence		pt_mur_1		pt_mur_2	 facade_choisi		_this	
+							on_a_une_facade_mur = true
+						)  
+						
+					) 
+					
+					if not  on_a_une_facade_mur do (
+					--- sinon un mur plein --------------
+						
+						--- Composant 'Mur plein' temporaire	------
+						local pt_accroche_1 	= 	pt_mur_1 
+						local pt_accroche_2 	= 	pt_mur_1 + [0,0,_this.ep_dalle]
+						local pt_accroche_3 	= 	pt_accroche_2 + [0,0,_this.niveaux_hauteur]	
+						
+						local ptsIDs_accroche 	= ( geo_ptr.creer.points   #( pt_accroche_1 , pt_accroche_2 , pt_accroche_3 )	 _this	)
+						
+						local compoTmp = get_murPlein		mur_longueur 		_this
+						ptsIDs_accroche 	= compoTmp.param[1].construire	 ptsIDs_accroche		norm_mur		_this 
+						
+					)
+					
+				)
+				
+				z += _this.niveaux_hauteur + _this.ep_dalle
+				
+				
+			) --- fin boucle etages -------------
+				
+				
+			
+			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	_this.ep_dalle	_this
+			z += ep_dalle
+			
+		)
+		
+		*********************** BACK **********************************/
+		
 ) ---- fin struct construire ------------------
 
 

@@ -4,7 +4,7 @@ global str_plan
 global str_facade_modele
 
 global str_facadeParam_murPlein, str_facadeParam_baie , str_facadeParam_espacement		, str_facadeParam_balcon, str_facadeParam_balconFin
-global str_facade, str_facade_composant			/* , str_regle_ssTrace */
+global str_facade, str_facade_composant	, str_ssTrace		/* , str_regle_ssTrace */
 
 global	str_prefs_matID 
 
@@ -1197,6 +1197,13 @@ struct str_facade (
 		
 ) 
 
+struct	str_ssTrace	(
+	
+	trace		=	#(),
+	etages	=	0,
+	toiture	=	#()
+	
+)
 /* 
 
 struct	str_regle_ssTrace	(

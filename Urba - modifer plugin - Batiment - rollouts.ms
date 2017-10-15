@@ -43,7 +43,7 @@ parameters params_global rollout:roll_global			(
 	sousTraces_surf_max		type:#float			default:25.			ui:spn_sousTraces_surf_max
 	sousTraces_surf_min_use	type:#boolean		default:true		ui:chk_sousTraces_surf_min
 	sousTraces_surf_max_use	type:#boolean		default:true		ui:chk_sousTraces_surf_max
-	sousTraces_etages			type:#boolean		default:true		ui:spn_sousTraces_etages
+	sousTraces_etages			type:#integer		default:1			ui:spn_sousTraces_etages
 	
 	sousTraces						type:#stringTab 	tabSize:0 			tabSizeVariable:true
 	
