@@ -1,6 +1,13 @@
 ----------- Tracé du batiment et autres manipulations----------------
 struct str_trace (
+	
 		geo_ptr,
+		
+		regles_ssTrace 	= #(),
+		sousTraces 		= #(),
+		
+		datasMgr = str_datasMgr 	m_prt:this,
+		
 		-----------------  Opérations diverses ----------------------
 		fn surface 							_trace 	_this =(
 			--- on creer une face sur le tracé ---------
@@ -128,34 +135,86 @@ struct str_trace (
 		),
 	
 		
+		
+		---- tableaux -----------
+		fn boucler 	_array	_id_item 		=(
+			
+			
+			if _id_item >	_array.count do _id_item = mod _id_item _array.count
+			if _id_item < 1 do _id_item += _array.count
+			_id_item as integer
+		),
+		fn trouver_pt 		_arraydePts  	_pt 	 =(
+			local result = 0
+			local seuil = 1
+			local i = 1
+			while i <= _arraydePts.count and  result == 0 do (
+				local pt  =_arraydePts[i]
+				if distance 	pt  _pt < seuil do
+					result = i
+				i+=1
+			)
+-- 			format "pt_est_dejaPresent :%\n" result
+			result
+		),
+		fn pt_est_dejaPresent 		_arraydePts  	_pt 	 =(
+			local result = ( trouver_pt	_arraydePts	_pt ) != 0
+			result
+		),
+		
+		---- manipulation de tableaux ----
+		fn ComparerTableaux 	first 	second =		(
+			result = true
+			if first.count != second.count then
+				result = false
+			else
+				for i = 1 to first.count do
+					if first[i] != second[i] do result = false
+			result
+		),
+		fn virerDoublonsDansTableau  _tab = (
+			for i = 1 to _tab.count do
+			(
+				for j = _tab.count to i+1 by -1 do
+				(
+					test = ( ComparerTableaux  _tab[i] _tab[j] )
+					if test do
+					(
+						deleteItem _tab j
+					)
+				)--end j loop
+			)--end i loop
+		),
+	
+		
+		fn 	ordonner_Points 		_id_pts	 =(
+			--#(2, 3, 4, 1), #(3, 4, 1, 2), #(4, 1, 2, 3)
+			local min 		=	amin _id_pts
+			local id_min 	= finditem _id_pts min
+			local tab_debut = #()
+			local tab_result = #()
+			for i = id_min to  _id_pts.count	 do (
+				append tab_debut _id_pts[i]
+			)
+			for i = id_min to  _id_pts.count	 do 
+				deleteItem _id_pts id_min
+			tab_result = tab_debut + _id_pts
+			tab_result
+		),
+		
+		
+		
 		----- MURS -----------------
 		fn est_pignon 		_id	_this	= (
 -- 			findItem _this.idtrace_pignons 	_id 	!= 0
 			
-			local j = _id+1
-			if j > _this.trace_courant.count do j = 1
+			local j = boucler  _this.trace_courant  (_id+1)
+-- 			if j > _this.trace_courant.count do j = 1
 			
 			orientation = vec_axeP	_this		(_this.trace_courant[j]-_this.trace_courant[_id])
 			if orientation == #perpendiculaire then true else false
 			
 		),
-		/* fn actualiser_pignonsEtGouttereaux  _this =(
-			
-			_this.idtrace_pignons 		=#()
-			_this.idtrace_gouttereaux 	=#()
-			
-			for i =1 to _this.trace_courant.count do (
-				local j = i+1
-				if j > _this.trace_courant.count do j = 1
-				
-				local orientation = vec_axeP	_this		(_this.trace_courant[j]-_this.trace_courant[i])
-				case orientation of (
-					#perpendiculaire: 	append 	_this.idtrace_pignons			i
-					#parallele: 				append 	_this.idtrace_gouttereaux	i
-				)
-				
-			)
-		), */
 		
 		fn actualiser_axeP	  _this	=(
 			
@@ -272,35 +331,25 @@ struct str_trace (
 			local pt_test					= _this.trace_courant[_idTest]		* inverse  mtrx_AP
 			local result =#()
 		
-				
 			for i = 1  to _this.trace_courant.count do (
-				local j = i + 1
-				if j > _this.trace_courant.count do j = 1
-				local pt 					= _this.trace_courant[i]	* inverse  mtrx_AP
-				local pt_suivant 			= _this.trace_courant[j]	* inverse  mtrx_AP
 				
-				if est_pignon  	_idTest	_this	 and est_pignon i 	_this 					do 	(
-					
-					if abs ( pt_test.z - pt.z ) < seuil do (
-	-- 					format 	"	---->proches sur X !!!\n"
+				local j 				= boucler 	_this.trace_courant	( i + 1)
+				local pt 			= _this.trace_courant[i]	* inverse  mtrx_AP
+				local pt_suivant 	= _this.trace_courant[j]	* inverse  mtrx_AP
+				
+				
+				if est_pignon  	_idTest	_this	 and est_pignon  i 	_this 					do 	(
+					if abs ( pt_test.z - pt.z ) < seuil do 
 						appendIfUnique result i
-					)
-					if abs ( pt_test.z - pt_suivant.z ) < seuil do (
-	-- 					format 	"	---->proches sur X Suiovant    !!!\n"
+					if abs ( pt_test.z - pt_suivant.z ) < seuil do 
 						appendIfUnique result i
-					)
 				)
 				
 				if not est_pignon  	_idTest	_this	 and not est_pignon i _this 	do (
-					
-					if abs ( pt_test.x - pt.x ) < seuil do (
-	-- 					format 	"	---->proches sur X !!!\n"
+					if abs ( pt_test.x - pt.x ) < seuil do
 						appendIfUnique result i
-					)
-					if abs ( pt_test.x - pt_suivant.x ) < seuil do (
-	-- 					format 	"	---->proches sur X Suiovant    !!!\n"
+					if abs ( pt_test.x - pt_suivant.x ) < seuil do 
 						appendIfUnique result i
-					)
 				)
 				
 			)
@@ -322,32 +371,31 @@ struct str_trace (
 					pt_moyenne += _this.trace_courant[id_align]	* inverse  mtrx_AP
 				pt_moyenne /=  aligns.count
 				
-				for id_align in aligns where  not est_pignon  	id_align		_this	 do (
-					local pt 			= _this.trace_courant[id_align]	* inverse  mtrx_AP  
-					local j = id_align + 1
-					if j > _this.trace_courant.count do j = 1
-					local pt_suivant 	= _this.trace_courant[j]	* inverse  mtrx_AP  
+				for id_align in aligns  do (
+					
+					local j 						= boucler _this.trace_courant (  id_align + 1 )
+					local pt 					= _this.trace_courant[id_align]	* inverse  mtrx_AP  
+					local pt_suivant 			= _this.trace_courant[j]	* inverse  mtrx_AP  
 					local vec_moyenne1 	= pt_moyenne	 - pt
 					local vec_moyenne2 	= pt_moyenne	 - pt_suivant
-					local vec_align1 		= [vec_moyenne1.x,0,0] 
-					local vec_align2 		= [vec_moyenne2.x,0,0] 
+					local vec_align1, vec_align2
+					if est_pignon  	id_align		_this then (
+						vec_align1 			= [0,0,vec_moyenne1.z] 
+						vec_align2 			= [0,0,vec_moyenne2.z] 						
+					) else (
+						vec_align1 			= [vec_moyenne1.x,0,0] 
+						vec_align2 			= [vec_moyenne2.x,0,0] 
+					)
 					
-					pt 			= _this.trace_courant[id_align]	* inverse  mtrx_AP  	+ vec_align1 
-					pt_suivant 	= _this.trace_courant[j]			* inverse  mtrx_AP  	+ vec_align2
-					_this.trace_courant[id_align] = pt *   mtrx_AP 
-					_this.trace_courant[j] = pt_suivant *   mtrx_AP 
+					pt 							= _this.trace_courant[id_align]	* inverse  mtrx_AP  	+ vec_align1 
+					pt_suivant 					= _this.trace_courant[j]			* inverse  mtrx_AP  	+ vec_align2
+					
+					_this.trace_courant[id_align] 	= pt *   mtrx_AP 
+					_this.trace_courant[j] 			= pt_suivant *   mtrx_AP 
 					
 				)
-				
 			)
 		),
-		
-		
-		
-		
-		
-		
-		
 		fn intersection 	_pt_orig 	_pt_2 		_pt_seg_1 	_pt_seg_2  	_this	 =(
 			local pt_result
 			local seuil = 1
@@ -451,41 +499,6 @@ struct str_trace (
 			)
 			pt_result
 		),
-		
-		
-		
-		
-		fn boucler 	_array	_id_item 		=(
-			
-			
-			if _id_item >	_array.count do _id_item = mod _id_item _array.count
-			if _id_item < 1 do _id_item += _array.count
-			_id_item as integer
-		),
-		
-		
-		
-		
-		fn trouver_pt 		_arraydePts  	_pt 	 =(
-			local result = 0
-			local seuil = 1
-			local i = 1
-			while i <= _arraydePts.count and  result == 0 do (
-				local pt  =_arraydePts[i]
-				if distance 	pt  _pt < seuil do
-					result = i
-				i+=1
-			)
--- 			format "pt_est_dejaPresent :%\n" result
-			result
-		),
-		fn pt_est_dejaPresent 		_arraydePts  	_pt 	 =(
-			local result = ( trouver_pt	_arraydePts	_pt ) != 0
-			result
-		),
-		
-		
-		
 		fn projeter_trace		_this 		=(
 			
 			local mtrx_AP 	= _this.axeP_mtrx
@@ -563,9 +576,6 @@ struct str_trace (
 			_this.trace_courant = trace_temp
 			
 		),
-		
-		
-		
 		fn chercher_pt_a90degGauche	_id_pt  	vec_pt		_this =(
 			
 			local seuil = 1
@@ -650,83 +660,260 @@ struct str_trace (
 			result
 			
 		),
+	/* 	fn unir_traces 	_rect1 	_rect2 =(
+	
+			format "unir_traces ->	_rect1 : %	_rect2:%\n" _rect1 _rect2
+			local result = #()
+			local ptsCommuns_trouve = false
+			local idCommun_rect1 = 0
+			if _rect1.count == 0 then (
+				result = _rect2
+			) else (
+				
+				--- on cherche  pt commun 1 -------
+				local ptsCommuns =#()
+				for i = 1 to  _rect1.count  do (
+					local id1 = _rect1[i]
+					local id2 =	finditem 	_rect2	 id1
+					if  id2 != 0 then (
+			 			append ptsCommuns id1
+					)  
+				)
+				
+				if ptsCommuns.count >= 2 then (
+					for i = 1 to  _rect1.count  where not  ptsCommuns_trouve  do (
+						local id1 = _rect1[i]
+						local id2 =	finditem 	_rect2	 id1
+						append result id1
+						if  id2 != 0 then (
+							append ptsCommuns id1
+							
+							ptsCommuns_trouve = true
+							idCommun_rect1 = i
+							local id_pt1 = boucler  _rect2  (  id2 + 1 )
+							local id_pt2 = boucler  _rect2  (  id2 + 2 )
+							append result 	_rect2[ id_pt1 ]
+							append result 	_rect2[ id_pt2 ] 
+						)  
+					)
+					for i = idCommun_rect1 + 1 to _rect1.count  do (
+						append result 	_rect1[i]
+					)
+					format "unir_traces ->	result : %\n" result
+				)
+				
+			)
+			result
+			
+		),
+		 */
 		
-		
-		
-		
-		
+
+		fn unir 	_listeTraces =(
+			
+-- 			format "unir 	_listeTraces : %\n" _listeTraces
+			local traces = for trace in _listeTraces collect trace
+			
+			local continu = true
+			local suivant = false
+			local idTrace1 = 1
+			local idTrace2 = 1
+			local trace1, trace2
+		-- 	local result 	= #()
+			
+			while traces.count > 1 and	continu do (
+				trace1 	= traces[idTrace1]
+				suivant 	= false
+				for idTrace2 = 1 to traces.count where idTrace1 != idTrace2 and  not suivant 	do (
+					
+					trace2 	= traces[ idTrace2 ]
+					
+-- 					if trace1.count == 0 then (
+-- 						traces[idTrace1] = trace2
+-- 						deleteItem  traces 	idTrace1
+-- 						idTrace1 = 1
+-- 						suivant = true
+-- 					) else (
+-- 					
+						
+-- 						
+-- 						format "idTrace1 : %	" idTrace1
+-- 						format "idTrace2 : %\n" idTrace2
+-- 						format "trace1 : %	" trace1
+-- 						format "trace2 : %\n" trace2
+						
+						
+						local ptsCommuns			= #()
+						local ptsCommuns_trouve = false
+						local idCommun_rect1 		= 0
+						
+						for i = 1 to  trace1.count  where not  ptsCommuns_trouve   do (
+							local id1 = trace1[i]
+							local id2 =	finditem 	trace2	 id1
+				-- 			append result id1
+							if  id2 != 0 then (
+-- 								format "	-> id2 : %\n" id2
+								append ptsCommuns id1
+								if ptsCommuns.count == 2 do 
+									ptsCommuns_trouve = true
+							)
+						)
+					
+						
+						if ptsCommuns.count > 1 then (
+							local idPt1_communTrace2 = findItem	trace2  ptsCommuns[1]
+							local idPt2_communTrace2 = boucler	trace2  ( idPt1_communTrace2 + 1 )
+							
+							if trace2[ idPt2_communTrace2 ] != ptsCommuns[2] then (
+								local id_Pt1_trace2 = boucler trace2 (idPt1_communTrace2 + 1)
+								local id_Pt2_trace2 = boucler trace2 (idPt1_communTrace2 + 2)
+								
+								local idPt1_communTrace1 = findItem	trace1  ptsCommuns[1]
+								local idPt2_communTrace1 = boucler trace1 ( idPt1_communTrace1 + 1 )
+								if trace1[ idPt2_communTrace1 ] != ptsCommuns[2] then (
+									local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[2] ) + 1 )
+									insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+									insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+									
+								) else (
+									local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[1] ) + 1 )
+									insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+									insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+								)
+								
+								
+								
+							) else (
+								local id_Pt1_trace2 = boucler trace2 (idPt2_communTrace2 +1)
+								local id_Pt2_trace2 = boucler trace2 (idPt2_communTrace2 +2)
+-- 								format "		-> - B - on insert a partir de %\n" trace2[ id_Pt1_trace2 ]
+								
+								local idPt1_communTrace1 = findItem	trace1  ptsCommuns[1]
+								local idPt2_communTrace1 = boucler trace1 ( idPt1_communTrace1 + 1 )
+								if trace1[ idPt2_communTrace1 ] != ptsCommuns[2] then (
+									local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[2] ) + 1 )
+									insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+									insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+									
+								) else (
+									local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[1] ) + 1 )
+									insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+									insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+								)
+								
+								
+							)
+							
+							traces[idTrace1] = ordonner_Points 	trace1
+							deleteItem  traces 	idTrace2
+							idTrace1 = 1
+							
+							suivant = true
+						)
+-- 					)
+				)
+				if suivant == false do (
+					idTrace1 += 1
+				)
+-- 			format "idTrace1 : %	traces.count :%\n" idTrace1 traces.count
+				if idTrace1 > traces.count - 1 do (
+					continu = false
+	-- 				append result trace1
+				)
+			) -- fin du while --------
+			
+			
+-- 			format "traces : %\n" traces
+			traces
+			
+			
+			
+		),
 		fn subdiviser		_this 		=(
 			
-			local seuil 			= 1
-			local mtrx_AP 	= _this.axeP_mtrx
-			local trace 		= _this.trace_courant
+			local result = #()
+			local result_reste =#()
 			
-			--- creer la face tracé pour tester intersection ------------
-			local node_surface = convertToPoly ( mesh() )
-			geo_ptr.vider	_this	nd:node_surface
-			geo_ptr.creerFace	_this.trace_courant	_this	nd:node_surface
+			local seuil 					= 1
+			local mtrx_AP 			= _this.axeP_mtrx
+			local trace 				= _this.trace_courant
+			local trace_restant 		= for i = 1 to trace.count collect i
+			
+-- 			--- creer la face tracé pour tester intersection ------------
 			
 			for i = 1 to  trace.count 	do (
 -- 				format "------------------------- i: % ----------------------------\n" i
-				local est_trouve 		=false 
-				local pt_orig			= 	trace[ i ]	* 	inverse  	mtrx_AP  	
-
+				local pt_orig			= 	trace[ i ]	* 	inverse  	mtrx_AP 
 				local id_pt_preced 	= boucler 	trace	( i - 1)
 				local pt_preced 		= trace[ id_pt_preced ] * 	inverse  	mtrx_AP	
-
 				local vec_pt 			= pt_orig - pt_preced		
 				local id_pt_1, id_pt_2, id_pt_3, id_pt_4
+				
 				id_pt_1	= chercher_pt_a90degGauche	i 	vec_pt	_this 
 				if id_pt_1 != undefined then (
-					
--- 					format "->	id_pt_1: %\n"	id_pt_1
 					local norm 		= vec_pt * (rotateY	(matrix3 1)	90 )
-					id_pt_2				= chercher_pt_a90degGauche	id_pt_1 	norm	_this 
-				)  
-				
+					id_pt_2				= chercher_pt_a90degGauche	id_pt_1 	norm		_this 
+				)  				
 				if id_pt_2 != undefined then (
--- 					format "->	id_pt_2: %\n"	id_pt_2
 					local norm	 	= vec_pt * (rotateY	(matrix3 1)	180 )
 					id_pt_3 				= chercher_pt_a90degGauche	id_pt_2 	norm	_this 
-				)  
-				
+				)  				
 				if id_pt_3 != undefined then (
--- 					format "->	id_pt_3: %\n"	id_pt_3
 					local norm	 	= vec_pt * (rotateY	(matrix3 1)	270 )
 					id_pt_4 				= chercher_pt_a90degGauche	id_pt_3 	norm	_this 
 				)  
 				
-				if id_pt_4 == i do est_trouve = true
+				---- si on a les quatre points -------
+				if id_pt_4 == i do (
 					
-				if est_trouve do (
+					local estValide = true
 					
--- 					format "------------->  RECTANGLE : %, %, %, %\n"	id_pt_1 id_pt_2 id_pt_3 id_pt_4
-					/* 
-					--- on verifie si le rectangle est dans le tracé -------------
-					local bary = ( (pt_orig + pt_rect_1 + pt_rect_2 + pt_dernCoin ) / 4 ) * 	 	mtrx_AP  
-					bary.z +=10
-					ray_test = ray bary	 [0,0,-1]
-					local ray_result = intersectRay 		node_surface		ray_test
-					format"est dans le tracé : %\n" (ray_result != undefined )
+					local pt_rect_1 = trace[ id_pt_1 ]	* 	inverse  	mtrx_AP 
+					local pt_rect_2 = trace[ id_pt_2 ]	* 	inverse  	mtrx_AP 
+					local pt_rect_3 = trace[ id_pt_3 ]	* 	inverse  	mtrx_AP 
+					
+					local surf = ( distance pt_orig pt_rect_1 ) * ( distance pt_orig pt_rect_3 )  / 10000
+					
+-- 					format "surface : %\n" 	surf
+					
+					if _this.sousTraces_surf_min_use do
+						if surf < _this.sousTraces_surf_min do estValide = false
+					if _this.sousTraces_surf_max_use do
+						if surf > _this.sousTraces_surf_max do estValide = false
 					
 					
+					local rect = ordonner_Points #( i, id_pt_1, id_pt_2, id_pt_3 )
 					
-					local sp = splineShape name:("i: " + i as string )
-					addnewSpline sp
-					addKnot sp 1 #corner #line ( pt_orig			* 	mtrx_AP )
-					addKnot sp 1 #corner #line ( pt_rect_1		* 	mtrx_AP )
-					addKnot sp 1 #corner #line ( pt_rect_2		* 	mtrx_AP )
-					addKnot sp 1 #corner #line ( pt_dernCoin		* 	mtrx_AP )
-					close sp 1
-					updateShape sp */
+-- 					format "surf: %\n" ( surf )
+					if estValide then (
+					
+						append result  ( rect )
+						
+					) else (
+						
+						append result_reste 	rect
+						virerDoublonsDansTableau 	result
+						
+					)
 				)
+-- 			format "découpage, result_reste: %\n" ( result_reste )
 			) -- fin while i  --
 			
-			delete node_surface
+-- 			delete node_surface
 			
+			virerDoublonsDansTableau 	result_reste
+			result_reste = unir  result_reste
+			
+			virerDoublonsDansTableau 	result
+			if result_reste.count >0 do join  result  result_reste
+				
+-- 			format "découpage, result: %\n" ( result )
+-- 			_this.sousTraces = result
+			
+			sousTraces = result
+-- 			_this.soustraces = sousTraces
+			result
 		),
-		
-		
 		fn decouper 		_this 		=(
 			
 			--- on  les points projetés au tracé --------
@@ -738,9 +925,60 @@ struct str_trace (
 		
 		),
 		
-	
-	
+	 
 		
+		/* 
+		---- sous tracés ------------
+		fn params_toStructs 	_this	=		(		
+			------ Modeles -------
+			regles_ssTrace				= #()
+			for regle_ssTrace in _this.regles_ssTrace 	do (
+				local nvl_regleSsTrace = str_regle_ssTrace ()
+				datasMgr.set_datas_string		regle_ssTrace		nvl_regleSsTrace		_this
+				append 	regles_ssTrace		nvl_regleSsTrace
+			)
+			
+			sousTraces		= #()		
+-- 			set_datas_string 		_datas_string 		_element 	_this	
+			for sousTrace_string in _this.sousTraces 	do (
+				local ssTrace =	datasMgr.get_string_to_array		sousTrace_string	
+				append 	sousTraces		ssTrace
+			)
+			
+			
+			
+			
+		),
+		fn structs_toParam 	_this	=		(			
+			
+			_this.regles_ssTrace	= #()			
+			for regle_ssTrace in regles_ssTrace 	do (
+				local regle_string = 	datasMgr.get_datas_string		regle_ssTrace	
+				append 	_this.regles_ssTrace		regle_string
+			)
+			
+			_this.sousTraces		= #()		
+			for sousTrace in sousTraces 	do (
+				local ssTrace_string = 	datasMgr.get_array_to_string		sousTrace	
+				append 	_this.sousTraces		ssTrace_string
+			)
+			
+			
+		),
+		
+		fn ajouter_sousTrace	_this =(	
+			local nvl_regleSsTrace = str_regle_ssTrace ()
+			append 	regles_ssTrace		nvl_regleSsTrace
+			structs_toParam _this
+		),
+		
+		fn supprimer_sousTrace	_id	_this =(	
+			deleteItem regles_ssTrace 	_id
+			deleteItem _this.regles_ssTrace 	_id
+-- 			structs_toParam 	_this
+		),
+		
+		 */
 		
 		
 		------------tracé du batiment ---------------
@@ -797,8 +1035,10 @@ struct str_trace (
 			if _this.trace_souder		do	souder			_this
 			if _this.trace_optimiser 	do	optimiser		_this
 			if _this.trace_aligner 		do	aligner 			_this 	
-			if _this.trace_decouper 	do	decouper 		_this 		
+				
+			if _this.sousTraces_use 	do 	decouper 		_this 		
 			
+			_this.soustraces = for ssTrace in sousTraces collect datasMgr.get_array_to_string	 ssTrace
 		),
 		
 		fn definir	 	_shapeNvtrace  		_thisNode		=(
@@ -836,4 +1076,22 @@ struct str_trace (
 		)
 		
 ) -- fin struct TRACE ---------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -13,7 +13,6 @@
 	changelog:
 ########################################################################################################################*/
 -- (
-	
 -- 	
 -- include "$userScripts\cp - GLOBAL\Debuger et ecrire.ms"
 struct str_presets_batiment (

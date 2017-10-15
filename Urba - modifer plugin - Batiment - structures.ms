@@ -121,9 +121,67 @@ struct str_datasMgr (
 		separateur_mutationTab 	= "£",
 		separateur_items 			= "^",
 	public
+	
+	
+		fn get_array_to_string		_tab	=(
+			local tabString = ""
+			for item in _tab do (
+				
+				case classof item  of (
+					string:	tabString += item 		as string + separateur_items
+					Integer:	tabString += item 		as string + separateur_items
+					Float:	tabString += item 		as string + separateur_items
+					
+					Point3:	tabString += item 		as string + separateur_items
+					Array:	( 
+						tabString += item 		as string + separateur_items
+						
+					)
+					---- les reste doit etre nos struct a nous ... -------
+					default:	(
+-- 									format "---->Default\n" 
+						tabString += item.id 	as string + separateur_items
+					)
+				)
+			)
+			tabString
+		),
+		fn get_string_to_array		_string	=(
+			
+			local tabResult = #()
+			local items 	= filterString 	_string 		separateur_items
+			
+			
+			for item in items do (
+										
+				local data_exe 	= execute item
+				
+				if data_exe 		== undefined then (
+				--------------- string ---------------
+					append tabResult ( item )
+				) else	if classof data_exe == Name then (
+				
+				--------------- un objet ---------------
+					local elemTmp =  ( m_prt.get_parametre_parID	  ( item ) 	_this	)	
+					
+					--- un id (name)------
+					if elemTmp == undefined do
+						elemTmp = item
+					
+					append tabResult		elemTmp
+					
+				) else 	(					
+				--------------- Nombres ---------------			
+					append tabResult 	( data_exe)
+				)
+			)
+			tabResult
+		),
+		
 		fn get_datas_string 		_element	=(
 			local txtResult = ""
 			local propNames = getPropNames _element
+			
 			for param in propNames do (
 				local prop = ( getProperty  _element 	param )
 				local type = classof prop
@@ -143,26 +201,7 @@ struct str_datasMgr (
 						txtResult+=  param as string  + separateur_mutation	+	prop as string  + separateur_params
 					) */
 					array: (
-						local tabString = ""
-						for item in prop do (
-							
-							case classof item  of (
-								string:	tabString += item 		as string + separateur_items
-								Integer:	tabString += item 		as string + separateur_items
-								Float:	tabString += item 		as string + separateur_items
-								
-								Point3:	tabString += item 		as string + separateur_items
-								Array:	( 
-									tabString += item 		as string + separateur_items
-									
-								)
-								---- les reste doit etre nos struct a nous ... -------
-								default:	(
--- 									format "---->Default\n" 
-									tabString += item.id 	as string + separateur_items
-								)
-							)
-						)
+						local tabString = get_array_to_string		prop
 						txtResult+=  param as string  + separateur_mutation 	+	tabString  + separateur_params
 					)
 					Name:		(
@@ -184,8 +223,8 @@ struct str_datasMgr (
 			
 -- 			stack ()
 			
-			local datasTab 	= filterString _datas_string 		separateur_params
-			local propNames 	= getPropNames _element
+			local datasTab 	= filterString 	_datas_string 		separateur_params
+-- 			local propNames 	= getPropNames _element
 			
 			for datas in datasTab do (
 				

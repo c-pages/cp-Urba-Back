@@ -1,106 +1,172 @@
-	
-	
-	
-	
-	
-	
-		fn intersection 	_pt_orig 	_pt_2 		_pt_seg_1 	_pt_seg_2  		 =(
-			local pt_result
-			
-			local vec_proj		= _pt_orig - _pt_2
-			local vec_seg		= _pt_seg_1 - _pt_seg_2
-			
-			local norm_proj		= normalize vec_proj
-			local norm_seg			= normalize vec_seg
-			local dot_proj_seg 	= dot norm_proj norm_seg
-			
-			---- pas verticale ----------				
-			
-			local a1, b1, a2, b2 
-			local d1_vert = false
-			local d2_vert = false
-			
-			--- données pour les eaquations de droite y = ax + b ----
-			-- droite projeté----------------------
-			if (( _pt_orig.y *1000) as integer /1000  == ( _pt_2.y *1000) as integer /1000) then (
-				-- horizontale --
-				a1 = 0
-				b1 	= _pt_orig.y 
-			) else if (( _pt_orig.x *1000) as integer /1000  == ( _pt_2.x *1000) as integer /1000) then (
-				-- verticale --s
-				a1 	= 1
-				b1 	= _pt_orig.y - _pt_orig.x
-				d1_vert = true
-			) else (
-				a1 	= (_pt_orig.y - _pt_2.y ) / (_pt_orig.x - _pt_2.x)
-				b1 	= _pt_orig.y - a1*_pt_orig.x
-			)		
-			-- droite reception
-			if _pt_seg_1.y == _pt_seg_2.y then (
-				-- horizontale --
-				a2 = 0
-				b2 	= _pt_seg_1.y 
-			) else if _pt_seg_1.x == _pt_seg_2.x then (
-				-- verticale --
-				a2 	= 1
-				b2 	= _pt_seg_1.y - _pt_seg_1.x
-				d2_vert = true
-			) else (
-				a2 	= (_pt_seg_1.y - _pt_seg_2.y ) / (_pt_seg_1.x - _pt_seg_2.x)
-				b2 	= _pt_seg_1.y - a2*_pt_seg_1.x
+
+	fn 	ordonner_Points 		_id_pts	 =(
+			--#(2, 3, 4, 1), #(3, 4, 1, 2), #(4, 1, 2, 3)
+			local min 		=	amin _id_pts
+			local id_min 	= finditem _id_pts min
+			local tab_debut = #()
+			local tab_result = #()
+			for i = id_min to  _id_pts.count	 do (
+				append tab_debut _id_pts[i]
 			)
-			
-			
-			
-			
-			local x, y
-			if 	d1_vert then (
-				if not d2_vert do (
-					x =   _pt_orig.x
-					y =   a2 * x + b2
-				)
-			) else 	if 	d2_vert then (
-				if not d1_vert do (
-					x =   _pt_seg_1.x
-					y =   a1 * x + b1
-				)
-			) else (
-				if a1 != a2 then (
-					x =   ( b2 - b1 ) / (a1  - a2 )
-					y =   a1 * x + b1
-				)
-			)
-			
-			-- si on a un point on verifie la suite -----------------------------
-			if x != undefined do (
-				local pt_proj  = [x,y,0]
-			
-				if   dot  ( normalize ( _pt_orig - _pt_2 ) )  (  normalize (   pt_proj - _pt_orig) )   > 0 do (
-					
-					local dist_seg 	= distance _pt_seg_1 	_pt_seg_2
-					local dist_ptProj 	= distance _pt_seg_1 	pt_proj 		+ distance _pt_seg_2 	pt_proj 
-					
-					if  dist_ptProj  == dist_seg do 
-						pt_result = pt_proj
-					
-				)
-				
-			)
-			
-			pt_result
+			for i = id_min to  _id_pts.count	 do 
+				deleteItem _id_pts id_min
+			tab_result = tab_debut + _id_pts
+			tab_result
 		)
 		
+fn boucler 	_array	_id_item 		=(
+	
+	
+	if _id_item >	_array.count do _id_item = mod _id_item 	_array.count
+	if _id_item < 1 do _id_item += _array.count
+	_id_item as integer
+)
+
+fn unir 	_listeTraces =(
+	
+	local traces = for trace in _listeTraces collect trace
+	
+-- 	local continu = true
+	
+	while traces.count > 1 do (
+		local result 	= #()
+		local trace1 	= traces[1]
+		local trace2 	= traces[2]
+		format "trace1 : %	" trace1
+		format "trace2 : %\n" trace2
 		
-				---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		
+		local ptsCommuns			= #()
+		local ptsCommuns_trouve = false
+		local idCommun_rect1 		= 0
+		
+		for i = 1 to  trace1.count  where not  ptsCommuns_trouve   do (
+			local id1 = trace1[i]
+			local id2 =	finditem 	trace2	 id1
+			append result id1
+			if  id2 != 0 then (
+				format "	-> id2 : %\n" id2
+				append ptsCommuns id1
+				if ptsCommuns.count == 2 do 
+					ptsCommuns_trouve = true
+			)
+		)
+		
+		local idPt1_communTrace2 = findItem	trace2  ptsCommuns[1]
+		local idPt2_communTrace2 = boucler	trace2  ( idPt1_communTrace2 + 1 )
+		
+		if trace2[ idPt2_communTrace2 ] != ptsCommuns[2] then (
+			local id_Pt1_trace2 = boucler trace2 (idPt1_communTrace2 + 1)
+			local id_Pt2_trace2 = boucler trace2 (idPt1_communTrace2 + 2)
 			
-		pt_orig 	= getKnotPoint $Line_proj 1 1 
-		pt_2 		= getKnotPoint $Line_proj 1 2
+			local idPt1_communTrace1 = findItem	trace1  ptsCommuns[1]
+			local idPt2_communTrace1 = boucler trace1 ( idPt1_communTrace1 + 1 )
+			if trace1[ idPt2_communTrace1 ] != ptsCommuns[2] then (
+				local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[2] ) + 1 )
+				insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+				insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+				
+			) else (
+				local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[1] ) + 1 )
+				insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+				insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+			)
+			
+			
+			
+		) else (
+			local id_Pt1_trace2 = boucler trace2 (idPt2_communTrace2 +1)
+			local id_Pt2_trace2 = boucler trace2 (idPt2_communTrace2 +2)
+			format "		-> - B - on insert a partir de %\n" trace2[ id_Pt1_trace2 ]
+			
+			local idPt1_communTrace1 = findItem	trace1  ptsCommuns[1]
+			local idPt2_communTrace1 = boucler trace1 ( idPt1_communTrace1 + 1 )
+			if trace1[ idPt2_communTrace1 ] != ptsCommuns[2] then (
+				local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[2] ) + 1 )
+				insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+				insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+				
+			) else (
+				local idPt2_communTrace1 = boucler trace1		( (finditem trace1  ptsCommuns[1] ) + 1 )
+				insertItem   trace2[  id_Pt2_trace2 ]	trace1	 idPt2_communTrace1
+				insertItem   trace2[  id_Pt1_trace2 ]	trace1	 idPt2_communTrace1
+			)
+			
+				
+		)
 		
-		pt_seg_1 = getKnotPoint $Line_test 1 1
-		pt_seg_2 = getKnotPoint $Line_test 1 2
-		clearlistener ()
-		pt_proj = intersection 	pt_orig 		pt_2 		pt_seg_1 	pt_seg_2 		
-		if pt_proj != undefined do popo = point pos:pt_proj 
+		traces[1] = ordonner_Points trace1
+		deleteItem  traces 2
+		format "traces : %\n" traces
 		
-		
-		
+	)
+	
+	
+	
+/* 	local ptsCommuns_trouve = false
+	local idCommun_rect1 = 0
+	
+	--- on cherche  pt commun 1 -------
+	local ptsCommuns =#()
+	for i = 1 to  _rect1.count  where not  ptsCommuns_trouve  do (
+		local id1 = _rect1[i]
+		local id2 =	finditem 	_rect2	 id1
+		append result id1
+		if  id2 != 0 then (
+-- 			append ptsCommuns id1
+			
+			ptsCommuns_trouve = true
+			idCommun_rect1 = i
+			local id_pt1 = boucler  _rect2  (  id2 + 1 )
+			local id_pt2 = boucler  _rect2  (  id2 + 2 )
+			append result 	_rect2[ id_pt1 ]
+			append result 	_rect2[ id_pt2 ] 
+		)  
+	)
+	format "ptsCommuns : %\n" ptsCommuns
+	for i = idCommun_rect1 + 1 to _rect1.count  do (
+		append result 	_rect1[i]
+	)
+	
+	result
+	 */
+)
+
+
+clearListener ()
+rect1 = #(1, 4, 7, 8)
+rect3 =  #(4, 5, 6, 7)
+rect2 = #(1, 8, 9, 10)
+
+
+rects = #(rect1, rect2, rect3)
+
+rect4 =  #(1, 2, 3, 4)
+
+-- #(1, 4, 5, 6, 7, 8, 9, 10)
+
+
+
+unir  rects
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

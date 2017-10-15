@@ -36,35 +36,46 @@ parameters params_global rollout:roll_global			(
 	axeP_BB					type:#point3Tab		tabSize:2			tabSizeVariable:false
 	axeP_orientation		type:#float				default:0.			ui:spn_rotation_axeP
 	
-	------- tracés			------------------
-	a_un_trace				type:#boolean			default:false
 	
-	trace_original			type:#point3Tab 		tabSize:0 			tabSizeVariable:true
-	trace_courant			type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+	------- sous tracés	------------------
+	sousTraces_use				type:#boolean		default:true		ui:chk_sousTraces
+	sousTraces_surf_min		type:#float			default:15.			ui:spn_sousTraces_surf_min
+	sousTraces_surf_max		type:#float			default:25.			ui:spn_sousTraces_surf_max
+	sousTraces_surf_min_use	type:#boolean		default:true		ui:chk_sousTraces_surf_min
+	sousTraces_surf_max_use	type:#boolean		default:true		ui:chk_sousTraces_surf_max
+	sousTraces_etages			type:#boolean		default:true		ui:spn_sousTraces_etages
 	
-	trace_optimiser		type:#boolean			default:true		ui:chk_optimiser
-	trace_souder			type:#boolean			default:true		ui:chk_souder
-	trace_ortho			type:#boolean			default:true		ui:chk_ortho
-	trace_aligner			type:#boolean			default:true		ui:chk_aligner
-	trace_decouper		type:#boolean			default:true		ui:chk_decouper
+	sousTraces						type:#stringTab 	tabSize:0 			tabSizeVariable:true
 	
-	seuil_optimiser			type:#float				default:20.			ui:spn_optimiser
-	seuil_souder			type:#float				default:30.			ui:spn_souder
-	seuil_ortho				type:#float				default:100.		ui:spn_ortho
-	seuil_aligner			type:#float				default:20.			ui:spn_aligner
-	
-	-------  	murs		------------------
--- 	idtrace_pignons		type:#intTab 			tabSize:0 			tabSizeVariable:true
--- 	idtrace_gouttereaux	type:#intTab	 		tabSize:0 			tabSizeVariable:true
 	
 	niveaux_hauteur		type: #float 			default:250.		ui:spn_hauteur
 	niveaux_nbre			type: #integer			default:1			ui:spn_nbres
 	ep_dalle					type: #float 			default:20.			--ui:spn_ep_dalle
 	
-	----- 
--- 	MaJ_auto_actif		type:#boolean			default:true		ui:chk_MaJ_auto
 	
 )
+
+parameters params_trace rollout:roll_trace			(
+
+	------- tracés			------------------
+	a_un_trace				type:#boolean			default:false	
+	trace_original			type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+	trace_courant			type:#point3Tab 		tabSize:0 			tabSizeVariable:true
+	
+	
+	------- Optimisations		------------------
+	trace_optimiser		type:#boolean			default:true		ui:chk_optimiser
+	trace_souder			type:#boolean			default:true		ui:chk_souder
+	trace_ortho			type:#boolean			default:true		ui:chk_ortho
+	trace_aligner			type:#boolean			default:true		ui:chk_aligner
+	
+	seuil_optimiser			type:#float				default:20.			ui:spn_optimiser
+	seuil_souder			type:#float				default:30.			ui:spn_souder
+	seuil_ortho				type:#float				default:100.		ui:spn_ortho
+	seuil_aligner			type:#float				default:50.			ui:spn_aligner
+	
+)
+
 parameters params_infos rollout:roll_infos			(
 	
 	surface					type: #float 			default:0.	
@@ -74,7 +85,7 @@ parameters params_infos rollout:roll_infos			(
 	affiche_trace				type:#boolean			default:true	ui:ckb_trace
 	affiche_gouttereaux		type:#boolean			default:false	ui:ckb_gouttereaux
 	affiche_pignons			type:#boolean			default:false	ui:ckb_pignons
--- 		affiche_longueurSegts	type:#boolean			default:false	ui:ckb_longueurSegts
+	affiche_ssTraces			type:#boolean			default:true	ui:ckb_ssTraces
 	
 	cache_geometrie			type:#boolean			default:false	ui:ckb_geometrie
 )
@@ -155,34 +166,29 @@ rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 			actualiser()
 		)
 )
-rollout roll_global "Global" width:247 height:220
+rollout roll_trace "Tracé" width:182 height:301
 (
+	
 	
 	fn shape_filt 		obj = superclassof obj == shape
 	
 	pickbutton 'btn_pick_trace' "Pick shape" pos:[10,13] width:156 height:21 filter:shape_filt align:#left
-	checkbox 'chk_optimiser' "Optimiser" pos:[10,64] width:62 height:13 align:#left
-	checkbox 'chk_ortho' "Orthonorm." pos:[10,34] width:76 height:13 align:#left
-	spinner 'spn_optimiser' "" pos:[87,63] width:80 height:16 range:[0,40,0] align:#left
-	checkbox 'chk_souder' "Souder" pos:[10,49] width:55 height:13 align:#left
-	spinner 'spn_souder' "" pos:[87,48] width:80 height:16 range:[0,100,0] type:#worldunits align:#left
-	spinner 'spn_ortho' "" pos:[87,33] width:80 height:16 range:[0,100,0] type:#float align:#left
-	spinner 'spn_rotation_axeP' "" pos:[87,151] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
-	label 'lbl_axeP' "Orientation:" pos:[5,152] width:59 height:15 align:#left
-	button 'btn_rotation' "+90°" pos:[89,166] width:42 height:16 align:#left
-	button 'btn_rotation_inv' "-90°" pos:[130,166] width:42 height:16 align:#left	
+	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:40 align:#left
+	
+	checkbox 'chk_optimiser' "Optimiser" pos:[6,76] width:62 height:13 align:#left
+	checkbox 'chk_ortho' "Orthonorm." pos:[6,46] width:76 height:13 align:#left
+	spinner 'spn_optimiser' "" pos:[87,75] width:85 height:16 range:[0,40,0] align:#left
+	checkbox 'chk_souder' "Souder" pos:[6,61] width:55 height:13 align:#left
+	spinner 'spn_souder' "" pos:[87,60] width:85 height:16 range:[0,100,0] type:#worldunits align:#left
+	spinner 'spn_ortho' "" pos:[87,45] width:85 height:16 range:[0,100,0] type:#float align:#left
 	
 	
 	
-	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:116 align:#left
-	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,122] width:79 height:15 align:#left
-	spinner 'spn_nbres' "" pos:[87,121] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
-	spinner 'spn_hauteur' "" pos:[87,136] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
-	label 'lbl_hauteur' "Htr. des étages:" pos:[5,137] width:76 height:15 align:#left
 	
-	checkbox 'chk_aligner' "Aligner" pos:[10,79] width:50 height:13 align:#left
-	spinner 'spn_aligner' "" pos:[87,78] width:80 height:16 range:[0,100,0] align:#left
-	checkbox 'chk_decouper' "Découper" pos:[10,94] width:69 height:13 align:#left
+	
+	
+	checkbox 'chk_aligner' "Aligner" pos:[6,91] width:50 height:13 align:#left
+	spinner 'spn_aligner' "" pos:[87,90] width:85 height:16 range:[0,100,0] align:#left
 -- 	spinner 'spn_decouper' "" pos:[87,93] width:80 height:16 range:[0,40,0] align:#left
 	
 -- 	button 'btn_MaJ' "Actualiser" pos:[24,155] width:147 height:21 align:#left
@@ -193,15 +199,15 @@ rollout roll_global "Global" width:247 height:220
 	
 	fn actualiser =(
 		
-		spn_hauteur.enabled 				= a_un_trace
-		lbl_hauteur.enabled 				= a_un_trace		
+-- 		spn_hauteur.enabled 				= a_un_trace
+-- 		lbl_hauteur.enabled 				= a_un_trace		
 		chk_optimiser.enabled 			= a_un_trace
 		chk_ortho.enabled 				= a_un_trace
 		chk_souder.enabled 				= a_un_trace		
-		btn_rotation.enabled 				= a_un_trace
-		btn_rotation_inv.enabled 		= a_un_trace
-		spn_rotation_axeP.enabled 	= a_un_trace
-		lbl_axeP.enabled 					= a_un_trace
+-- 		btn_rotation.enabled 				= a_un_trace
+-- 		btn_rotation_inv.enabled 		= a_un_trace
+-- 		spn_rotation_axeP.enabled 	= a_un_trace
+-- 		lbl_axeP.enabled 					= a_un_trace
 		
 		spn_optimiser.enabled 			= trace_optimiser
 		spn_souder.enabled 				= trace_souder
@@ -222,6 +228,7 @@ rollout roll_global "Global" width:247 height:220
 			trace.actualiser	this
 			construire.batiment this
 		)
+	
 	on chk_optimiser changed state do
 	(
 		trace.actualiser 	this
@@ -255,6 +262,120 @@ rollout roll_global "Global" width:247 height:220
 			trace.actualiser this
 			construire.batiment this
 		)
+	on chk_aligner changed state do
+	(
+		trace.actualiser 	this
+		construire.batiment this
+		actualiser ()
+	)
+	on spn_aligner changed val 	do
+	(
+			trace.actualiser this
+			construire.batiment this
+		)
+)
+rollout roll_global "Global" width:247 height:375
+(
+	
+-- 	local regle_ssTrace_courant
+	
+	spinner 'spn_rotation_axeP' "" pos:[87,32] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
+	label 'lbl_axeP' "Orientation:" pos:[5,33] width:59 height:15 align:#left
+	button 'btn_rotation' "+90°" pos:[89,47] width:42 height:16 align:#left
+	button 'btn_rotation_inv' "-90°" pos:[130,47] width:42 height:16 align:#left		
+		
+	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,3] width:79 height:15 align:#left
+	spinner 'spn_nbres' "" pos:[87,2] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	spinner 'spn_hauteur' "" pos:[87,17] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl_hauteur' "Htr. des étages:" pos:[5,18] width:76 height:15 align:#left
+	
+	
+	GroupBox 'grp_sousTrace' "Division surfaces:" pos:[4,64] width:168 height:86 align:#left
+	label 'lbl_division_etages' "Nbre. d'étages:" pos:[13,128] width:75 height:15 align:#left
+	spinner 'spn_sousTraces_etages' "" pos:[87,127] width:81 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	label 'lbl_surfMin' "Surf. min (m²):" pos:[13,95] width:76 height:15 align:#left
+	label 'lbl_surfMax' "        max (m²):" pos:[15,110] width:72 height:15 align:#left
+-- 	button 'btn_ajouter_division' "+" pos:[134,76] width:16 height:16 enabled:true toolTip:"surface minimum." highlightColor:(color 255 255 0) align:#left
+-- 	button 'btn_supprimer_division' "-" pos:[149,76] width:16 height:16 enabled:true toolTip:"surface minimum." highlightColor:(color 255 255 0) align:#left
+	
+	
+	spinner 'spn_sousTraces_surf_min' "" pos:[102,95] width:66 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
+	spinner 'spn_sousTraces_surf_max' "" pos:[102,111] width:66 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
+	checkbutton 'chk_sousTraces_surf_max' "" pos:[89,111] width:16 height:16 highlightColor:(color 255 255 0) toolTip:"Surface maximum." checked:false align:#left
+	checkbutton 'chk_sousTraces_surf_min' "" pos:[89,95] width:16 height:16 enabled:true highlightColor:(color 255 255 0) toolTip:"surface minimum." align:#left
+-- 	listbox 'lbx_divisions' "" pos:[12,92] width:153 height:5 align:#left
+
+		
+	checkbox 'chk_sousTraces' "Diviser" pos:[13,80] width:107 height:15 align:#left
+	
+	
+	fn actualiser =(
+		
+-- 		lbx_divisions.items = for ssTrace in trace.regles_ssTrace collect ssTrace.nom
+-- 		if lbx_divisions.selection != 0 then
+-- 			regle_ssTrace_courant	= trace.regles_ssTrace[lbx_divisions.selection]
+-- 		else regle_ssTrace_courant = undefined
+		
+		spn_hauteur.enabled 			= a_un_trace
+		lbl_hauteur.enabled 				= a_un_trace		
+		btn_rotation.enabled 			= a_un_trace
+		btn_rotation_inv.enabled 		= a_un_trace
+		spn_rotation_axeP.enabled 	= a_un_trace
+		lbl_axeP.enabled 					= a_un_trace
+		
+		local enabled =  sousTraces_use
+		
+		spn_sousTraces_etages.enabled 	= enabled
+		spn_sousTraces_surf_min.enabled 			= enabled
+		lbl_surfMin.enabled 						= enabled
+		lbl_surfMax.enabled 						= enabled
+		chk_sousTraces_surf_max.enabled 	= enabled
+		chk_sousTraces_surf_min.enabled 	= enabled
+		spn_sousTraces_surf_max.enabled 	= enabled
+-- 		btn_supprimer_division.enabled 		= enabled
+		
+		if enabled then (
+			spn_sousTraces_etages.indeterminate  		= false
+			spn_sousTraces_surf_min.indeterminate  		= false
+			spn_sousTraces_surf_max.indeterminate  	= false
+-- 			spn_sousTraces_etages.value  			= .nombre_etages
+-- 			spn_sousTraces_surf_min.value  		= regle_ssTrace_courant.surface_min
+-- 			spn_sousTraces_surf_max.value  		= regle_ssTrace_courant.surface_max
+-- 			chk_sousTraces_surf_max.checked  	= regle_ssTrace_courant.surface_min_use
+-- 			chk_sousTraces_surf_min.checked  	= regle_ssTrace_courant.surface_max_use
+			
+		) else (
+			spn_sousTraces_etages.indeterminate  		= true
+			spn_sousTraces_surf_min.indeterminate  		= true
+			spn_sousTraces_surf_max.indeterminate  	= true
+			chk_sousTraces_surf_max.checked  			= false
+			chk_sousTraces_surf_min.checked  			= false
+			
+		)
+		
+	)
+	
+
+/* 			.value  			= regle_ssTrace_courant.nombre_etages
+			spn_division_surfaceMin.value  		= regle_ssTrace_courant.surface_min
+			spn_division_surfaceMax.value  		= regle_ssTrace_courant.surface_max
+			chk_division_surfaceMin.checked  	= regle_ssTrace_courant.surface_min_use
+			chk_division_surfaceMax.checked  	= regle_ssTrace_courant.surface_max_use
+		
+		nombre_etages	=	0,
+		surface_min		= 20.,
+		surface_min_use	= true,
+		surface_max		= 50.,
+		surface_max_use	= true, */
+	
+		
+		
+		
+		
+		
+	
+	on roll_global open do
+		actualiser ()
 	on spn_rotation_axeP changed arg do
 	(
 			trace.actualiser this
@@ -290,30 +411,58 @@ rollout roll_global "Global" width:247 height:220
 		flagForeground $ 	true
 	on spn_hauteur buttonup do
 		flagForeground $ 	false
-	on chk_aligner changed state do
+	on spn_sousTraces_etages changed val do
 	(
-		trace.actualiser 	this
-		construire.batiment this
-		actualiser ()
-	)
-	on spn_aligner changed val 	do
-	(
-			trace.actualiser this
-			construire.batiment this
+-- 			regle_ssTrace_courant.nombre_etages = val
+			actualiser ()
+-- 			trace.structs_toParam 	this
+			trace.actualiser 	this
+			construire.batiment 	this
 		)
-	on chk_decouper changed state do
+	on spn_sousTraces_surf_min changed val do
 	(
--- 		
--- 		geo.vider 	_this
--- 		
-		trace.actualiser 	this
-		construire.batiment this
-		actualiser ()
-	)
-	on spn_decouper changed val 	do
+-- 			regle_ssTrace_courant.surface_min = val
+			actualiser ()
+-- 			trace.structs_toParam 	this
+			trace.actualiser 	this
+			construire.batiment 	this
+		
+		)
+	on spn_sousTraces_surf_max changed val do
 	(
-			trace.actualiser this
-			construire.batiment this
+-- 			regle_ssTrace_courant.surface_max = val
+			actualiser ()
+-- 			trace.structs_toParam 	this
+			trace.actualiser 	this
+			construire.batiment 	this
+		
+		)
+	on chk_sousTraces_surf_max changed state do
+	(
+-- 			regle_ssTrace_courant.surface_max_use = state
+			actualiser ()
+-- 			trace.structs_toParam 	this
+			trace.actualiser 	this
+			construire.batiment 	this
+		
+		)
+	on chk_sousTraces_surf_min changed state do
+	(
+-- 			regle_ssTrace_courant.surface_min_use = state
+			actualiser ()
+-- 			trace.structs_toParam 	this
+			trace.actualiser 	this
+			construire.batiment 	this
+		
+		)
+	on chk_sousTraces changed state do
+	(
+-- 			regle_ssTrace_courant.surface_max_use = state
+			actualiser ()
+-- 			trace.structs_toParam 	this
+			trace.actualiser 	this
+			construire.batiment 	this
+		
 		)
 )
 rollout roll_facades "Façades" width:510 height:813
@@ -443,39 +592,47 @@ rollout roll_toiture "Toiture" width:236 height:418
 	on spn_pente changed val 	do
 		construire.batiment this
 )
-rollout roll_infos "Infos" width:191 height:142	rolledUp:true
+rollout roll_infos "Infos" width:191 height:142
 (
-	label 'lbl16' "Surface:" pos:[5,69] width:43 height:14 align:#left
-	label 'lbl_surface' "" pos:[85,69] width:78 height:16 align:#left 
+	label 'lbl16' "Surface:" pos:[5,90] width:43 height:14 align:#left
+	label 'lbl_surface' "" pos:[85,90] width:78 height:16 align:#left 
  
- 
-
-	label 'lbl1_tracePts' "Tracé (origin.):" pos:[5,84] width:70 height:14 align:#left
-	label 'lbl_tracePts_val' "" pos:[85,84] width:78 height:16 align:#left 
  
  
 
-	label 'lbl1_tracePts_opt' "Tracé (optim.):" pos:[5,99] width:69 height:14 align:#left
-	label 'lbl_tracePts_opt_val' "" pos:[85,99] width:78 height:16 align:#left 
+	label 'lbl1_tracePts' "Tracé (origin.):" pos:[5,105] width:70 height:14 align:#left
+	label 'lbl_tracePts_val' "" pos:[85,105] width:78 height:16 align:#left 
+ 
+ 
+ 
+
+	label 'lbl1_tracePts_opt' "Tracé (optim.):" pos:[5,120] width:69 height:14 align:#left
+	label 'lbl_tracePts_opt_val' "" pos:[85,120] width:78 height:16 align:#left 
+ 
  
  
 	checkbutton 'ckb_axe' "Axe" pos:[10,14] width:75 height:16 align:#left	 --highlightColor:[200,200,100]
 	 --highlightColor:[200,200,100]
+	 --highlightColor:[200,200,100]
 	checkbutton 'ckb_trace' "Points" pos:[84,14] width:75 height:16 align:#left --highlightColor:[170,170,170]
+ --highlightColor:[170,170,170]
  --highlightColor:[170,170,170]
 	checkbutton 'ckb_pignons' "Pignons" pos:[84,29] width:75 height:16 align:#left		 --highlightColor:[130,130,250]
 		 --highlightColor:[130,130,250]
+		 --highlightColor:[130,130,250]
 	checkbutton 'ckb_gouttereaux' "Gouttereaux" pos:[10,29] width:75 height:16 align:#left --highlightColor:[250,100,100]
  --highlightColor:[250,100,100]
+ --highlightColor:[250,100,100]
 -- 		checkbutton 'ckb_longueurSegts' "Long. façades" pos:[5,32] width:80 height:16 align:#left --highlightColor:[170,170,170]
-	checkbutton 'ckb_geometrie' "Cacher géom." pos:[10,44] width:75 height:16 highlightColor:(color 255 0 0) align:#left
+	checkbutton 'ckb_geometrie' "Cacher géom." pos:[10,65] width:75 height:16 highlightColor:(color 255 0 0) align:#left
+	checkbutton 'ckb_ssTraces' "Sous tracés" pos:[10,44] width:75 height:16 align:#left
 	
 	
 	
 	
 	
 -- 		on ckb_longueurSegts 	changed state 		do	VP_toggle ()
-	groupBox 'grp30' "Viewport:" pos:[5,1] width:158 height:63 align:#left
+	GroupBox 'grp30' "Viewport:" pos:[5,1] width:158 height:85 align:#left
 	
 	
 	fn actualiser =(
@@ -503,25 +660,16 @@ rollout roll_infos "Infos" width:191 height:142	rolledUp:true
 	
 	
 	
-	on ckb_geometrie 		changed state 		do 		actualiser_cacherGeo ()
-	on ckb_axe 				changed state 		do 		VP_toggle ()
-	on ckb_trace 				changed state 		do	VP_toggle ()
-	on ckb_pignons 			changed state 		do	(
-		VP_toggle ()
-		actualiser ()
-	)
-	on ckb_gouttereaux 	changed state 		do	(
-		VP_toggle ()
-		actualiser ()
-	)
 -- 		on ckb_longueurSegts 	changed state 		do	VP_toggle ()
-	on roll_infos open do actualiser ()
-	on roll_infos close do (
-		cache_geometrie = false 
-		actualiser_cacherGeo ()
-	)
 	
 	
+	on roll_infos open do
+		actualiser ()
+	on roll_infos close do
+	(
+			cache_geometrie = false 
+			actualiser_cacherGeo ()
+		)
 	on ckb_axe changed state 		do
 		VP_toggle ()
 	on ckb_trace changed state 		do
@@ -571,7 +719,6 @@ rollout roll_TEST "TEST" width:162 height:58
 )
 
  */
-
 
 
 

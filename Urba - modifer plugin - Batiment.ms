@@ -28,7 +28,13 @@
 ########################################################################################################################*/
 
 
--- unregisterRedrawViewsCallback 	fn_VP_afficher_axePrincipal
+
+
+
+try unregisterRedrawViewsCallback 		$.fn_VP_afficher_axePrincipal 	
+catch ()
+
+
 
 (
 	------------ DEBUG	-------------------------------------------------------------------------------------------------------------------------
@@ -125,32 +131,17 @@ extends:Editable_poly replaceUI:true version:0
 			local mtrx_axeP	= o.axeP_mtrx 
 			local mtrx_axeP2	= o.axeP_mtrx 
 				
--- format "fn_VP_afficher_axePrincipal:%\n"  BB_axeP
 			translate mtrx_axeP 	BB_axeP[1]
--- 			translate mtrx_axeP 	o.pos
--- 			mtrx_axeP 	= mtrx_axeP * o.transform
 			
 			local diag_axeP	=	(BB_axeP[2] * inverse mtrx_axeP ) - (BB_axeP[1]  * inverse mtrx_axeP  )
 			local largeur 		=	diag_axeP.x
 			local longeur 		= 	diag_axeP.z
 -- 				
--- format "largeur:%		longeur:%		mtrx_axeP:%\n" largeur longeur  mtrx_axeP
-
-				
--- 			gw.Marker 	( BB_axeP[1] * o.transform )	#Circle  	color:yellow
--- 			gw.Marker 	 ( (  [largeur,0,0]    *  mtrx_axeP  * o.transform) 	)	#Circle  	color:blue
--- 			gw.Marker 	 ( BB_axeP[2] * o.transform )	#Circle  	color:yellow
--- 			gw.Marker 	 ( [BB_axeP[2].x, BB_axeP[1].y, BB_axeP[1].z] * o.transform )	#Circle  	color:blue
-				
 			------ l'AXE----------------
 			if o.affiche_axe do (
 				---- dessin de l'Axe-----------------
 				local ptAxe_1 =  [largeur/2,0,0]  *   mtrx_axeP   * o.transform
 				local ptAxe_2 =  [largeur/2,0,longeur - largeurFleche ]  *     mtrx_axeP    * o.transform
--- 				local ptAxe_1 =  [0,0,0]  *   mtrx_axeP   * o.transform
--- 				local ptAxe_2 =  [0,0,0 ]  *     mtrx_axeP    * o.transform
-				
--- format "ptAxe_1:%		ptAxe_2:%\n" ptAxe_1 ptAxe_2  
 
 				gw.setColor	#line	yellow
 				gw.Polyline #( ptAxe_1, ptAxe_2 )	false
@@ -163,8 +154,51 @@ extends:Editable_poly replaceUI:true version:0
 				gw.Polyline #( ptFleche_1, ptFleche_2, ptFleche_3 )	true
 			)
 			
-		
+			
+			
+			--- sous tracés -------------
+			if o.affiche_ssTraces do (
+				local sousTraces = o.sousTraces
+				local barycentre = [0,0,0]
+				for i = 1 to sousTraces.count do (
+-- 					format "o.sousTraces.count :%\n"	o.sousTraces.count
+					local sousTrace = o.trace.datasMgr.get_string_to_array	 	sousTraces[i]
+					
+					for id_pt = 1 to sousTrace.count do (
+						local id_ptSuiv = id_pt + 1
+						if id_ptSuiv > sousTrace.count do id_ptSuiv = 1
+						local id_ssTrace 				= sousTrace[ id_pt ]
+						local id_ssTrace_suivant 	= sousTrace[ id_ptSuiv ]
+						
+						local pt 			= o.trace_courant[ id_ssTrace  ] 		*  o.transform 
+						local pt_suivant 	= o.trace_courant[ id_ssTrace_suivant  ]  	*  o.transform 
+						gw.setColor	#line	gray
+						gw.polyline #( pt, pt_suivant )	false
+						barycentre += pt
+					)
+						
+					local pt_0 = o.trace_courant[ sousTrace[ 1 ] ]
+					local pt_1 = o.trace_courant[ sousTrace[ 2 ] ]
+					local pt_2 = o.trace_courant[ sousTrace[ 4 ] ]
+					
+					barycentre /= sousTraces.count
+					
+					local surf = ( distance pt_1 pt_0 ) * ( distance pt_2 pt_0 ) / 10000
+					gw.text 		barycentre	( surf as string + " m²" )  	color:gray
+					
+					
+					
+				)
+			)
+				
+				
+	-- 			gw.text 		( (pt + pt_suivant) /2 )	longueurFacade  	color:white
+			
+			
+			
 			for i = 1 to o.trace_courant.count do (
+				
+					
 				local j = i + 1
 				if j > o.trace_courant.count do j = 1
 				local pt = o.trace_courant[i] *  o.transform 
@@ -194,7 +228,7 @@ extends:Editable_poly replaceUI:true version:0
 				)
 				---- les points du trace_courant -----
 				if o.affiche_trace do (
-					gw.text 		(pt + [0,0,10]) 	(i as string)  	color:yellow
+					gw.text 		(pt + [0,0,10]) 	(i as string /* + ":" + ( o.trace_courant[i] * inverse o.axeP_mtrx ) as string */ )  	color:yellow
 -- 					gw.Marker 	pt 	#hollowBox 	color:yellow
 				)
 			
@@ -263,11 +297,13 @@ extends:Editable_poly replaceUI:true version:0
 	on load 						do 	(
 		debug "load du plugin" 
 		VP_toggle ()
+-- 		trace.params_toStructs 	this	 
 -- 		facades.params_toStructs		this
 	)
 	on clone 	_original 	do (
 		debug "clone du plugin" 
 		facades.params_toStructs		this
+-- 		trace.params_toStructs 	this	
 -- 		initialiser ()
 	)
 	on create do (
@@ -296,7 +332,7 @@ bat1 = urba_batiment ()
 clearlistener ()
 for obj in helpers do delete obj
 
-bat1.assigner_trace 	$Shape014	bat1
+bat1.assigner_trace 	$Shape032	bat1
 -- bat1.assigner_trace 	$Shape009	bat1
 
 -- bat1.facades.creer_facade 	bat1
@@ -305,20 +341,21 @@ bat1.assigner_trace 	$Shape014	bat1
 select bat1
 
 
-
-
-
-
-
-
-
 bat1.pos = [0,0,0]
+bat1.sousTraces
+
+
+try unregisterRedrawViewsCallback 		bat1.fn_VP_afficher_axePrincipal 	
+catch ()
 
 
 
 
 
 
+
+
+$.VP_toggle ()
 
 
 
