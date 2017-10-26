@@ -51,7 +51,7 @@ global urba_clipboard_batiment = ""
 
 
 (
-include	 "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures secondaires.ms"
+	include	"$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures secondaires.ms"
 )
 
 	
@@ -71,13 +71,13 @@ extends:Editable_poly replaceUI:true version:0
 	)
 	
 	--------------- IMPORTS  ----------------------------------------------------------------------------------------------------------------------
-	include "$userScripts\cp - GLOBAL\Enregistreur De Node.ms"	
+	include 	"$userScripts\cp - GLOBAL\Enregistreur De Node.ms"	
 
 	
-	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
-	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
-	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - tracé.ms"
-	include "$userScripts\cp-Urba\Urba - modifer plugin - Batiment - Construire.ms"
+	include 	"$userScripts\cp-Urba\Urba - modifer plugin - Batiment - presets.ms"
+	include 	"$userScripts\cp-Urba\Urba - modifer plugin - Batiment - structures.ms"
+	include 	"$userScripts\cp-Urba\Urba - modifer plugin - Batiment - tracé.ms"
+	include 	"$userScripts\cp-Urba\Urba - modifer plugin - Batiment - Construire.ms"
 	
 	
 	--------------- PRé-DéCLARATIONS  ----------------------------------------------------------------------------------------------------------------------
@@ -333,7 +333,7 @@ extends:Editable_poly replaceUI:true version:0
 	on load 						do 	(
 		debug "load du plugin" 
 		VP_toggle ()
-		trace.actualiser 	this	 
+-- 		trace.actualiser 	this	 
 -- 		facades.params_toStructs		this
 	)
 	on clone 	_original 	do (
@@ -369,7 +369,7 @@ bat1 = urba_batiment ()
 clearlistener ()
 for obj in helpers do delete obj
 
-bat1.assigner_trace 	$Shape032	bat1
+bat1.assigner_trace 	$Shape002	bat1
 -- bat1.assigner_trace 	$Shape009	bat1
 
 -- bat1.facades.creer_facade 	bat1
@@ -379,8 +379,20 @@ select bat1
 
 
 bat1.pos = [0,0,0]
+
+
+
+
+
 bat1.trace.rectangles_traces
 bat1.sousTraces
+
+
+
+
+
+
+
 
 try unregisterRedrawViewsCallback 		bat1.fn_VP_afficher_axePrincipal 	
 catch ()

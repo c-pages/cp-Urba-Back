@@ -38,12 +38,12 @@ parameters params_global rollout:roll_global			(
 	
 	
 	------- sous tracés	------------------
-	sousTraces_use				type:#boolean		default:true		ui:chk_sousTraces
-	sousTraces_surf_min		type:#float			default:15.			ui:spn_sousTraces_surf_min
-	sousTraces_surf_max		type:#float			default:25.			ui:spn_sousTraces_surf_max
-	sousTraces_surf_min_use	type:#boolean		default:true		ui:chk_sousTraces_surf_min
-	sousTraces_surf_max_use	type:#boolean		default:true		ui:chk_sousTraces_surf_max
-	sousTraces_etages			type:#integer		default:1			ui:spn_sousTraces_etages
+	sousTraces_use				type:#boolean		default:true		--ui:chk_sousTraces
+	sousTraces_surf_min		type:#float			default:15.			--ui:spn_sousTraces_surf_min
+	sousTraces_surf_max		type:#float			default:25.			--ui:spn_sousTraces_surf_max
+	sousTraces_surf_min_use	type:#boolean		default:true		--ui:chk_sousTraces_surf_min
+	sousTraces_surf_max_use	type:#boolean		default:true		--ui:chk_sousTraces_surf_max
+	sousTraces_etages			type:#integer		default:1			--ui:spn_sousTraces_etages
 	
 	sousTraces						type:#stringTab 	tabSize:0 			tabSizeVariable:true
 	
@@ -113,22 +113,24 @@ parameters params_toiture rollout:roll_toiture			(
 --------------- ROLLOUT  ----------------------------------------------------------------------------------------------------------------------	
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
-rollout roll_presets "Presets" width:235 height:205	rolledUp:true
+rollout roll_presets "Presets" width:235 height:205
 (
 	
 	fn shape_filt 		obj = superclassof obj == shape
 	
-	button 'btn_enregistrer' "Enregistrer" pos:[88,2] width:85 height:16 align:#left		
 		
 		
-	button 'btn_charger' "Charger" pos:[5,2] width:85 height:16 align:#left
-	button 'btn_coller' "Coller" pos:[88,17] width:85 height:16 align:#left
-	button 'btn_copier' "Copier" pos:[5,17] width:85 height:16 align:#left
+		
+		
+	button 'btn_charger' "Charger" pos:[5,0] width:82 height:16 align:#left
+	button 'btn_copier' "Copier" pos:[5,15] width:82 height:16 align:#left
+	button 'btn_enregistrer' "Enregistrer" pos:[85,0] width:82 height:16 align:#left		
+	button 'btn_coller' "Coller" pos:[85,15] width:82 height:16 align:#left
 	
 	
 	fn actualiser =(
-		btn_coller.enabled 		= a_un_trace and urba_clipboard_batiment != ""
-		btn_copier.enabled 			= a_un_trace
+		btn_coller.enabled 				= a_un_trace and urba_clipboard_batiment != ""
+		btn_copier.enabled 				= a_un_trace
 		btn_enregistrer.enabled 		= a_un_trace
 		btn_charger.enabled 			= a_un_trace
 		
@@ -137,8 +139,9 @@ rollout roll_presets "Presets" width:235 height:205	rolledUp:true
 	
 	
 	
-	on roll_presets open do actualiser ()
 
+	on roll_presets open do
+		actualiser ()
 	on btn_enregistrer pressed do
 		presets.enregistrer 	this
 	on btn_charger pressed do
@@ -172,23 +175,23 @@ rollout roll_trace "Tracé" width:182 height:301
 	
 	fn shape_filt 		obj = superclassof obj == shape
 	
-	pickbutton 'btn_pick_trace' "Pick shape" pos:[10,13] width:156 height:21 filter:shape_filt align:#left
-	GroupBox 'grp9' "Tracé:" pos:[4,0] width:168 height:40 align:#left
+	pickbutton 'btn_pick_trace' "Pick shape" pos:[10,13] width:151 height:21 filter:shape_filt align:#left
+	GroupBox 'grp9' "Tracé:" pos:[5,0] width:161 height:40 align:#left
 	
-	checkbox 'chk_optimiser' "Optimiser" pos:[6,76] width:62 height:13 align:#left
-	checkbox 'chk_ortho' "Orthonorm." pos:[6,46] width:76 height:13 align:#left
-	spinner 'spn_optimiser' "" pos:[87,75] width:85 height:16 range:[0,40,0] align:#left
-	checkbox 'chk_souder' "Souder" pos:[6,61] width:55 height:13 align:#left
-	spinner 'spn_souder' "" pos:[87,60] width:85 height:16 range:[0,100,0] type:#worldunits align:#left
-	spinner 'spn_ortho' "" pos:[87,45] width:85 height:16 range:[0,100,0] type:#float align:#left
-	
-	
+	checkbox 'chk_optimiser' "Optimiser" pos:[5,76] width:62 height:13 align:#left
+	checkbox 'chk_ortho' "Orthonorm." pos:[5,46] width:76 height:13 align:#left
+	spinner 'spn_optimiser' "" pos:[85,75] width:80 height:16 range:[0,40,0] align:#left
+	checkbox 'chk_souder' "Souder" pos:[5,61] width:55 height:13 align:#left
+	spinner 'spn_souder' "" pos:[85,60] width:80 height:16 range:[0,100,0] type:#worldunits align:#left
+	spinner 'spn_ortho' "" pos:[85,45] width:80 height:16 range:[0,100,0] type:#float align:#left
 	
 	
 	
 	
-	checkbox 'chk_aligner' "Aligner" pos:[6,91] width:50 height:13 align:#left
-	spinner 'spn_aligner' "" pos:[87,90] width:85 height:16 range:[0,100,0] align:#left
+	
+	
+	checkbox 'chk_aligner' "Aligner" pos:[5,91] width:50 height:13 align:#left
+	spinner 'spn_aligner' "" pos:[85,90] width:80 height:16 range:[0,100,0] align:#left
 -- 	spinner 'spn_decouper' "" pos:[87,93] width:80 height:16 range:[0,40,0] align:#left
 	
 -- 	button 'btn_MaJ' "Actualiser" pos:[24,155] width:147 height:21 align:#left
@@ -274,12 +277,11 @@ rollout roll_trace "Tracé" width:182 height:301
 			construire.batiment this
 		)
 )
-rollout roll_global "Global" width:247 height:375
+rollout roll_global "Global" width:178 height:286
 (
 	
 -- 	local regle_ssTrace_courant
-	
-	spinner 'spn_rotation_axeP' "" pos:[87,32] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
+	/* spinner 'spn_rotation_axeP' "" pos:[87,32] width:85 height:16 range:[-360,360,0] type:#float scale:1 align:#left
 	label 'lbl_axeP' "Orientation:" pos:[5,33] width:59 height:15 align:#left
 	button 'btn_rotation' "+90°" pos:[89,47] width:42 height:16 align:#left
 	button 'btn_rotation_inv' "-90°" pos:[130,47] width:42 height:16 align:#left		
@@ -307,7 +309,42 @@ rollout roll_global "Global" width:247 height:375
 
 		
 	checkbox 'chk_sousTraces' "Diviser" pos:[13,80] width:107 height:15 align:#left
+	 */
+	spinner 'spn_rotation_axeP' "" pos:[83,161] width:57 height:16 range:[-360,360,0] type:#float scale:1 align:#left
+	label 'lbl_axeP' "Orientation:" pos:[5,162] width:59 height:15 align:#left
+	button 'btn_rotation' "+" pos:[137,161] width:16 height:16 toolTip:"+ 90°" align:#left
+	button 'btn_rotation_inv' "-" pos:[152,161] width:16 height:16 toolTip:"- 90°" align:#left		
+		
+		
+		
+		
+		
 	
+	
+	label 'lbl_nbre' "Nbre. d'étages:" pos:[5,132] width:79 height:15 align:#left
+	spinner 'spn_nbres' "" pos:[83,131] width:85 height:16 range:[0,1e+13,0] type:#integer scale:1 align:#left
+	spinner 'spn_hauteur' "" pos:[83,146] width:85 height:16 range:[0,1e+13,0] type:#worldunits scale:1 align:#left
+	label 'lbl_hauteur' "Htr. des étages:" pos:[5,147] width:76 height:15 align:#left
+	
+	
+	label 'lbl_surfMin' "Surf. min  (m²):" pos:[5,94] width:76 height:15 align:#left
+	label 'lbl_surfMax' "        max (m²):" pos:[7,109] width:72 height:15 align:#left
+-- 	button 'btn_ajouter_division' "+" pos:[134,76] width:16 height:16 enabled:true toolTip:"surface minimum." highlightColor:(color 255 255 0) align:#left
+-- 	button 'btn_supprimer_division' "-" pos:[149,76] width:16 height:16 enabled:true toolTip:"surface minimum." highlightColor:(color 255 255 0) align:#left
+	
+	
+	spinner 'spn_sousTraces_surf_min' "" pos:[98,94] width:70 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
+	spinner 'spn_sousTraces_surf_max' "" pos:[98,110] width:70 height:16 range:[0,1e+13,0] type:#float scale:1 align:#left
+	checkbutton 'chk_sousTraces_surf_max' "" pos:[85,110] width:16 height:16 highlightColor:(color 255 255 0) toolTip:"Surface maximum." checked:false align:#left
+	checkbutton 'chk_sousTraces_surf_min' "" pos:[85,94] width:16 height:16 enabled:true highlightColor:(color 255 255 0) toolTip:"surface minimum." align:#left
+-- 	listbox 'lbx_divisions' "" pos:[12,92] width:153 height:5 align:#left
+
+	
+	listbox 'lbx_division' "" pos:[5,0] width:161 height:5 items:#("global") align:#left
+	
+	checkbutton 'btn_ajouter_division' "+" pos:[137,73] width:16 height:16 enabled:true highlightColor:(color 255 255 0) toolTip:"surface minimum." align:#left
+	checkbutton 'btn_supprimer_division' "-" pos:[152,73] width:16 height:16 enabled:true highlightColor:(color 255 255 0) toolTip:"surface minimum." align:#left
+	edittext 'edt_nom' "" pos:[1,73] width:136 height:16 align:#left
 	
 	fn actualiser =(
 		
@@ -315,7 +352,7 @@ rollout roll_global "Global" width:247 height:375
 -- 		if lbx_divisions.selection != 0 then
 -- 			regle_ssTrace_courant	= trace.regles_ssTrace[lbx_divisions.selection]
 -- 		else regle_ssTrace_courant = undefined
-		
+		/* 
 		spn_hauteur.enabled 			= a_un_trace
 		lbl_hauteur.enabled 				= a_un_trace		
 		btn_rotation.enabled 			= a_un_trace
@@ -352,7 +389,7 @@ rollout roll_global "Global" width:247 height:375
 			chk_sousTraces_surf_min.checked  			= false
 			
 		)
-		
+		 */
 	)
 	
 
@@ -411,55 +448,56 @@ rollout roll_global "Global" width:247 height:375
 		flagForeground $ 	true
 	on spn_hauteur buttonup do
 		flagForeground $ 	false
-	on spn_sousTraces_etages changed val do
-	(
--- 			regle_ssTrace_courant.nombre_etages = val
-			actualiser ()
--- 			trace.structs_toParam 	this
-			trace.actualiser 	this
-			construire.batiment 	this
-		)
 	on spn_sousTraces_surf_min changed val do
 	(
--- 			regle_ssTrace_courant.surface_min = val
+	-- 			regle_ssTrace_courant.surface_min = val
 			actualiser ()
--- 			trace.structs_toParam 	this
+	-- 			trace.structs_toParam 	this
 			trace.actualiser 	this
 			construire.batiment 	this
 		
 		)
 	on spn_sousTraces_surf_max changed val do
 	(
--- 			regle_ssTrace_courant.surface_max = val
+	-- 			regle_ssTrace_courant.surface_max = val
 			actualiser ()
--- 			trace.structs_toParam 	this
+	-- 			trace.structs_toParam 	this
 			trace.actualiser 	this
 			construire.batiment 	this
 		
 		)
 	on chk_sousTraces_surf_max changed state do
 	(
--- 			regle_ssTrace_courant.surface_max_use = state
+	-- 			regle_ssTrace_courant.surface_max_use = state
 			actualiser ()
--- 			trace.structs_toParam 	this
+	-- 			trace.structs_toParam 	this
 			trace.actualiser 	this
 			construire.batiment 	this
 		
 		)
 	on chk_sousTraces_surf_min changed state do
 	(
--- 			regle_ssTrace_courant.surface_min_use = state
+	-- 			regle_ssTrace_courant.surface_min_use = state
 			actualiser ()
--- 			trace.structs_toParam 	this
+	-- 			trace.structs_toParam 	this
 			trace.actualiser 	this
 			construire.batiment 	this
 		
 		)
-	on chk_sousTraces changed state do
+	on btn_ajouter_division changed state do
 	(
--- 			regle_ssTrace_courant.surface_max_use = state
+	-- 			regle_ssTrace_courant.surface_min_use = state
 			actualiser ()
--- 			trace.structs_toParam 	this
+	-- 			trace.structs_toParam 	this
+			trace.actualiser 	this
+			construire.batiment 	this
+		
+		)
+	on btn_supprimer_division changed state do
+	(
+	-- 			regle_ssTrace_courant.surface_min_use = state
+			actualiser ()
+	-- 			trace.structs_toParam 	this
 			trace.actualiser 	this
 			construire.batiment 	this
 		
@@ -689,9 +727,9 @@ rollout roll_infos "Infos" width:191 height:142
 )
 rollout roll_aPropos "A propos" width:162 height:64 	rolledUp:true
 (
-	label 'lbl_axeP' "Urba | V0.1  |" pos:[5,2]  align:#left
-	HyperLink 'hpl1' "Christophe Pagès" pos:[76,2] address:"http://c-pages.fr" color:(color 200 200 127.5) hovercolor:(color 250 250 150) visitedcolor:(color 200 200 127.5) align:#left
-	HyperLink 'hpl2' "GitHub" pos:[127,17] address:"https://github.com/c-pages/cp-Urba" color:(color 200 200 127.5) hovercolor:(color 250 250 150) visitedcolor:(color 200 200 127.5) align:#left
+	label 'lbl_axeP' "Urba  |  V0.1   |" pos:[5,2]  align:#left
+	HyperLink 'hpl1' "Christophe Pagès" pos:[81,2] address:"http://c-pages.fr" color:(color 200 200 127.5) hovercolor:(color 250 250 150) visitedcolor:(color 200 200 127.5) align:#left
+	HyperLink 'hpl2' "GitHub" pos:[132,17] address:"https://github.com/c-pages/cp-Urba" color:(color 200 200 127.5) hovercolor:(color 250 250 150) visitedcolor:(color 200 200 127.5) align:#left
 	label 'lbl6' "2017" pos:[5,17] align:#left
 )
 
@@ -719,8 +757,6 @@ rollout roll_TEST "TEST" width:162 height:58
 )
 
  */
-
-
 
 
 

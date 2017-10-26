@@ -1047,7 +1047,7 @@ struct str_construire (
 			
 			for ssTrace_string in _this.sousTraces do (
 					z  = z_initial
-				
+					
 					local sousTrace = str_ssTrace ()
 					_this.trace.datasMgr.set_datas_string 		ssTrace_string 		sousTrace 		_this
 -- 				set_datas_string 		_datas_string 		_element 	
@@ -1121,12 +1121,13 @@ struct str_construire (
 					)  */
 					
 				) --- fin boucle etages -------------
-					
+				
+				toit				_this		&z
 				
 			)
 			
-			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	_this.ep_dalle	_this
-			z += ep_dalle
+-- 			geo_ptr.creerFacesContour	 	_this.trace_courant		z 	_this.ep_dalle	_this
+-- 			z += ep_dalle
 			
 		),
 		
@@ -1172,7 +1173,7 @@ struct str_construire (
 					local chrono_ssBassement		= timeStamp ()	
 					etages			_this	&zCourant
 					local chrono_etages				= timeStamp ()	
-					toit				_this	&zCourant
+-- 					toit				_this	&zCourant
 					local chrono_toit					= timeStamp ()	
 					
 					local chrono_retirerImport		= timeStamp ()	
